@@ -1,4 +1,4 @@
-﻿[![Build Status](https://travis-ci.org/microServiceBus/microservicebus.host.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.host/)
+﻿[![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
 ![alt](https://blogical.blob.core.windows.net/microservicebus/Logosmall.png)
 
 # microservicebus.host
