@@ -1,0 +1,64 @@
+{
+  "author": {
+    "email": "wmmihaa@hotmail.com",
+    "name": "microServiceBus.com",
+    "url": "https://microservicebus.com"
+  },
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "async": "^1.4.2",
+    "body-parser": "^1.14.1",
+    "chokidar": "^1.0.5",
+    "colors": "^1.1.2",
+    "deasync": "^0.1.2",
+    "ds18x20": "^0.2.0",
+    "edge": "^4.0.0",
+    "express": "^4.13.3",
+    "extend": "^3.0.0",
+    "graceful-fs": "^4.1.2",
+    "guid": "0.0.12",
+    "moment": "^2.10.3",
+    "mssql": "^2.2.0",
+    "node-linq": "0.0.5",
+    "node-persist": "0.0.6",
+    "node-rest-client": "^1.5.1",
+    "npm": "^2.13.2",
+    "require-reload": "^0.2.2",
+    "scp": "0.0.3",
+    "signalr-client": "0.0.14",
+    "sync-request": "^2.0.1"
+  },
+  "description": "node.js host for microservicebus.com",
+  "devDependencies": {
+    "chai": "^3.3.0",
+    "event-stream": "^3.3.1",
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-jshint": "^0.11.3",
+    "gulp": "^3.9.0",
+    "gulp-scp2": "^0.2.0",
+    "mocha": "^2.3.3",
+    "mocha-jshint": "^2.2.5",
+    "sleep": "^3.0.0",
+    "unit.js": "^2.0.0"
+  },
+  "scripts": {
+    "lint": "jshint Utils.js",
+    "test": "mocha Tests/UnitTests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microServiceBus/microservicebus.node"
+  },
+  "keywords": [
+    "IoT",
+    "Integration",
+    "MicroService",
+    "microServiceBus",
+    "Cloud"
+  ],
+  "main": "microServiceBusHost.js",
+  "name": "microservicebus.node",
+  "version": "0.0.1"
+}
+ 
