@@ -6,7 +6,7 @@ microServiceBus.com is an integration platform for IoT and enterprise applicatio
 
 [For more information about microServiceBus.com](https://microservicebus.com)
 
-## To create your own service using microServiceBus.com. 
+## To create your own service using microServiceBus.com.
 Simply follow the template below. When your are done, simply save in the portal.
 
 ```javascript
