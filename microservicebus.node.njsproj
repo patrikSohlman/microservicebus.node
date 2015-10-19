@@ -40,6 +40,7 @@
     <Compile Include="Tests\UnitTests.js" />
     <Compile Include="Utils.js" />
     <Content Include=".npmignore" />
+    <Content Include=".travis.yml" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="settings.json" />
