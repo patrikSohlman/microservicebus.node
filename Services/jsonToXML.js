@@ -35,11 +35,26 @@ var exports = module.exports = {
         var xmlString;
         var obj = {};
         if(ns != null && ns != ''){
-            obj[rootNode] = [{ _attr: { xmlns: ns} }, payload];
+            if (Array.isArray(payload)) {
+                //obj[rootNode] = [{ _attr: { xmlns: ns } }, payload];
+                //obj[rootNode] = payload;
+                
+                obj[rootNode] = [{ _attr: { xmlns: ns} }].concat(payload);
+
+                //obj[rootNode] = [{ _attr: { xmlns: ns } }, payload];
+            }
+            else{
+                obj[rootNode] = [{ _attr: { xmlns: ns} }, payload];
+                var s = JSON.stringify(obj);
+            }
             xmlString = xml(obj);
         }
         else{
-            obj[rootNode] = [payload];
+            if(Array.isArray(payload))
+                obj[rootNode] = payload;
+            else
+                obj[rootNode] = [payload];
+    
             xmlString = xml(obj);
         }
         

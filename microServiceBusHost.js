@@ -37,7 +37,27 @@ var color = require('colors');
 var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var _downloadedScripts = [];
- 
+
+// TEST
+
+//var xml = require('xml');
+//var obj = { "Cars": [{ "_attr": { "xmlns": "http://microservicebus.com" } }, { "LicenseNumber": "AAA123", "Brand": "Audi", "Model": "A4", "Color": "Midnight blue", "Class": "Standard" }] };
+//xmlString = xml(obj);
+
+//var obj = [
+//    {
+//        toys: [
+//            { _attr: { decade: '80s', locale: 'US' } }, 
+//            { toy: 'Transformers', Color: 'Red' } , 
+//            { toy: 'GI Joe' , Color: 'Green'}, 
+//            { toy: 'He-man' , Color: 'Blue'}]
+//    }
+//];
+
+//xmlString = xml(obj,true);
+
+
+
 // Handle settings
 var temporaryVerificationCode;
 var existingHostName;
@@ -379,9 +399,6 @@ function MicroServiceBusHost(microService) {
                     if (host != settings.hostName)
                         continue;
                     
-                    if (!isEnabled)
-                        continue;
-                    
                     var scriptFile;
                     
                     // If the activity is a dynamic nodeJs activity, pick the script from the activity
@@ -400,6 +417,11 @@ function MicroServiceBusHost(microService) {
                     var integrationId = activity.userData.integrationId;
                     
                     var fileName = path.basename(scriptFile);
+                    
+                    if (!isEnabled) {
+                        var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(fileName, 40, ' ') + "|";
+                        console.log(lineStatus); continue;
+                    }
                     
                     var exist = new linq(_downloadedScripts).First(function (s) { return s.name === fileName; }); // jshint ignore:line
                     if (exist == null) { // jshint ignore:line
@@ -525,7 +547,11 @@ function MicroServiceBusHost(microService) {
                     }
                     catch (ex) {
                         console.log('Unable to start service '.red + newMicroService.Name.red);
-                        console.log(ex.message.red);
+                        if (typeof ex === 'object')
+                            console.log(ex.message.red);
+                        else
+                            console.log(ex.red);
+
                         exceptionsLoadingItineraries++;
                     }
                     loadedItineraries++;
