@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="Gruntfile.js" />
     <Compile Include="gulpfile.js" />
+    <Compile Include="Com.js" />
     <Compile Include="microServiceBusHost.js" />
     <Compile Include="Services\microService.js" />
     <Compile Include="Services\sqlCommand.js" />

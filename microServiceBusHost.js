@@ -36,6 +36,7 @@ var util = require('./Utils.js');
 var color = require('colors');
 var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
+var Com = require("./Com.js");
 var _downloadedScripts = [];
 
 // TEST
@@ -56,106 +57,20 @@ var _downloadedScripts = [];
 
 //xmlString = xml(obj,true);
 
-
-
-// Handle settings
-var temporaryVerificationCode;
-var existingHostName;
-var hostPrefix = 'nodeJs'; // Used for creating new hosts
-var _itineraries; // all downloaded itineries for this host
-var _inboundServices = []; // all started services
-var _hasDisconnected = false;
-var _shoutDown = false;
-
-function MicroServiceBusHost(microService) {
+function MicroServiceBusHost(settings) {
     // Callbacks
     this.onStarted = null;
-    
-    // Load settings
-    try {
-        var data = fs.readFileSync('./settings.json');
-        var settings = JSON.parse(data);
-    //settings.hubUri = "wss://localhost:44302";
-    
-    }
-    catch (err) {
-        console.log('Invalid settings file.'.red);
-        process.abort();
-    }
-    
-    var args = process.argv.slice(2);
-    if (settings.hubUri != null && settings.hostName != null && settings.organizationId != null) { // jshint ignore:line
-        console.log('Logging in using settings'.grey);
-    }
-    else if (args.length > 0) { // Starting using code
-        switch (args[0]) {
-            case '/c':
-            case '-c':
-            case '-code':
-            case '/code':
-                temporaryVerificationCode = args[1];
-                
-                if (args[2] != null && args[3] != null && // jshint ignore:line
-                    (args[2] == '/h' || 
-                    args[2] == '-h' ||
-                    args[2] == '/host' ||
-                    args[2] == '-host'))
-                    existingHostName = args[3];
-                
-                break;
-            default: {
-                console.log('Sorry, invalid arguments.'.red);
-                console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
-                console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
-                console.log('');
-                console.log('You may also host name:'.yellow);
-                console.log('Eg: microServiceBus.js -code ABCD1234 -host nodejs00001'.yellow);
-                console.log('');
-                
-                process.abort();
-            }
-        }
-    }
-    else {// Wrong config
-        if (temporaryVerificationCode != null) { // jshint ignore:line
-    
-        }
-        else {
-            if (process.argv.length != 4) {
-                console.log('');
-                console.log('Missing arguments'.red);
-                console.log('Make sure to start using arguments; verification code (/c) and optionally host name.'.yellow);
-                console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
-                console.log('Eg: node microservicebus.js /c <Verification code> [/h <Host name>]'.yellow);
-                console.log('Eg: node microservicebus.js /c V5VUYFSY [/h MyHostName]'.yellow);
-                process.exit();
-            }
-            
-            settings.hostName = process.argv[3];
-            settings.organizationId = process.argv[2];
-            settings.machineName = os.hostname();
-            
-            if (settings.debug == null) // jshint ignore:line
-                settings.debug = false;
-            
-            if (settings.hubUri == null) // jshint ignore:line
-                settings.debug = "wss://microservicebus.com";
-            
-            util.saveSettings(settings);
-            
-            console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
-            console.log('');
-        }
-    }
-    
-    if (typeof String.prototype.startsWith != 'function') {
-        // see below for better implementation!
-        String.prototype.startsWith = function (str) {
-            return this.indexOf(str) === 0;
-        };
-    }
-    // Only used for localhost
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    // Handle settings
+    var temporaryVerificationCode;
+    var existingHostName;
+    var hostPrefix = 'nodeJs'; // Used for creating new hosts
+    var _itineraries; // all downloaded itineries for this host
+    var _inboundServices = []; // all started services
+    var _hasDisconnected = false;
+    var _shoutDown = false;
+    var signInResponse;
+    var com;
+
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -249,17 +164,39 @@ function MicroServiceBusHost(microService) {
     
     // Incoming message from HUB
     client.on('integrationHub', 'sendMessage', function (message, destination) {
-        receiveMessage(message, destination);
+        //receiveMessage(message, destination);
     });
     
     // Called by HUB when signin  has been successful
-    client.on('integrationHub', 'signInMessage', function (organizationId, itineraries) {
+    client.on('integrationHub', 'signInMessage', function (response) {
         console.log("signInMessage => Successfully logged in");
         
         log(settings.hostName + ' successfully logged in');
+        signInResponse = response;
         
-        _itineraries = itineraries;
-        loadItineraries(organizationId, itineraries);
+        var sbSettings = {
+            sbNamespace : response.sbNamespace,
+            topic : response.topic,
+            sasKey : response.sasKey,
+            sasKeyName : response.sasKeyName,
+            trackingKey : response.trackingKey
+        };
+        com = new Com(settings.hostName, sbSettings);
+        com.OnQueueMessageReceived(function (sbMessage) {
+            var message = sbMessage.body;
+            var service = sbMessage.applicationProperties.value.service;
+            receiveMessage(message, service);
+        });
+        com.OnReceivedQueueError(function (message) {
+            console.log("OnReceivedError");
+        });
+        com.OnSubmitQueueError(function (message) {
+            console.log("OnSubmitError");
+        });
+        com.Start();
+
+        _itineraries = signInResponse.itineraries;
+        loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
     });
     
     // Called by HUB when Host has been successfully created
@@ -316,7 +253,10 @@ function MicroServiceBusHost(microService) {
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
-            var microService = new linq(_inboundServices).First(function (i) { return i.Name === destination && i.ItineraryId == message.ItineraryId; });
+            var microService = new linq(_inboundServices).First(function (i) {
+                return i.Name === destination && 
+                        i.ItineraryId == message.ItineraryId;
+            });
             
             microService.OnCompleted(function (integrationMessage, destination) {
                 trackMessage(integrationMessage, destination, "Completed");
@@ -466,10 +406,11 @@ function MicroServiceBusHost(microService) {
                         
                         if (integrationMessage.FaultCode != null) {
                             trackException(integrationMessage, 
-                            integrationMessage.LastActivity, 
-                            "Failed", 
-                            integrationMessage.FaultCode, 
-                            integrationMessage.FaultDescripton);
+                                integrationMessage.LastActivity, 
+                                "Failed", 
+                                integrationMessage.FaultCode, 
+                                integrationMessage.FaultDescripton);
+
                             console.log('Exception: '.red + integrationMessage.FaultDescripton);
                             return;
                         }
@@ -491,12 +432,13 @@ function MicroServiceBusHost(microService) {
                                 try {
                                     client.invoke(
                                         'integrationHub',
-		                            'followCorrelation',	
-		                            successor.userData.id, 
-                                    settings.hostName,
-                                    correlationValue,
-                                    settings.organizationId,
-                                    integrationMessage);
+		                                'followCorrelation',	
+		                                successor.userData.id, 
+                                        settings.hostName,
+                                        correlationValue,
+                                        settings.organizationId,
+                                        integrationMessage);
+
                                 }
                             catch (err) {
                                     console.log(err);
@@ -505,12 +447,16 @@ function MicroServiceBusHost(microService) {
                             else {
                                 // No correlation
                                 try {
-                                    var invokeResult = client.invoke( 
-                                        'integrationHub',
-		                            'sendMessage',	
-		                            successor.userData.id, 
-                                    integrationMessage);
-                                    
+                                  //  var invokeResult = client.invoke( 
+                                  //      'integrationHub',
+		                                //'sendMessage',	
+		                                //successor.userData.id, 
+                                  //      integrationMessage);
+
+                                    com.Submit(integrationMessage, 
+                                        successor.userData.host.toLowerCase(),
+                                        successor.userData.id);
+
                                     trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                 }
                             catch (err) {
@@ -587,8 +533,13 @@ function MicroServiceBusHost(microService) {
                 var successor = new linq(itinerary.activities)
                                 .First(function (action) { return action.id === connection.target.node; });
                 
-                if (validateRoutingExpression(successor, integrationMessage))
+                if (validateRoutingExpression(successor, integrationMessage)) {
+                    var destination = new linq(successor.userData.config.generalConfig)
+                                .First(function (c) { return c.id === 'host'; }).value;
+
+                    successor.userData.host = destination;
                     successors.push(successor);
+                }
             }
         });
         
@@ -746,6 +697,81 @@ function MicroServiceBusHost(microService) {
     
     MicroServiceBusHost.prototype.Start = function (testFlag) {
         
+        var args = process.argv.slice(2);
+        if (settings.hubUri != null && settings.hostName != null && settings.organizationId != null) { // jshint ignore:line
+            console.log('Logging in using settings'.grey);
+        }
+        else if (args.length > 0) { // Starting using code
+            switch (args[0]) {
+                case '/c':
+                case '-c':
+                case '-code':
+                case '/code':
+                    temporaryVerificationCode = args[1];
+                    
+                    if (args[2] != null && args[3] != null && // jshint ignore:line
+                        (args[2] == '/h' || 
+                        args[2] == '-h' ||
+                        args[2] == '/host' ||
+                        args[2] == '-host'))
+                        existingHostName = args[3];
+                    
+                    break;
+                default: {
+                    console.log('Sorry, invalid arguments.'.red);
+                    console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
+                    console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
+                    console.log('');
+                    console.log('You may also host name:'.yellow);
+                    console.log('Eg: microServiceBus.js -code ABCD1234 -host nodejs00001'.yellow);
+                    console.log('');
+                    
+                    process.abort();
+                }
+            }
+        }
+        else {// Wrong config
+            if (temporaryVerificationCode != null) { // jshint ignore:line
+    
+            }
+            else {
+                if (process.argv.length != 4) {
+                    console.log('');
+                    console.log('Missing arguments'.red);
+                    console.log('Make sure to start using arguments; verification code (/c) and optionally host name.'.yellow);
+                    console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
+                    console.log('Eg: node microservicebus.js /c <Verification code> [/h <Host name>]'.yellow);
+                    console.log('Eg: node microservicebus.js /c V5VUYFSY [/h MyHostName]'.yellow);
+                    process.exit();
+                }
+                
+                settings.hostName = process.argv[3];
+                settings.organizationId = process.argv[2];
+                settings.machineName = os.hostname();
+                
+                if (settings.debug == null) // jshint ignore:line
+                    settings.debug = false;
+                
+                if (settings.hubUri == null) // jshint ignore:line
+                    settings.debug = "wss://microservicebus.com";
+                
+                util.saveSettings(settings);
+                
+                console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
+                console.log('');
+            }
+        }
+        
+        if (typeof String.prototype.startsWith != 'function') {
+            // see below for better implementation!
+            String.prototype.startsWith = function (str) {
+                return this.indexOf(str) === 0;
+            };
+        }
+        // Only used for localhost
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+        
+
         if (testFlag != true) {
             process.on('uncaughtException', function (err) {
                 console.log('Uncaught exception: '.red + err);
