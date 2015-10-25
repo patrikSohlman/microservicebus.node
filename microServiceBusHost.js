@@ -70,7 +70,7 @@ function MicroServiceBusHost(settings) {
     var _shoutDown = false;
     var signInResponse;
     var com;
-
+    
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -181,7 +181,8 @@ function MicroServiceBusHost(settings) {
             sasKeyName : response.sasKeyName,
             trackingKey : response.trackingKey,
             trackingHubName : response.trackingHubName,
-            trackingKeyName: response.trackingKeyName
+            trackingKeyName: response.trackingKeyName,
+            protocol : response.protocol.toLowerCase()
         };
         com = new Com(settings.hostName, sbSettings);
         com.OnQueueMessageReceived(function (sbMessage) {
@@ -196,7 +197,7 @@ function MicroServiceBusHost(settings) {
             console.log("OnSubmitError");
         });
         com.Start();
-
+        
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
     });
@@ -259,7 +260,7 @@ function MicroServiceBusHost(settings) {
                 return i.Name === destination && 
                         i.ItineraryId == message.ItineraryId;
             });
-            
+            message.IsFirstAction = false;
             microService.OnCompleted(function (integrationMessage, destination) {
                 trackMessage(integrationMessage, destination, "Completed");
             });
@@ -308,12 +309,12 @@ function MicroServiceBusHost(settings) {
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-
+        
         var loadedItineraries = 0;
         var exceptionsLoadingItineraries = 0;
         
         if (itineraries.length == 0)
-            onStarted(0,0);
+            onStarted(0, 0);
         
         //itineraries.forEach(function (itinerary) {
         for (var n in itineraries) {
@@ -372,16 +373,16 @@ function MicroServiceBusHost(settings) {
                             var httpResponse = syncrequest('GET', scriptFile);
                             if (httpResponse.statusCode != 200)
                                 throw 'Resourse not found';
-                            var body = JSON.stringify(httpResponse.body);
-                            var b = JSON.parse(body);
-                            var buff = new Buffer(b.data);
+                            //var body = JSON.stringify(httpResponse.body);
+                            //var b = JSON.parse(body);
+                            var buff = new Buffer(httpResponse.body);
                             var scriptContent = buff.toString('utf8');
                             // Write the script files to disk
                             fs.writeFileSync("./Services/" + fileName, scriptContent);
                             
                             _downloadedScripts.push({ name: fileName });
                         }
-                    catch (ex) {
+                        catch (ex) {
                             //console.log(itinerary.activities[i].userData.type + '.js does not exist. This might be due to the microsevice is not enabled for the nodeJs host yet.');
                             var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(fileName, 40, ' ') + "|";
                             
@@ -412,7 +413,7 @@ function MicroServiceBusHost(settings) {
                                 "Failed", 
                                 integrationMessage.FaultCode, 
                                 integrationMessage.FaultDescripton);
-
+                            
                             console.log('Exception: '.red + integrationMessage.FaultDescripton);
                             return;
                         }
@@ -449,16 +450,16 @@ function MicroServiceBusHost(settings) {
                             else {
                                 // No correlation
                                 try {
-                                  //  var invokeResult = client.invoke( 
-                                  //      'integrationHub',
-		                                //'sendMessage',	
-		                                //successor.userData.id, 
-                                  //      integrationMessage);
-
+                                    //  var invokeResult = client.invoke( 
+                                    //      'integrationHub',
+                                    //'sendMessage',	
+                                    //successor.userData.id, 
+                                    //      integrationMessage);
+                                    
                                     com.Submit(integrationMessage, 
                                         successor.userData.host.toLowerCase(),
                                         successor.userData.id);
-
+                                    
                                     trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                 }
                             catch (err) {
@@ -499,7 +500,7 @@ function MicroServiceBusHost(settings) {
                             console.log(ex.message.red);
                         else
                             console.log(ex.red);
-
+                        
                         exceptionsLoadingItineraries++;
                     }
                     loadedItineraries++;
@@ -538,7 +539,7 @@ function MicroServiceBusHost(settings) {
                 if (validateRoutingExpression(successor, integrationMessage)) {
                     var destination = new linq(successor.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'host'; }).value;
-
+                    
                     successor.userData.host = destination;
                     successors.push(successor);
                 }
@@ -775,7 +776,7 @@ function MicroServiceBusHost(settings) {
         // Only used for localhost
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         
-
+        
         if (testFlag != true) {
             process.on('uncaughtException', function (err) {
                 console.log('Uncaught exception: '.red + err);
@@ -792,12 +793,13 @@ function MicroServiceBusHost(settings) {
             util.saveSettings(settings);
             
             console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
+            console.log('Hub: ' + settings.hubUri.gray);
             console.log('');
         }
     };
     MicroServiceBusHost.prototype.Stop = function () {
         _shoutDown = true;
-        for(i in _inboundServices){
+        for (i in _inboundServices) {
             // _inboundServices.forEach(function (service) {
             var service = _inboundServices[i];
             try {
@@ -820,7 +822,7 @@ function MicroServiceBusHost(settings) {
             client.end();
             delete client;
         } 
-        catch (ex){}
+        catch (ex) { }
     };
     MicroServiceBusHost.prototype.OnStarted = function (callback) {
         onStarted = callback;
