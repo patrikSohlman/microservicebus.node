@@ -27,7 +27,8 @@
     "require-reload": "^0.2.2",
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
-    "sync-request": "^2.0.1"
+    "sync-request": "^2.0.1",
+    "zlib": "^1.0.5"
   },
   "description": "node.js host for microservicebus.com",
   "devDependencies": {

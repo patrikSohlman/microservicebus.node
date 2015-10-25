@@ -179,7 +179,9 @@ function MicroServiceBusHost(settings) {
             topic : response.topic,
             sasKey : response.sasKey,
             sasKeyName : response.sasKeyName,
-            trackingKey : response.trackingKey
+            trackingKey : response.trackingKey,
+            trackingHubName : response.trackingHubName,
+            trackingKeyName: response.trackingKeyName
         };
         com = new Com(settings.hostName, sbSettings);
         com.OnQueueMessageReceived(function (sbMessage) {
@@ -617,15 +619,16 @@ function MicroServiceBusHost(settings) {
             State : status,
             Variables : msg.Variables
         };
+        com.Track(trackingMessage);
+        //var trackingMessages = [];
+        //trackingMessages.push(trackingMessage);
         
-        var trackingMessages = [];
-        trackingMessages.push(trackingMessage);
-        
-        client.invoke(
-            'integrationHub',
-		'trackData',	
-		trackingMessages 
-        );
+
+  //      client.invoke(
+  //          'integrationHub',
+		//'trackData',	
+		//trackingMessages 
+  //      );
     }
     
     // Submits exception message for tracking
@@ -655,15 +658,15 @@ function MicroServiceBusHost(settings) {
             FaultCode : fault,
             FaultDescription : faultDescription
         };
+        com.Track(trackingMessage);
+  //      var trackingMessages = [];
+  //      trackingMessages.push(trackingMessage);
         
-        var trackingMessages = [];
-        trackingMessages.push(trackingMessage);
-        
-        client.invoke(
-            'integrationHub',
-		'trackData',	
-		trackingMessages 
-        );
+  //      client.invoke(
+  //          'integrationHub',
+		//'trackData',	
+		//trackingMessages 
+  //      );
     };
     
     function log(message) {
@@ -758,6 +761,7 @@ function MicroServiceBusHost(settings) {
                 util.saveSettings(settings);
                 
                 console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
+                console.log('Hub: ' + settings.hubUri.gray);
                 console.log('');
             }
         }

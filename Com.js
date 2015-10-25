@@ -1,26 +1,36 @@
 ﻿
 var AMQPClient = require('amqp10').Client;
 var Policy = require('amqp10').Policy;
+var zlib = require('zlib');
 
 function Com(nodeName, sbSettings) {
     var sbSettings = sbSettings;
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
-    var uri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
-    var policy = Policy.ServiceBusTopic;
-    policy.reconnect.forever = false;
-    policy.reconnect.retries = 2;
     
-    var trackingClient = new AMQPClient(Policy.EventHub);
-    var messageClient = new AMQPClient(policy);
+    var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
+    var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
+    
+    var trackingClientPolicy = Policy.ServiceBusQueue;
+    trackingClientPolicy.reconnect.forever = false;
+    trackingClientPolicy.reconnect.retries = 2;
+    
+    var messageClientPolicy = Policy.ServiceBusTopic;
+    messageClientPolicy.reconnect.forever = false;
+    messageClientPolicy.reconnect.retries = 2;
+    
+    
+    var trackingClient = new AMQPClient(trackingClientPolicy);
+    var messageClient = new AMQPClient(messageClientPolicy);
+
     var messageSender;
     var trackingSender;
-
+    
     this.onQueueMessageReceivedCallback = null;
     this.onQueueErrorReceiveCallback = null;
     this.onQueueErrorSubmitCallback = null;
     
     Com.prototype.Start = function () {
-        messageClient.connect(uri)
+        messageClient.connect(messageClientUri)
         .then(function () {
             return Promise.all([
                 messageClient.createSender(sbSettings.topic),
@@ -40,9 +50,17 @@ function Com(nodeName, sbSettings) {
             receiver.on('message', function (message) {
                 onQueueMessageReceivedCallback(message);
             });
-        }) 
-    };
+        });
 
+        trackingClient.connect(trackingClientUri)
+          .then(function () { return trackingClient.createSender(sbSettings.trackingHubName); })
+          .then(function (sender) {
+            trackingSender = sender;
+                    sender.on('errorReceived', function (err) { console.warn(err); });
+                })
+          .then(function (state) { console.log('State: ', state); });
+    };
+    
     Com.prototype.Submit = function (message, node, service) {
         var request = {
             body: message, 
@@ -93,9 +111,25 @@ function Com(nodeName, sbSettings) {
         }
     };
     Com.prototype.Track = function (trackingMessage) {
-        this.Submit(trackingMessage, "tracking");
+        while (trackingSender === undefined) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) {
+                console.log("waiting for trackingSender to get ready...");
+            }
+        }
+        
+        var request = {
+            body: trackingMessage, 
+            applicationProperties: {}
+        };
+        return trackingSender.send(request)
+                    .then(function (err) {
+            
+        });
     };
-
+    
     Com.prototype.OnQueueMessageReceived = function (callback) {
         onQueueMessageReceivedCallback = callback;
     };
