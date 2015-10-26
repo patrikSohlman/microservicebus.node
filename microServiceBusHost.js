@@ -202,16 +202,16 @@ function MicroServiceBusHost(settings) {
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
     });
     
-    // Called by HUB when Host has been successfully created
-    client.on('integrationHub', 'hostCreated', function (hostData) {
+    // Called by HUB when node has been successfully created
+    client.on('integrationHub', 'nodeCreated', function (nodeData) {
         
-        console.log("hostCreated => Successgully created host: " + hostData.hostName.green);
+        console.log("nodeCreated => Successgully created node: " + nodeData.nodeName.green);
         
-        log(settings.hostName + ' Successgully created host: ' + hostData.hostName);
+        log(settings.nodeName + ' Successgully created node: ' + nodeData.nodeName);
         
-        hostData.MachineName = os.hostname();
+        nodeData.machineName = os.hostname();
         
-        settings = extend(settings, hostData);
+        settings = extend(settings, nodeData);
         
         var data = JSON.stringify(settings);
         
@@ -225,11 +225,12 @@ function MicroServiceBusHost(settings) {
     function signIn() {
         
         // Logging in using code
-        if (settings.hostName == null || settings.hostName.length == 0) { // jshint ignore:line
+        if (settings.nodeName == null || settings.hostName.length == 0) { // jshint ignore:line
             if (temporaryVerificationCode.length == 0) { // jshint ignore:line
                 console.log('No hostname or temporary verification code has been provided.');
             }
             else {
+                console.log('Calling createHost...');
                 client.invoke(
                     'integrationHub', 
     		        'createHost',	
@@ -744,8 +745,8 @@ function MicroServiceBusHost(settings) {
                     console.log('Missing arguments'.red);
                     console.log('Make sure to start using arguments; verification code (/c) and optionally host name.'.yellow);
                     console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
-                    console.log('Eg: node microservicebus.js /c <Verification code> [/h <Host name>]'.yellow);
-                    console.log('Eg: node microservicebus.js /c V5VUYFSY [/h MyHostName]'.yellow);
+                    console.log('node start.js /c <Verification code> [/h <Host name>]'.yellow);
+                    console.log('Eg: node start.js /c V5VUYFSY [/h MyHostName]'.yellow);
                     process.exit();
                 }
                 
