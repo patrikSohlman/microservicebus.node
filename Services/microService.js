@@ -179,9 +179,6 @@ function MicroService(microService) {
         npm.load({loaded: true}, function (err) {
             // catch errors
             var packages = npmPackages.split(',');
-            //var count = 1;
-            //if (Array.isArray(packages))
-            //    count = packages.length;
 
             for (var i = 0; i < packages.length; i++) {
                 var npmPackage = packages[i];

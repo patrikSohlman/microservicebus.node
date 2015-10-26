@@ -6,10 +6,12 @@
   },
   "dependencies": {
     "adm-zip": "^0.4.7",
+    "amqp10": "^2.0.3",
     "async": "^1.4.2",
     "body-parser": "^1.14.1",
     "chokidar": "^1.0.5",
     "colors": "^1.1.2",
+    "crypto": "0.0.3",
     "deasync": "^0.1.2",
     "ds18x20": "^0.2.0",
     "edge": "^4.0.0",
@@ -26,7 +28,8 @@
     "require-reload": "^0.2.2",
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
-    "sync-request": "^2.0.1"
+    "sync-request": "^2.0.1",
+    "zlib": "^1.0.5"
   },
   "description": "node.js host for microservicebus.com",
   "devDependencies": {
@@ -39,7 +42,6 @@
     "gulp-scp2": "^0.2.0",
     "mocha": "^2.3.3",
     "mocha-jshint": "^2.2.5",
-
     "unit.js": "^2.0.0"
   },
   "scripts": {
@@ -61,4 +63,3 @@
   "name": "microservicebus.node",
   "version": "0.0.1"
 }
- 
