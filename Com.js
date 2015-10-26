@@ -3,11 +3,15 @@ var AMQPClient = require('amqp10').Client;
 var Policy = require('amqp10').Policy;
 var zlib = require('zlib');
 var crypto = require('crypto');
-var RESTClient = require('node-rest-client').Client;
+var httpRequest = require('request');
+var querystring = require('querystring');
+var storage = require('node-persist');
+
 function Com(nodeName, sbSettings) {
     var sbSettings = sbSettings;
+    storage.initSync(); // Used for persistent storage if off-line
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
-
+    
     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
@@ -29,9 +33,7 @@ function Com(nodeName, sbSettings) {
     else if (sbSettings.protocol == "rest") {
         var listenReq;
         var listenReqInit = false;
-       
-        var restClient = new RESTClient();
-
+        
         var baseAddress = "https://" + sbSettings.sbNamespace;
         if (!baseAddress.match(/\/$/)) {
             baseAddress += '/';
@@ -55,7 +57,7 @@ function Com(nodeName, sbSettings) {
     Com.prototype.Submit = function (message, node, service) {
         if (sbSettings.protocol == "amqp")
             submitAMQP(message, node, service);
-        else if (sbSettings.protocol == "rest") { 
+        else if (sbSettings.protocol == "rest") {
             submitREST(message, node, service);
         }
 
@@ -89,7 +91,7 @@ function Com(nodeName, sbSettings) {
     Com.prototype.Track = function (trackingMessage) {
         if (sbSettings.protocol == "amqp")
             trackAMQP(trackingMessage);
-        else if (sbSettings.protocol == "rest") { 
+        else if (sbSettings.protocol == "rest") {
             trackREST(trackingMessage);
         }
     };
@@ -103,9 +105,9 @@ function Com(nodeName, sbSettings) {
     Com.prototype.OnSubmitQueueError = function (callback) {
         onQueueErrorSubmitCallback = callback;
     };
-
+    
     // AMQP
-    function startAMQP() { 
+    function startAMQP() {
         messageClient.connect(messageClientUri)
         .then(function () {
             return Promise.all([
@@ -126,6 +128,9 @@ function Com(nodeName, sbSettings) {
             receiver.on('message', function (message) {
                 onQueueMessageReceivedCallback(message);
             });
+        })
+        .catch(function (e) {
+            console.warn('Error send/receive: ', e);
         });
         
         trackingClient.connect(trackingClientUri)
@@ -134,9 +139,12 @@ function Com(nodeName, sbSettings) {
             trackingSender = sender;
             sender.on('errorReceived', function (err) { console.warn(err); });
         })
-          .then(function (state) { });
+          .then(function (state) { })
+          .catch(function (e) {
+            console.warn('Error send/receive: ', e);
+        });
     }
-    function submitAMQP (message, node, service) {       
+    function submitAMQP(message, node, service) {
         while (messageSender === undefined) {
             try {
                 require('deasync').runLoopOnce();
@@ -176,77 +184,130 @@ function Com(nodeName, sbSettings) {
             
         });
     };
-
+    
     // REST
     function startREST() {
         listenMessaging();
     }
     function submitREST(message, node, service) {
         try {
-            var args = {
-                data: message,
+            var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
+
+            httpRequest({
                 headers: {
                     "Authorization": restMessagingToken, 
                     "Content-Type" : "application/json",
                     "node": node,
                     "service" : service
+                },
+                uri: submitUri,
+                json: message,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    console.log("Unable to send message. " + err.code + " - " + err.message);
+                    storage.setItem(message.InterchangeId, message);
                 }
-            };
-            var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
-            restClient.post(submitUri, args, function (data, response) {
-                
-                // Check if token is valid...
-                if (response.statusCode >= 200 && response.statusCode < 300) {
-                    console.log("Message sent");
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
-                else if (response.statusCode == 401 && response.statusMessage == '40103: Invalid authorization token signature') {
+                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
-                    token = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    sendMessage(baseAddress, topicName, token, message, to);
+                    restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
+                    submitREST(message, node, service)
                     return;
                 }
                 else {
-                    console.log("Unable to send message. " + response.statusCode + " - " + response.statusMessage)
+                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+                    storage.setItem(message.instanceId, message);
                 }
-       
             });
+
         }
         catch (err) {
-            console.log();
+            console.log("from submitREST");
         }
     };
     function trackREST(trackingMessage) {
         try {
-            var args = {
-                data: trackingMessage,
+           var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
+            
+            httpRequest({
                 headers: {
                     "Authorization": restTrackingToken, 
                     "Content-Type" : "application/json",
+                },
+                uri: trackUri,
+                json: trackingMessage,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    console.log("Unable to send message. " + err.code + " - " + err.message);
+                    storage.setItem(message.InterchangeId, message);
                 }
-            };
-            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
-            restClient.post(trackUri, args, function (data, response) {
-                
-                // Check if token is valid...
-                if (response.statusCode >= 200 && response.statusCode < 300) {
-                    console.log("Tracking Message sent");
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
-                else if (response.statusCode == 401 && response.statusMessage == '40103: Invalid authorization token signature') {
+                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
-                    token = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    sendMessage(baseAddress, topicName, token, message, to);
+                    restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+                    trackREST(trackingMessage)
                     return;
                 }
                 else {
-                    console.log("Unable to send message. " + response.statusCode + " - " + response.statusMessage)
+                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+                    storage.setItem(message.instanceId, message);
                 }
-       
             });
+
         }
         catch (err) {
             console.log();
         }
     };
+    function listenMessaging() {
+        try {
+           var listenUri = baseAddress + sbSettings.topic + "/Subscriptions/" + nodeName + "/messages/head" + "?timeout=60"
+            
+            httpRequest({
+                headers: {
+                    "Authorization": restMessagingToken, 
+                },
+                uri: listenUri,
+                method: 'DELETE'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    onQueueErrorReceiveCallback("Unable to send message. " + err.code + " - " + err.message)
+                    console.log("Unable to receive message. " + err.code + " - " + err.message);
+                }
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    var message = JSON.parse(res.body);
+                    var responseData = {
+                        body : message,
+                        applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                    }
+                    onQueueMessageReceivedCallback(responseData);
+                }
+                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
+                    console.log("Invalid token. Recreating token...")
+                    restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
+                    return;
+                }
+                else {
+                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+                }
+                listenMessaging();
+            });
+
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+    
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
@@ -257,41 +318,6 @@ function Com(nodeName, sbSettings) {
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
         
         return token;
-    }
-    function listenMessaging() { 
-        try {
-            var args = {
-                headers: { "Authorization": restMessagingToken },
-                requestConfig: {
-                    timeout: 50 //response timeout 
-                },
-                responseConfig: {
-                    timeout: 50 //response timeout 
-                }
-            };
-            var listenUri = baseAddress + sbSettings.topic + "/Subscriptions/" + nodeName + "/messages/head" + "?timeout=60"
-            listenReq = restClient.delete(listenUri, args, function (data, response) {
-                if (response.statusCode >= 200 && response.statusCode < 300) {
-                    //var message = sbMessage.body;
-                    //var service = sbMessage.applicationProperties.value.service;
-                    var responseData = {
-                        body : data,
-                        applicationProperties: {value: {service: response.headers.service.replace(/"/g, '')}}
-                    }
-                    onQueueMessageReceivedCallback(responseData);
-                }
-                else { 
-                    buf = new Buffer(data, 'base64');
-                    rerr = buf.toString('utf8');
-                    onQueueErrorReceiveCallback(rerr);
-                }
-                listenMessaging();
-            });
-            initListenRequest();
-        }
-        catch (err) {
-            console.log(err);
-        }
     }
     function initListenRequest() {
         if (!listenReqInit) {

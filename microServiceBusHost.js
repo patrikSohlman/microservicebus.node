@@ -191,10 +191,10 @@ function MicroServiceBusHost(settings) {
             receiveMessage(message, service);
         });
         com.OnReceivedQueueError(function (message) {
-            console.log("OnReceivedError");
+            console.log("OnReceivedError: ".red + message);
         });
         com.OnSubmitQueueError(function (message) {
-            console.log("OnSubmitError");
+            console.log("OnSubmitError: ".red + message );
         });
         com.Start();
         

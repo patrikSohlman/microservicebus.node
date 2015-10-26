@@ -1,6 +1,7 @@
 ﻿gulpfile.js
 Gruntfile.js
 simulator.js
+BEFORE PUBLISH.md
 *.dat
 *.dat.tmp
 *.vspscc
