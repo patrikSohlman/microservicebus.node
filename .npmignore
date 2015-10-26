@@ -1,4 +1,6 @@
 ﻿gulpfile.js
+Gruntfile.js
+simulator.js
 *.dat
 *.dat.tmp
 *.vspscc
