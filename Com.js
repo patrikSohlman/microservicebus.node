@@ -293,9 +293,10 @@ function Com(nodeName, sbSettings) {
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     try {
-                        if (res.statusCode == 204)
+                        if (res.statusCode == 204) {
+                            listenMessaging();
                             return;
-
+                        }
                         var message = JSON.parse(res.body);
                         var responseData = {
                             body : message,
