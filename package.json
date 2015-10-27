@@ -61,5 +61,5 @@
   ],
   "main": "microServiceBusHost.js",
   "name": "microservicebus.node",
-  "version": "0.0.5"
+  "version": "0.0.6"
 }

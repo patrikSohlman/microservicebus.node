@@ -292,12 +292,17 @@ function Com(nodeName, sbSettings) {
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
-                    var message = JSON.parse(res.body);
-                    var responseData = {
-                        body : message,
-                        applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                    try {
+                        var message = JSON.parse(res.body);
+                        var responseData = {
+                            body : message,
+                            applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                        }
+                        onQueueMessageReceivedCallback(responseData);
                     }
-                    onQueueMessageReceivedCallback(responseData);
+                    catch (listenerror) { 
+                        console.log("Unable to parse incoming message. " + listenerror.code + " - " + listenerror.message);      
+                    }
                 }
                 else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
