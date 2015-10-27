@@ -1,10 +1,8 @@
 ﻿
 var AMQPClient = require('amqp10').Client;
 var Policy = require('amqp10').Policy;
-var zlib = require('zlib');
 var crypto = require('crypto');
 var httpRequest = require('request');
-var querystring = require('querystring');
 var storage = require('node-persist');
 
 function Com(nodeName, sbSettings) {
@@ -208,7 +206,12 @@ function Com(nodeName, sbSettings) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
-                    storage.setItem(message.InterchangeId, message);
+                    var persistMessage = {
+                        node: node,
+                        service: service,
+                        message: message
+                    };
+                    storage.setItem(message.InterchangeId, persistMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
@@ -220,7 +223,12 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    storage.setItem(message.instanceId, message);
+                    var persistMessage = {
+                        node: node,
+                        service: service,
+                        message: message
+                    };
+                    storage.setItem(message.instanceId, persistMessage);
                 }
             });
 

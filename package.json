@@ -1,38 +1,36 @@
 {
   "author": {
-    "email": "wmmihaa@hotmail.com",
+    "email": "microservicebus@xlent.se",
     "name": "microServiceBus.com",
     "url": "https://microservicebus.com"
   },
   "dependencies": {
-    "adm-zip": "^0.4.7",
-    "amqp10": "^2.0.3",
-    "async": "^1.4.2",
-    "body-parser": "^1.14.1",
-    "chokidar": "^1.0.5",
-    "colors": "^1.1.2",
+    "adm-zip": "0.4.7",
+    "amqp10": "2.0.3",
+    "async": "1.4.2",
+    "body-parser": "1.14.1",
+    "chokidar": "1.0.5",
+    "colors": "1.1.2",
     "crypto": "0.0.3",
-    "deasync": "^0.1.2",
-    "ds18x20": "^0.2.0",
-    "edge": "^4.0.0",
-    "express": "^4.13.3",
-    "extend": "^3.0.0",
-    "graceful-fs": "^4.1.2",
+    "deasync": "0.1.2",
+    "edge": "4.0.0",
+    "express": "4.13.3",
+    "extend": "3.0.0",
+    "graceful-fs": "4.1.2",
     "guid": "0.0.12",
-    "moment": "^2.10.3",
-    "mssql": "^2.2.0",
+    "moment": "2.10.3",
+    "mssql": "2.2.0",
     "node-linq": "0.0.5",
     "node-persist": "0.0.6",
-    "node-rest-client": "^1.5.1",
-    "npm": "^2.13.2",
-    "request": "^2.65.0",
-    "require-reload": "^0.2.2",
+    "node-rest-client": "1.5.1",
+    "npm": "2.13.2",
+    "request": "2.65.0",
+    "require-reload": "0.2.2",
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
-    "sync-request": "^2.0.1",
-    "zlib": "^1.0.5"
+    "sync-request": "2.0.1"
   },
-  "description": "node.js host for microservicebus.com",
+  "description": "node.js host for microservicebus. Please visit microservicebus.com for more information.",
   "devDependencies": {
     "chai": "^3.3.0",
     "event-stream": "^3.3.1",
@@ -56,11 +54,12 @@
   "keywords": [
     "IoT",
     "Integration",
-    "MicroService",
+    "Micro Services",
+    "MicroServices",
     "microServiceBus",
     "Cloud"
   ],
   "main": "microServiceBusHost.js",
   "name": "microservicebus.node",
-  "version": "0.0.1"
+  "version": "0.0.4"
 }

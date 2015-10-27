@@ -39,24 +39,6 @@ var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
 var _downloadedScripts = [];
 
-// TEST
-
-//var xml = require('xml');
-//var obj = { "Cars": [{ "_attr": { "xmlns": "http://microservicebus.com" } }, { "LicenseNumber": "AAA123", "Brand": "Audi", "Model": "A4", "Color": "Midnight blue", "Class": "Standard" }] };
-//xmlString = xml(obj);
-
-//var obj = [
-//    {
-//        toys: [
-//            { _attr: { decade: '80s', locale: 'US' } }, 
-//            { toy: 'Transformers', Color: 'Red' } , 
-//            { toy: 'GI Joe' , Color: 'Green'}, 
-//            { toy: 'He-man' , Color: 'Blue'}]
-//    }
-//];
-
-//xmlString = xml(obj,true);
-
 function MicroServiceBusHost(settings) {
     // Callbacks
     this.onStarted = null;
@@ -116,7 +98,7 @@ function MicroServiceBusHost(settings) {
     client.on('integrationHub', 'ping', function (message) {
         console.log("ping => " + _inboundServices.length + " active services");
         
-        client.invoke('integrationHub', 'pingResponse', settings.hostName , os.hostname(), "Online", settings.organizationId);
+        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
         
     });
     
@@ -171,7 +153,7 @@ function MicroServiceBusHost(settings) {
     client.on('integrationHub', 'signInMessage', function (response) {
         console.log("signInMessage => Successfully logged in");
         
-        log(settings.hostName + ' successfully logged in');
+        log(settings.nodeName + ' successfully logged in');
         signInResponse = response;
         
         var sbSettings = {
@@ -184,7 +166,7 @@ function MicroServiceBusHost(settings) {
             trackingKeyName: response.trackingKeyName,
             protocol : response.protocol.toLowerCase()
         };
-        com = new Com(settings.hostName, sbSettings);
+        com = new Com(settings.nodeName, sbSettings);
         com.OnQueueMessageReceived(function (sbMessage) {
             var message = sbMessage.body;
             var service = sbMessage.applicationProperties.value.service;
@@ -200,14 +182,16 @@ function MicroServiceBusHost(settings) {
         
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
+
+        setTimeout(function () { restorePersistedMessages(); }, 3000);
     });
     
     // Called by HUB when node has been successfully created
     client.on('integrationHub', 'nodeCreated', function (nodeData) {
         
-        console.log("nodeCreated => Successgully created node: " + nodeData.nodeName.green);
+        console.log("nodeCreated => Successfully created node: " + nodeData.nodeName.green);
         
-        log(settings.nodeName + ' Successgully created node: ' + nodeData.nodeName);
+        log(settings.nodeName + ' Successfully created node: ' + nodeData.nodeName);
         
         nodeData.machineName = os.hostname();
         
@@ -225,12 +209,11 @@ function MicroServiceBusHost(settings) {
     function signIn() {
         
         // Logging in using code
-        if (settings.nodeName == null || settings.hostName.length == 0) { // jshint ignore:line
+        if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
             if (temporaryVerificationCode.length == 0) { // jshint ignore:line
                 console.log('No hostname or temporary verification code has been provided.');
             }
             else {
-                console.log('Calling createHost...');
                 client.invoke(
                     'integrationHub', 
     		        'createHost',	
@@ -242,7 +225,7 @@ function MicroServiceBusHost(settings) {
         else {
             
             var hostData = {
-                Name : settings.hostName ,
+                Name : settings.nodeName ,
                 MachineName : settings.MachineName,
                 OrganizationID : settings.organizationId
             };
@@ -288,7 +271,7 @@ function MicroServiceBusHost(settings) {
                     'integrationHub',
 		        'persistCorrelation',	
 		        microService.Name, 
-                settings.hostName,
+                settings.nodeName,
                 correlationValue,
                 message
                 );
@@ -303,6 +286,26 @@ function MicroServiceBusHost(settings) {
     
     }
     
+    // Restore persisted messages from ./persist folder
+    function restorePersistedMessages() { 
+        fs.readdir('./persist/', function (err, files) {
+            if (err) throw err;
+            for (var i = 0; i < files.length; i++) {
+                var file = './persist/' + files[i];
+                var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
+                com.Submit(persistMessage.message, persistMessage.node, persistMessage.service);
+                try {
+                    fs.unlinkSync(file);
+                }
+                catch (fe) {
+                    var msg = "Unable to delete file from persistent store. The message was successfully submitted, but will be submitted again after the node restarts.";
+                    log(msg);
+                    console.log("Error: ".red + msg.grey)
+                }
+            }
+        });
+    }
+
     // Called after successfull signin.
     // Iterates through all itineries and download the scripts, afterwhich the services is started
     function loadItineraries(organizationId, itineraries) {
@@ -340,7 +343,7 @@ function MicroServiceBusHost(settings) {
                     
                     var isEnabled = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'enabled'; }).value;
-                    if (host != settings.hostName)
+                    if (host != settings.nodeName)
                         continue;
                     
                     var scriptFile;
@@ -423,7 +426,7 @@ function MicroServiceBusHost(settings) {
                         var successors = getSuccessors(integrationMessage);
                         
                         successors.forEach(function (successor) {
-                            integrationMessage.Sender = settings.hostName;
+                            integrationMessage.Sender = settings.nodeName;
                             
                             var correlationValue = sender.CorrelationValue(null, integrationMessage);
                             
@@ -438,7 +441,7 @@ function MicroServiceBusHost(settings) {
                                         'integrationHub',
 		                                'followCorrelation',	
 		                                successor.userData.id, 
-                                        settings.hostName,
+                                        settings.nodeName,
                                         correlationValue,
                                         settings.organizationId,
                                         integrationMessage);
@@ -609,7 +612,7 @@ function MicroServiceBusHost(settings) {
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.hostName ,
+            Host : settings.nodeName ,
             OrganizationId : settings.organizationId,
             InterchangeId : msg.InterchangeId,
             ItineraryId : msg.ItineraryId,
@@ -645,7 +648,7 @@ function MicroServiceBusHost(settings) {
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.hostName ,
+            Host : settings.nodeName ,
             Variables : null,
             OrganizationId : settings.organizationId,
             IntegrationId : guid.EMPTY,
@@ -675,7 +678,7 @@ function MicroServiceBusHost(settings) {
         client.invoke( 
             'integrationHub',
 		'logMessage',	
-		settings.hostName,
+		settings.nodeName,
         message,
         settings.organizationId);
     }
@@ -684,7 +687,7 @@ function MicroServiceBusHost(settings) {
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
         console.log("Received kill signal, shutting down gracefully.");
-        log(settings.hostName + ' signing out...');
+        log(settings.nodeName + ' signing out...');
         
         client.end();
         process.exit();
@@ -703,7 +706,7 @@ function MicroServiceBusHost(settings) {
     MicroServiceBusHost.prototype.Start = function (testFlag) {
         
         var args = process.argv.slice(2);
-        if (settings.hubUri != null && settings.hostName != null && settings.organizationId != null) { // jshint ignore:line
+        if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             console.log('Logging in using settings'.grey);
         }
         else if (args.length > 0) { // Starting using code
@@ -750,7 +753,7 @@ function MicroServiceBusHost(settings) {
                     process.exit();
                 }
                 
-                settings.hostName = process.argv[3];
+                settings.nodeName = process.argv[3];
                 settings.organizationId = process.argv[2];
                 settings.machineName = os.hostname();
                 
@@ -762,7 +765,7 @@ function MicroServiceBusHost(settings) {
                 
                 util.saveSettings(settings);
                 
-                console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
+                console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
                 console.log('Hub: ' + settings.hubUri.gray);
                 console.log('');
             }
@@ -786,14 +789,14 @@ function MicroServiceBusHost(settings) {
         client.start();
         
         // Startig using proper config
-        if (settings.hostName != null && settings.organizationId != null) {
+        if (settings.nodeName != null && settings.organizationId != null) {
             if (temporaryVerificationCode != null)
                 console.log('Settings has already set. Temporary verification code will be ignored.'.gray);
             
             settings.machineName = os.hostname();
             util.saveSettings(settings);
             
-            console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.hostName.gray);
+            console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
             console.log('Hub: ' + settings.hubUri.gray);
             console.log('');
         }

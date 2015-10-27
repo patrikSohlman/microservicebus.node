@@ -4,3 +4,5 @@
 	- Remove all settings but debug and hubUri
 
 Update the package version 
+
+Empty Service folder

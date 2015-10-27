@@ -2,6 +2,7 @@
 Gruntfile.js
 simulator.js
 BEFORE PUBLISH.md
+.travis.yml
 *.dat
 *.dat.tmp
 *.vspscc
@@ -12,6 +13,7 @@ BEFORE PUBLISH.md
 *.Tests
 *.suo
 microServiceBus.BizTalk
+persist
 Services
 !Services/microService.js
 !Services/sqlCommand.js
