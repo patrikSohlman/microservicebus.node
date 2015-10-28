@@ -244,6 +244,14 @@ function MicroServiceBusHost(settings) {
                 return i.Name === destination && 
                         i.ItineraryId == message.ItineraryId;
             });
+            if (microService == null) { 
+                var logm = "The service receiving this message is no longer configured to run on this node. This can happen when a service has been shut down and restarted on a different machine";
+                trackException(message, destination, "Failed", "90001", logm);
+                log(logm);
+                console.log("Error: ".red + logm);
+                return;
+            }
+
             message.IsFirstAction = false;
             microService.OnCompleted(function (integrationMessage, destination) {
                 trackMessage(integrationMessage, destination, "Completed");
@@ -277,7 +285,7 @@ function MicroServiceBusHost(settings) {
                 );
             }
         }
-    catch (err) {
+        catch (err) {
             console.log("Error at: ".red + destination);
             console.log("Error id: ".red + err.name);
             console.log("Error desccription: ".red + err.message);
