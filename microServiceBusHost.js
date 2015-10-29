@@ -52,7 +52,7 @@ function MicroServiceBusHost(settings) {
     var _shoutDown = false;
     var signInResponse;
     var com;
-    
+    var checkConnectionInterval;
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -65,21 +65,36 @@ function MicroServiceBusHost(settings) {
     client.serviceHandlers = {
         
         bound: function () { console.log("Connection: " + "bound".yellow); },
-        connectFailed: function (error) { console.log("Connection: " + "Error: ".red, error); },
+        connectFailed: function (error) {
+            console.log("Connection: " + "Connect Failed".red);
+        },
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
             signIn();
+            checkConnection();
         },
-        disconnected: function () { console.log("Connection: " + "Disconnected".yellow); },
+        disconnected: function () {
+            console.log("Connection: " + "Disconnected".yellow);
+            if (com != null) {
+                com.Stop();
+            }
+        },
         onerror: function (error) { console.log("Connection: " + "Error: ".red, error); },
         messageReceived: function (message) {
-        //console.log("Websocket messageReceived: ", message);
-        //return false;
+            //console.log("Websocket messageReceived: ", message);
+            //return false;
         },
-        bindingError: function (error) { console.log("Connection: " + "Binding Error: ".red, error); },
-        connectionLost: function (error) { console.log("Connection: " + "Connection Lost: ".red, error); },
+        bindingError: function (error) {
+            console.log("Connection: " + "Binding Error: ".red, error);
+        },
+        connectionLost: function (error) {
+            console.log("Connection: " + "Connection Lost: ".red);
+        },
+        reconnected: void function (connection) {
+            console.log("Connection: " + "Reconnected ".green);
+        },
         reconnecting: function (retry /* { inital: true/false, count: 0} */) {
-            console.log("Connection: " + "Retrying: ".red, retry);
+            console.log("Connection: " + "Retrying: ".yellow, retry);
             //return retry.count >= 3; /* cancel retry true */
             return true;
         }
@@ -217,7 +232,10 @@ function MicroServiceBusHost(settings) {
                 client.invoke(
                     'integrationHub', 
     		        'createHost',	
-    		        temporaryVerificationCode, hostPrefix, existingHostName
+    		        temporaryVerificationCode, 
+                    hostPrefix, 
+                    existingHostName,
+                    require('./package.json').version
                 );
             }
         }
@@ -691,6 +709,16 @@ function MicroServiceBusHost(settings) {
         settings.organizationId);
     }
     
+    function checkConnection() { 
+        checkConnectionInterval = setInterval(function () {
+            client.invoke( 
+                'integrationHub',
+		        'hello');
+
+        }, 5000);
+        
+        //clearInterval(interval);
+    }
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {

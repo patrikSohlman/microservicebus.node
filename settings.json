@@ -1,8 +1,7 @@
 {
     "debug": true,
     "hubUri": "wss://microservicebus.com/",
-    "nodeName": "nodeJs-00007",
-    "organizationId": "92c57318-8aef-4be4-b357-c8933f4de05b",
-    "MachineName": "",
-    "machineName": "Breeze-Mikael"
+    "nodeName": "nodeJs-00005",
+    "organizationId": "6cc321f3-94bf-49c3-853c-d93143fec457",
+    "machineName": "CND5215QH6"
 }

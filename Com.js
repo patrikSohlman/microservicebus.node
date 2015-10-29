@@ -7,6 +7,7 @@ var storage = require('node-persist');
 
 function Com(nodeName, sbSettings) {
     var sbSettings = sbSettings;
+    var stop = false;
     storage.initSync(); // Used for persistent storage if off-line
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
     
@@ -45,13 +46,21 @@ function Com(nodeName, sbSettings) {
     this.onQueueErrorSubmitCallback = null;
     
     Com.prototype.Start = function () {
+        stop = false;
         if (sbSettings.protocol == "amqp")
             startAMQP();
         else if (sbSettings.protocol == "rest") {
             startREST();
         }
     };
-    
+    Com.prototype.Stop = function () {
+        stop = true;
+        if (sbSettings.protocol == "amqp")
+            stopAMQP();
+        else if (sbSettings.protocol == "rest") {
+            stopREST();
+        }
+    };
     Com.prototype.Submit = function (message, node, service) {
         if (sbSettings.protocol == "amqp")
             submitAMQP(message, node, service);
@@ -142,6 +151,7 @@ function Com(nodeName, sbSettings) {
             console.warn('Error send/receive: ', e);
         });
     }
+    function stopAMQP() { }
     function submitAMQP(message, node, service) {
         while (messageSender === undefined) {
             try {
@@ -187,6 +197,8 @@ function Com(nodeName, sbSettings) {
     function startREST() {
         listenMessaging();
     }
+    function stopREST() { 
+    }
     function submitREST(message, node, service) {
         try {
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
@@ -204,7 +216,7 @@ function Com(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    onQueueErrorSubmitCallback("Unable to send message" )
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     var persistMessage = {
                         node: node,
@@ -222,7 +234,7 @@ function Com(nodeName, sbSettings) {
                     return;
                 }
                 else {
-                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+                    console.log("Unable to send message");
                     var persistMessage = {
                         node: node,
                         service: service,
@@ -277,6 +289,8 @@ function Com(nodeName, sbSettings) {
     };
     function listenMessaging() {
         try {
+            if (stop)
+                return;
            var listenUri = baseAddress + sbSettings.topic + "/Subscriptions/" + nodeName + "/messages/head" + "?timeout=60"
             
             httpRequest({

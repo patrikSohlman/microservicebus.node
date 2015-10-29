@@ -2,8 +2,8 @@
 var util = require('./Utils.js');
 var pjson = require('./package.json');
 var fs = require('fs');
-
 var maxWidth = 75;
+
 console.log();
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
 console.log(util.padRight(" microServicebus.com", maxWidth, ' ').bgBlue.white.bold);

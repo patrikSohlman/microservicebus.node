@@ -4,10 +4,16 @@ var fs = require('fs');
 
 var settigs = getSettings();
 
-settigs.hostName = "nodeJs-00005";
-new MicroServiceBusHost(settigs).Start();
-settigs.hostName = "nodeJs-00004";
-new MicroServiceBusHost(settigs).Start();
+
+settigs.nodeName = "nodeJs-00004";
+var microServiceBusHost1 = new MicroServiceBusHost(settigs);
+microServiceBusHost1.OnStarted(function (loadedCount, exceptionCount) { });
+microServiceBusHost1.Start();
+
+settigs.nodeName = "nodeJs-00005";
+var microServiceBusHost2 = new MicroServiceBusHost(settigs);
+microServiceBusHost2.OnStarted(function (loadedCount, exceptionCount) { });
+microServiceBusHost2.Start();
 
 
 function getSettings() {
