@@ -239,6 +239,7 @@ function MicroServiceBusHost(settings) {
                 );
             }
         }
+
     // Logging in using settings
         else {
             
