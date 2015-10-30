@@ -234,8 +234,7 @@ function MicroServiceBusHost(settings) {
     		        'createHost',	
     		        temporaryVerificationCode, 
                     hostPrefix, 
-                    existingHostName,
-                    require('./package.json').version
+                    existingHostName
                 );
             }
         }

@@ -1,7 +1,1 @@
-{
-    "debug": true,
-    "hubUri": "wss://microservicebus.com/",
-    "nodeName": "nodeJs-00005",
-    "organizationId": "6cc321f3-94bf-49c3-853c-d93143fec457",
-    "machineName": "CND5215QH6"
-}
+{"debug":true,"hubUri":"wss://microservicebus.com/","nodeName":"nodeJs-00004","organizationId":"6cc321f3-94bf-49c3-853c-d93143fec457","machineName":"Breeze-Mikael"}
