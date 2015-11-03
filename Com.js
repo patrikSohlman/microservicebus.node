@@ -11,6 +11,11 @@ function Com(nodeName, sbSettings) {
     storage.initSync(); // Used for persistent storage if off-line
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
     
+    sbSettings.trackingHubName = "trackingHub";
+    sbSettings.trackingKeyName = "node";
+    sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
+    
+    
     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
@@ -38,7 +43,7 @@ function Com(nodeName, sbSettings) {
             baseAddress += '/';
         }
         var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-        var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+        var restTrackingToken  = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
 
     }
     this.onQueueMessageReceivedCallback = null;
@@ -217,7 +222,7 @@ function Com(nodeName, sbSettings) {
             function (err, res, body) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message" )
-                    console.log("Unable to send message. " + err.code + " - " + err.message);
+                    console.log("Unable to send message. ");
                     var persistMessage = {
                         node: node,
                         service: service,
@@ -226,6 +231,7 @@ function Com(nodeName, sbSettings) {
                     storage.setItem(message.InterchangeId, persistMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    // All good
                 }
                 else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
@@ -249,9 +255,47 @@ function Com(nodeName, sbSettings) {
             console.log("from submitREST");
         }
     };
-    function trackREST(trackingMessage) {
+    function trackREST_(trackingMessage) {
         try {
            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
+            
+            httpRequest({
+                headers: {
+                    "Authorization": restTrackingToken, 
+                    "Content-Type" : "application/json",
+                },
+                uri: trackUri,
+                json: trackingMessage,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    console.log("Unable to send message. " + err.code + " - " + err.message);
+                    storage.setItem(message.InterchangeId, message);
+                }
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
+                }
+                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
+                    console.log("Invalid token. Recreating token...")
+                    restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+                    trackREST(trackingMessage)
+                    return;
+                }
+                else {
+                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+                    storage.setItem(message.instanceId, message);
+                }
+            });
+
+        }
+        catch (err) {
+            console.log();
+        }
+    };
+    function trackREST(trackingMessage) {
+        try {
+            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
             httpRequest({
                 headers: {

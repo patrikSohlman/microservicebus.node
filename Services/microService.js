@@ -13,6 +13,8 @@ function MicroService(microService) {
     this.Name = "Not set";
     this.OrganizationId = "Not set";
     this.IntegrationId = "Not set";
+    this.IntegrationName = "Not set";
+    this.Environment = "Not set";
     this.ItineraryId = "Not set";
     this.Itinerary = "Not set";
     this.Config = "Not set";
@@ -248,13 +250,13 @@ function MicroService(microService) {
         
         if (varaiables != null && itinerary.variables != null)
             variables = itinerary.variables.concat(varaiables);
-        //if (varaiables !== null && itinerary.variables == null)
-        //    itinerary.variables = varaiables;
-        
-        
+       
         var integrationMessage = {
             InterchangeId : guid.raw(),
             IntegrationId : this.IntegrationId,
+            IntegrationName : this.IntegrationName,
+            Environment : this.Environment,
+            TrackingLevel : this.TrackingLevel,
             ItineraryId : this.ItineraryId,
             CreatedBy : this.Name,
             LastActivity : this.Name,

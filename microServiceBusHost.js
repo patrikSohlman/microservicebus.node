@@ -346,7 +346,6 @@ function MicroServiceBusHost(settings) {
         if (itineraries.length == 0)
             onStarted(0, 0);
         
-        //itineraries.forEach(function (itinerary) {
         for (var n in itineraries) {
             itinerary = itineraries[n];
             if (_shoutDown) {
@@ -372,20 +371,8 @@ function MicroServiceBusHost(settings) {
                     if (host != settings.nodeName)
                         continue;
                     
-                    var scriptFile;
-                    
-                    // If the activity is a dynamic nodeJs activity, pick the script from the activity
-                    if (itinerary.activities[i].userData.type == "nodeJsBaseOneWayInboundService" ||
-                    itinerary.activities[i].userData.type == "nodeJsBaseOneWayOutboundService" ||
-                    itinerary.activities[i].userData.type == "nodeJsBaseTwoWayOutboundService") {
-                        
-                        scriptFile = new linq(activity.userData.config.staticConfig)
-                                .First(function (c) { return c.id === 'scriptFile'; }).value;
-                    }
-                    else { // else: pick the file from the site
-                        scriptFile = settings.hubUri + '/api/Scripts/' + itinerary.activities[i].userData.type + '.js';
-                        scriptFile = scriptFile.replace('wss://', 'https://');
-                    }
+                    var scriptFile = settings.hubUri + '/api/Scripts/' + itinerary.activities[i].userData.type + '.js';
+                    scriptFile = scriptFile.replace('wss://', 'https://');
                     
                     var integrationId = activity.userData.integrationId;
                     
@@ -431,7 +418,10 @@ function MicroServiceBusHost(settings) {
                     newMicroService.Itinerary = itinerary;
                     newMicroService.IntegrationId = integrationId;
                     newMicroService.Config = activity.userData.config;
-                    
+                    newMicroService.IntegrationName = itinerary.integrationName;
+                    newMicroService.Environment = itinerary.environment;
+                    newMicroService.TrackingLevel = itinerary.trackingLevel;
+
                     // Eventhandler for messages sent back from the service
                     newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                         
@@ -633,7 +623,7 @@ function MicroServiceBusHost(settings) {
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
         
         var trackingMessage =
- {
+        {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
@@ -642,6 +632,9 @@ function MicroServiceBusHost(settings) {
             OrganizationId : settings.organizationId,
             InterchangeId : msg.InterchangeId,
             ItineraryId : msg.ItineraryId,
+            IntegrationName : msg.IntegrationName,
+            Environment : msg.Environment,
+            TrackingLevel : msg.TrackingLevel,
             IntegrationId : msg.IntegrationId,
             FaultCode : msg.FaultCode,
             FaultDescription : msg.FaultDescripton,
@@ -651,15 +644,7 @@ function MicroServiceBusHost(settings) {
             Variables : msg.Variables
         };
         com.Track(trackingMessage);
-        //var trackingMessages = [];
-        //trackingMessages.push(trackingMessage);
-        
 
-  //      client.invoke(
-  //          'integrationHub',
-		//'trackData',	
-		//trackingMessages 
-  //      );
     }
     
     // Submits exception message for tracking
@@ -669,7 +654,7 @@ function MicroServiceBusHost(settings) {
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
         
         var trackingMessage =
- {
+        {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
@@ -677,7 +662,9 @@ function MicroServiceBusHost(settings) {
             Host : settings.nodeName ,
             Variables : null,
             OrganizationId : settings.organizationId,
-            IntegrationId : guid.EMPTY,
+            IntegrationName : msg.IntegrationName,
+            Environment : msg.Environment,
+            TrackingLevel : msg.TrackingLevel,
             InterchangeId : msg.InterchangeId,
             ItineraryId : msg.ItineraryId,
             IntegrationId : msg.IntegrationId,
