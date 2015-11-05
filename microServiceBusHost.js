@@ -55,7 +55,7 @@ function MicroServiceBusHost(settings) {
     var checkConnectionInterval;
     
     // Azure API App support
-    var port = 1833;//process.env.PORT || 1337;
+    var port = process.env.PORT || 1337;
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var http = require('http');
     var express = require('express');
@@ -547,11 +547,12 @@ function MicroServiceBusHost(settings) {
     
     // Start listener
     function startListen() { 
+
         app.use(bodyParser.json());
         var server = http.createServer(app);
         app.use(swaggerize({
             api: require('./swagger.json'),
-            docspath: '/swagger',
+            docspath: '/swagger/docs/v1',
             handlers: './Handlers/'
         }));
         app.use('/', express.static(__dirname + '/html'));

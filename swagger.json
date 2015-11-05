@@ -1,99 +1,156 @@
 ﻿{
-	"swagger": "2.0",
-	"info": {
-		"version": "v1",
-		"title": "FoodTrucks",
-    "description": "An TryApp sample API App where you can find Food trucks."
-	},
-	"host": "microsoft-apiapp1fe6951749ff4b76b8cc9194bc29ba61.azurewebsites.net:443",
-	"schemes": ["http", "https"],
-  "basePath": "/api/data",
-	"paths": {
-		"/foodtrucks": {
-			"get": {
-				"tags": ["FoodTrucks"],
-				"operationId": "getFoodTrucks",
-				"consumes": [],
-				"produces": ["application/json",
-				"text/json",
-				"application/xml",
-				"text/xml"],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/Restaurant"
-							}
-						}
-					}
-				},
-				"deprecated": false
-			}
-		},
-		"/foodtrucks/{id}": {
-			"get": {
-				"tags": ["FoodTrucks"],
-				"operationId": "getFoodTruckDetails",
-				"consumes": [],
-				"produces": ["application/json",
-				"text/json",
-				"application/xml",
-				"text/xml"],
-				"parameters": [{
-					"name": "id",
-					"in": "path",
-					"required": true,
-					"type": "integer",
-					"format": "int32"
-				}],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"schema": {
-							"type": "array",
-							"items": {
-								"$ref": "#/definitions/Restaurant"
-							}
-						}
-					}
-				},
-				"deprecated": false
-			}
-		}
-	},
-	"definitions": {
-		"Restaurant": {
-			"type": "object",
-			"properties": {
-				"id": {
-					"format": "int32",
-					"type": "integer"
-				},
-				"name": {
-					"type": "string"
-				},
-				"likes": {
-					"format": "int32",
-					"type": "integer"
-				},
-				"savory": {
-					"type": "boolean"
-				},
-				"sweet": {
-					"type": "boolean"
-				},
-				"vegetarian": {
-					"type": "boolean"
-				},
-				"bookable": {
-					"type": "boolean"
-				},
-				"city": {
-					"type": "string"
-				}
-			}
-		}
-	}
+  "swagger": "2.0",
+  "info": {
+    "version": "v1",
+    "title": "APIAppTemplateForMicroservicebus"
+  },
+  "host": "localhost:10556",
+  "schemes": [ "http" ],
+  "paths": {
+    "/api/{serviceid}": {
+      "get": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_GetByServiceid",
+        "consumes": [ ],
+        "produces": [ "application/json", "text/json", "application/xml", "text/xml" ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/Object" }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/{serviceid}/{uri}": {
+      "get": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_GetByServiceidAndUri",
+        "consumes": [ ],
+        "produces": [ "application/json", "text/json", "application/xml", "text/xml" ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/Object" }
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_PutByServiceidAndUriAndMsg",
+        "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+        "produces": [ ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "msg",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Object" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } },
+        "deprecated": false
+      },
+      "post": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_PostByServiceidAndUriAndMsg",
+        "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+        "produces": [ ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "msg",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Object" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } },
+        "deprecated": false
+      },
+      "delete": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_DeleteByServiceidAndUriAndMsg",
+        "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+        "produces": [ ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "msg",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/Object" }
+          }
+        ],
+        "responses": { "204": { "description": "No Content" } },
+        "deprecated": false
+      }
+    }
+  },
+  "definitions": {
+    "Object": {
+      "type": "object",
+      "properties": { }
+    }
+  }
 }
