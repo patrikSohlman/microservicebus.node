@@ -1,7 +1,7 @@
 ﻿/*
 The MIT License (MIT)
 
-Copyright (c) 2014 Mikael Håkansson
+Copyright (c) 2014 microServiceBus.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -54,6 +54,18 @@ function MicroServiceBusHost(settings) {
     var com;
     var checkConnectionInterval;
     
+    // Azure API App support
+    var port = 1833;//process.env.PORT || 1337;
+    var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
+    var http = require('http');
+    var express = require('express');
+    var swaggerize = require('swaggerize-express');
+    var bodyParser = require('body-parser')
+    var app = express();
+    console.log("Server port:" + port);
+    // END Azure API App support
+    
+
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
@@ -421,6 +433,7 @@ function MicroServiceBusHost(settings) {
                     newMicroService.IntegrationName = itinerary.integrationName;
                     newMicroService.Environment = itinerary.environment;
                     newMicroService.TrackingLevel = itinerary.trackingLevel;
+                    newMicroService.App = app;
 
                     // Eventhandler for messages sent back from the service
                     newMicroService.OnMessageReceived(function (integrationMessage, sender) {
@@ -470,11 +483,6 @@ function MicroServiceBusHost(settings) {
                             else {
                                 // No correlation
                                 try {
-                                    //  var invokeResult = client.invoke( 
-                                    //      'integrationHub',
-                                    //'sendMessage',	
-                                    //successor.userData.id, 
-                                    //      integrationMessage);
                                     
                                     com.Submit(integrationMessage, 
                                         successor.userData.host.toLowerCase(),
@@ -524,8 +532,10 @@ function MicroServiceBusHost(settings) {
                         exceptionsLoadingItineraries++;
                     }
                     loadedItineraries++;
-                    if (itineraries.length == loadedItineraries)
+                    if (itineraries.length == loadedItineraries) {
                         onStarted(itineraries.length, exceptionsLoadingItineraries);
+                        startListen();
+                    }
                 }
             catch (ex2) {
                     console.log('Unable to start service.'.red);
@@ -533,6 +543,32 @@ function MicroServiceBusHost(settings) {
                 }
             }
         };
+    }
+    
+    // Start listener
+    function startListen() { 
+        app.use(bodyParser.json());
+        var server = http.createServer(app);
+        app.use(swaggerize({
+            api: require('./swagger.json'),
+            docspath: '/swagger',
+            handlers: './Handlers/'
+        }));
+        app.use('/', express.static(__dirname + '/html'));
+        
+        app._router.stack.forEach(function (endpoint) {
+            if(endpoint.route != undefined)
+                log(endpoint.route.path);
+        });
+
+        server.listen(port, 'localhost', function () {
+            if (baseHost === 'localhost') {
+                app.setHost(baseHost + ':' + port);
+            } else {
+                app.setHost(baseHost);
+            }
+            console.log("Server started ..");
+        });
     }
     
     // Returns the next services in line to be executed.
@@ -636,6 +672,7 @@ function MicroServiceBusHost(settings) {
             Environment : msg.Environment,
             TrackingLevel : msg.TrackingLevel,
             IntegrationId : msg.IntegrationId,
+            IsFault : false,
             FaultCode : msg.FaultCode,
             FaultDescription : msg.FaultDescripton,
             IsFirstAction : msg.IsFirstAction,
@@ -672,30 +709,26 @@ function MicroServiceBusHost(settings) {
             FaultDescription : msg.FaultDescripton,
             IsFirstAction : msg.IsFirstAction,
             TimeStamp : utcNow,
+            IsFault : true,
             State : status,
             FaultCode : fault,
             FaultDescription : faultDescription
         };
         com.Track(trackingMessage);
-  //      var trackingMessages = [];
-  //      trackingMessages.push(trackingMessage);
-        
-  //      client.invoke(
-  //          'integrationHub',
-		//'trackData',	
-		//trackingMessages 
-  //      );
     };
     
+    // Submits the messagee to the hub to show up in the portal console
     function log(message) {
+        console.log("Log: " + message.grey);
         client.invoke( 
             'integrationHub',
-		'logMessage',	
-		settings.nodeName,
-        message,
-        settings.organizationId);
+		    'logMessage',	
+		    settings.nodeName,
+            message,
+            settings.organizationId);
     }
     
+    // To enforce the signalR client to recognize disconnected state
     function checkConnection() { 
         checkConnectionInterval = setInterval(function () {
             client.invoke( 
@@ -704,8 +737,8 @@ function MicroServiceBusHost(settings) {
 
         }, 5000);
         
-        //clearInterval(interval);
     }
+    
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
@@ -721,10 +754,6 @@ function MicroServiceBusHost(settings) {
     
     // listen for INT signal e.g. Ctrl-C
     process.on('SIGINT', gracefulShutdown);
-    
-    //process.on('uncaughtException', function (err) {
-    //    console.log('Uncaught exception: '.red + err);
-    //});
     
     MicroServiceBusHost.prototype.Start = function (testFlag) {
         

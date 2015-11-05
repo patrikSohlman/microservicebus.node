@@ -19,6 +19,7 @@ function MicroService(microService) {
     this.Itinerary = "Not set";
     this.Config = "Not set";
     this.IsEnabled = "Not set";
+    this.App = null; // Used for Azure API Apps
     
     this.RunInboundScript = "Not set";
     this.RunOutboundScript = "Not set";

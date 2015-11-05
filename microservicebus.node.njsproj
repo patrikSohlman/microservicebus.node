@@ -14,7 +14,7 @@
     <ProjectGuid>e5509fe2-c037-42a1-8bec-77cb62d5047b</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>start.js</StartupFile>
+    <StartupFile>server.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -36,10 +36,12 @@
     <Compile Include="gulpfile.js" />
     <Compile Include="Com.js" />
     <Compile Include="microServiceBusHost.js" />
+    <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
     <Compile Include="Services\sqlCommand.js" />
     <Compile Include="simulator.js" />
     <Compile Include="start.js" />
+    <Compile Include="swagger.json" />
     <Compile Include="Tests\UnitTests.js" />
     <Compile Include="Utils.js" />
     <Content Include=".npmignore" />
@@ -50,6 +52,7 @@
     <Content Include="settings.json" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Handlers\" />
     <Folder Include="Tests\" />
     <Folder Include="Services\" />
   </ItemGroup>

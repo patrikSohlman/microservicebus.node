@@ -1,7 +1,7 @@
 {
     "debug": true,
-    "hubUri": "wss://localhost:44302/",
-    "nodeName": "nodeJs-00003",
+    "hubUri": "wss://microservicebus.com",
+    "nodeName": "ApiApp1",
     "organizationId": "6cc321f3-94bf-49c3-853c-d93143fec457",
     "machineName": "Breeze-Mikael"
 }

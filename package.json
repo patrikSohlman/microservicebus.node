@@ -18,6 +18,7 @@
     "extend": "3.0.0",
     "graceful-fs": "4.1.2",
     "guid": "0.0.12",
+    "jsonpath": "^0.2.0",
     "moment": "2.10.3",
     "mssql": "2.2.0",
     "node-linq": "0.0.5",
@@ -28,6 +29,7 @@
     "require-reload": "0.2.2",
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
+    "swaggerize-express": "^4.0.5",
     "sync-request": "2.0.1"
   },
   "description": "node.js host for microservicebus. Please visit microservicebus.com for more information.",
@@ -61,5 +63,5 @@
   ],
   "main": "microServiceBusHost.js",
   "name": "microservicebus.node",
-  "version": "0.0.10"
+  "version": "0.0.11"
 }
