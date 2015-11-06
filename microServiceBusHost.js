@@ -376,17 +376,6 @@ function MicroServiceBusHost(settings) {
                 startListen();
              });
 
-            //for (var i in itinerary.activities) {
-            //    if (_shoutDown) {
-            //        console.log("Shoutdown has been called.".red);
-            //        break;
-            //    }
-            //    var activity = itinerary.activities[i];
-            //    startService(activity, organizationId, itineraryId);
-                
-            //}
-            //onStarted(itineraries.length, exceptionsLoadingItineraries);
-            //startListen();
         };
     }
     
@@ -453,7 +442,9 @@ function MicroServiceBusHost(settings) {
                     }
                     // Load an instance of the base class
                     // Extend the base class with the new class
+                    console.log("Start extend");
                     var newMicroService = extend(new MicroService(), reload(localFilePath));
+                    console.log("Done extend");
                     
                     newMicroService.OrganizationId = organizationId;
                     newMicroService.ItineraryId = itineraryId;
