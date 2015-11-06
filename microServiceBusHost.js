@@ -402,12 +402,16 @@ function MicroServiceBusHost(settings) {
                             var httpResponse = syncrequest('GET', scriptFile);
                             if (httpResponse.statusCode != 200)
                                 throw 'Resourse not found';
-                            //var body = JSON.stringify(httpResponse.body);
-                            //var b = JSON.parse(body);
+                            
+                            console.log("Downloaded complete...");
                             var buff = new Buffer(httpResponse.body);
                             var scriptContent = buff.toString('utf8');
                             // Write the script files to disk
-                            fs.writeFileSync("./Services/" + fileName, scriptContent);
+                            var localFilePath = "./Services/" + fileName;
+                            var f = fs.realpathSync(localFilePath);
+                            console.log("Localpath: " + f);
+                            
+                            fs.writeFileSync(localFilePath, scriptContent);
                             
                             _downloadedScripts.push({ name: fileName });
                         }
