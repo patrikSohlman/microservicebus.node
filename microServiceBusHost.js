@@ -432,9 +432,13 @@ function MicroServiceBusHost(settings) {
                             }
                             else {
                                 localFilePath = __dirname + "/Services/" + scriptfileName;
+                                console.log("Download?1");
                                 fs.writeFileSync(localFilePath, scriptContent);
+                                console.log("Download?2");
                                 _downloadedScripts.push({ name: scriptfileName });
+                                console.log("Download?3");
                                 callback(null, localFilePath, integrationId, scriptfileName);
+                                console.log("Download?4");
                             }
                         });
                     }
