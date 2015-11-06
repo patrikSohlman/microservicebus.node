@@ -394,7 +394,7 @@ function MicroServiceBusHost(settings) {
                         var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(fileName, 40, ' ') + "|";
                         console.log(lineStatus); continue;
                     }
-                    console.log("__dir: " + __dir);
+                    console.log("__dir: " + __dir); 
                     var exist = new linq(_downloadedScripts).First(function (s) { return s.name === fileName; }); // jshint ignore:line
                     if (exist == null) { // jshint ignore:line
                         // Download the script file
