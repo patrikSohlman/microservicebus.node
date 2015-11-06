@@ -6,10 +6,8 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var storageIsEnabled = true;
 function Com(nodeName, sbSettings) {
-    console.log("Start COM...");
     var sbSettings = sbSettings;
     var stop = false;
-    console.log("Starting COM...0");
     try {
         storage.initSync(); // Used for persistent storage if off-line
     }
@@ -17,7 +15,6 @@ function Com(nodeName, sbSettings) {
         console.log("Local persistance is noot allowed");
         storageIsEnabled = false;
     }    
-    console.log("Starting COM...1");
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
      
     sbSettings.trackingHubName = "trackingHub";
@@ -45,8 +42,6 @@ function Com(nodeName, sbSettings) {
         var trackingSender;
     }
     else if (sbSettings.protocol == "rest") {
-        console.log("Starting COM...2");
-
         var listenReq;
         var listenReqInit = false;
         
@@ -56,8 +51,6 @@ function Com(nodeName, sbSettings) {
         }
         var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
         var restTrackingToken  = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-        console.log("Starting COM...3");
-
     }
     this.onQueueMessageReceivedCallback = null;
     this.onQueueErrorReceiveCallback = null;
@@ -68,7 +61,6 @@ function Com(nodeName, sbSettings) {
         if (sbSettings.protocol == "amqp")
             startAMQP();
         else if (sbSettings.protocol == "rest") {
-            console.log("COM is using REST");
             startREST();
         }
     };
@@ -405,14 +397,12 @@ function Com(nodeName, sbSettings) {
     
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
-        console.log("create_sas_token start");
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
         var string_to_sign = encodeURIComponent(uri) + '\n' + expiry;
         var hmac = crypto.createHmac('sha256', key);
         hmac.update(string_to_sign);
         var signature = hmac.digest('base64');
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
-        console.log("create_sas_token start - done");
         return token;
     }
     function initListenRequest() {
