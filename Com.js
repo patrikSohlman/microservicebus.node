@@ -12,7 +12,7 @@ function Com(nodeName, sbSettings) {
     console.log("Starting COM...0");    
     storage.initSync(); // Used for persistent storage if off-line
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
-    
+     
     sbSettings.trackingHubName = "trackingHub";
     sbSettings.trackingKeyName = "node";
     sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
