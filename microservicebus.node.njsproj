@@ -35,6 +35,7 @@
     <Compile Include="Gruntfile.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="Com.js" />
+    <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
     <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
@@ -60,7 +61,7 @@
     <Content Include="settings.json" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Handlers\" />
+    <Folder Include="handlers\" />
     <Folder Include="Metadata\" />
     <Folder Include="Metadata\deploymentTemplates\" />
     <Folder Include="Metadata\Icons\" />
