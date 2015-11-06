@@ -401,7 +401,7 @@ function MicroServiceBusHost(settings) {
                         try {
                             var httpResponse = syncrequest('GET', scriptFile);
                             if (httpResponse.statusCode != 200)
-                                throw 'Resourse not found';
+                                throw 'Resourse not found'; 
                             
                             console.log("Downloaded complete...");
                             var buff = new Buffer(httpResponse.body);
