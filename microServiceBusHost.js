@@ -755,10 +755,10 @@ function MicroServiceBusHost(settings) {
     }
     
     // listen for TERM signal .e.g. kill 
-    process.on('SIGTERM', gracefulShutdown);
+    //process.on('SIGTERM', gracefulShutdown);
     
     // listen for INT signal e.g. Ctrl-C
-    process.on('SIGINT', gracefulShutdown);
+   // process.on('SIGINT', gracefulShutdown);
     
     MicroServiceBusHost.prototype.Start = function (testFlag) {
         
