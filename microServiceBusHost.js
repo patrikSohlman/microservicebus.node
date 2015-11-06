@@ -387,7 +387,8 @@ function MicroServiceBusHost(settings) {
             }
             
             async.waterfall([
-                function (callback) { 
+                Init = function (callback) { 
+                    console.log("Init");
                     var host = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'host'; }).value;
                     
@@ -414,7 +415,9 @@ function MicroServiceBusHost(settings) {
 
                     callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                 },
-                function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
+                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
+                    console.log("Download");
+
                     if (exist != null) {
                         callback(null, localFilePath);
                         return;
@@ -436,15 +439,14 @@ function MicroServiceBusHost(settings) {
                         });
                     }
                 },
-                function (localFilePath, integrationId, scriptfileName, callback) {
+                CreateService = function (localFilePath, integrationId, scriptfileName, callback) {
+                    console.log("CreateService");
                     if (localFilePath == null) { 
                         callback(null, null);
                     }
                     // Load an instance of the base class
                     // Extend the base class with the new class
-                    console.log("Start extend");
                     var newMicroService = extend(new MicroService(), reload(localFilePath));
-                    console.log("Done extend");
                     
                     newMicroService.OrganizationId = organizationId;
                     newMicroService.ItineraryId = itineraryId;
@@ -536,7 +538,8 @@ function MicroServiceBusHost(settings) {
 
                     callback(null, newMicroService, scriptfileName);
                 },
-                function (newMicroService, scriptfileName, callback) {
+                StartService = function (newMicroService, scriptfileName, callback) {
+                    console.log("StartService");
                     if (newMicroService == null) {
                         callback(null, null);
                     }
