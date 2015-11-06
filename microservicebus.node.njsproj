@@ -47,12 +47,23 @@
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
     <Content Include="BEFORE PUBLISH.md" />
+    <Content Include="Metadata\deploymentTemplates\apiappconfig.azureresource.json" />
+    <Content Include="Metadata\Icons\hero.png" />
+    <Content Include="Metadata\Icons\large.png" />
+    <Content Include="Metadata\Icons\medium.png" />
+    <Content Include="Metadata\Icons\small.png" />
+    <Content Include="Metadata\Icons\wide.png" />
+    <Content Include="Metadata\UIDefinition.json" />
+    <Content Include="Metadata\_apiDefinition.swagger.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="settings.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Handlers\" />
+    <Folder Include="Metadata\" />
+    <Folder Include="Metadata\deploymentTemplates\" />
+    <Folder Include="Metadata\Icons\" />
     <Folder Include="Tests\" />
     <Folder Include="Services\" />
   </ItemGroup>

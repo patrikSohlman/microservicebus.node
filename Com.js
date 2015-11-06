@@ -12,7 +12,7 @@ function Com(nodeName, sbSettings) {
         storage.initSync(); // Used for persistent storage if off-line
     }
     catch (storageEx) {
-        console.log("Local persistance is noot allowed");
+        console.log("Local persistance is not allowed");
         storageIsEnabled = false;
     }    
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
