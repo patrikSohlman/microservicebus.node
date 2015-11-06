@@ -388,7 +388,6 @@ function MicroServiceBusHost(settings) {
             
             async.waterfall([
                 Init = function (callback) { 
-                    console.log("Init");
                     var host = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'host'; }).value;
                     
@@ -415,15 +414,12 @@ function MicroServiceBusHost(settings) {
 
                     callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                 },
-                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
-                    console.log("Download");
-
+                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {  
                     if (exist != null) {
                         callback(null, localFilePath);
                         return;
                     }
                     else {
-                        console.log("Download?0");
                         request(scriptFileUri, function (err, response, scriptContent) {
                             if (response.statusCode != 200 || err != null) {
                                 console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
@@ -433,19 +429,14 @@ function MicroServiceBusHost(settings) {
                             }
                             else {
                                 localFilePath = __dirname + "/Services/" + scriptfileName;
-                                console.log("Download?1");
                                 fs.writeFileSync(localFilePath, scriptContent);
-                                console.log("Download?2");
                                 _downloadedScripts.push({ name: scriptfileName });
-                                console.log("Download?3");
                                 callback(null, localFilePath, integrationId, scriptfileName);
-                                console.log("Download?4");
                             }
                         });
                     }
                 },
                 CreateService = function (localFilePath, integrationId, scriptfileName, callback) {
-                    console.log("CreateService");
                     if (localFilePath == null) { 
                         callback(null, null);
                     }
@@ -544,7 +535,6 @@ function MicroServiceBusHost(settings) {
                     callback(null, newMicroService, scriptfileName);
                 },
                 StartService = function (newMicroService, scriptfileName, callback) {
-                    console.log("StartService");
                     if (newMicroService == null) {
                         callback(null, null);
                     }
