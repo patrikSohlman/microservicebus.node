@@ -46,14 +46,7 @@
     "mocha-jshint": "^2.2.5",
     "unit.js": "^2.0.0"
   },
-  "scripts": {
-    "lint": "jshint Utils.js",
-    "test": "mocha Tests/UnitTests.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microServiceBus/microservicebus.node"
-  },
+  "engines": { "node": "0.12.6" },
   "keywords": [
     "IoT",
     "Integration",
@@ -64,5 +57,13 @@
   ],
   "main": "microServiceBusHost.js",
   "name": "microservicebus.node",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microServiceBus/microservicebus.node"
+  },
+  "scripts": {
+    "lint": "jshint Utils.js",
+    "test": "mocha Tests/UnitTests.js"
+  },
   "version": "0.0.11"
 }
