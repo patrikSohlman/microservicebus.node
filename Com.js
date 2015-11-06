@@ -387,13 +387,14 @@ function Com(nodeName, sbSettings) {
     
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
+        console.log("create_sas_token start");
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
         var string_to_sign = encodeURIComponent(uri) + '\n' + expiry;
         var hmac = crypto.createHmac('sha256', key);
         hmac.update(string_to_sign);
         var signature = hmac.digest('base64');
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
-        
+        console.log("create_sas_token start - done");
         return token;
     }
     function initListenRequest() {
