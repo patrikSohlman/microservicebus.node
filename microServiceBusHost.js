@@ -423,6 +423,7 @@ function MicroServiceBusHost(settings) {
                         return;
                     }
                     else {
+                        console.log("Download?0");
                         request(scriptFileUri, function (err, response, scriptContent) {
                             if (response.statusCode != 200 || err != null) {
                                 console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
