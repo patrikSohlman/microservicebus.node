@@ -6,6 +6,7 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 
 function Com(nodeName, sbSettings) {
+    console.log("Start COM...");
     var sbSettings = sbSettings;
     var stop = false;
     storage.initSync(); // Used for persistent storage if off-line
@@ -55,6 +56,7 @@ function Com(nodeName, sbSettings) {
         if (sbSettings.protocol == "amqp")
             startAMQP();
         else if (sbSettings.protocol == "rest") {
+            console.log("COM is using REST");
             startREST();
         }
     };
