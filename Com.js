@@ -11,13 +11,14 @@ function Com(nodeName, sbSettings) {
     var stop = false;
     console.log("Starting COM...0");    
     storage.initSync(); // Used for persistent storage if off-line
+    console.log("Starting COM...1");
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
      
     sbSettings.trackingHubName = "trackingHub";
     sbSettings.trackingKeyName = "node";
     sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
     
-    console.log("Starting COM...1");
+    
      
     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
