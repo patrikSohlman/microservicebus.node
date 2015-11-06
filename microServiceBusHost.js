@@ -412,7 +412,7 @@ function MicroServiceBusHost(settings) {
                             _downloadedScripts.push({ name: fileName });
                         }
                         catch (ex) {
-                            //console.log(itinerary.activities[i].userData.type + '.js does not exist. This might be due to the microsevice is not enabled for the nodeJs host yet.');
+                            console.log("Unable to get file:" + fileName + ". Exception:" + ex.message);
                             var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(fileName, 40, ' ') + "|";
                             
                             console.log(lineStatus);
