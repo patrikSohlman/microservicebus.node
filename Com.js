@@ -4,13 +4,19 @@ var Policy = require('amqp10').Policy;
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
-
+var storageIsEnabled = true;
 function Com(nodeName, sbSettings) {
     console.log("Start COM...");
     var sbSettings = sbSettings;
     var stop = false;
-    console.log("Starting COM...0");    
-    storage.initSync(); // Used for persistent storage if off-line
+    console.log("Starting COM...0");
+    try {
+        storage.initSync(); // Used for persistent storage if off-line
+    }
+    catch (storageEx) {
+        console.log("Local persistance is noot allowed");
+        storageIsEnabled = false;
+    }    
     console.log("Starting COM...1");
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
      
@@ -236,7 +242,8 @@ function Com(nodeName, sbSettings) {
                         service: service,
                         message: message
                     };
-                    storage.setItem(message.InterchangeId, persistMessage);
+                    if(storageIsEnabled)
+                        storage.setItem(message.InterchangeId, persistMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
@@ -254,7 +261,8 @@ function Com(nodeName, sbSettings) {
                         service: service,
                         message: message
                     };
-                    storage.setItem(message.instanceId, persistMessage);
+                    if(storageIsEnabled)
+                        storage.setItem(message.instanceId, persistMessage);
                 }
             });
 
@@ -280,7 +288,8 @@ function Com(nodeName, sbSettings) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
-                    storage.setItem(message.InterchangeId, message);
+                    if(storageIsEnabled)
+                        storage.setItem(message.InterchangeId, message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
@@ -292,7 +301,8 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    storage.setItem(message.instanceId, message);
+                    if(storageIsEnabled)
+                        storage.setItem(message.instanceId, message);
                 }
             });
 
@@ -318,7 +328,8 @@ function Com(nodeName, sbSettings) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
-                    storage.setItem(message.InterchangeId, message);
+                    if(storageIsEnabled)
+                        storage.setItem(message.InterchangeId, message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
@@ -330,7 +341,8 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    storage.setItem(message.instanceId, message);
+                    if(storageIsEnabled)
+                        storage.setItem(message.instanceId, message);
                 }
             });
 
