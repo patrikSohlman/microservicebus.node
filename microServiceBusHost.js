@@ -394,7 +394,7 @@ function MicroServiceBusHost(settings) {
                         var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(fileName, 40, ' ') + "|";
                         console.log(lineStatus); continue;
                     }
-                    console.log("__dir: " + __dirname); 
+                    var localFilePath;
                     var exist = new linq(_downloadedScripts).First(function (s) { return s.name === fileName; }); // jshint ignore:line
                     if (exist == null) { // jshint ignore:line
                         // Download the script file
@@ -407,9 +407,9 @@ function MicroServiceBusHost(settings) {
                             var buff = new Buffer(httpResponse.body);
                             var scriptContent = buff.toString('utf8');
                             // Write the script files to disk
-                            var localFilePath = "./Services/" + fileName;
-                            var f = fs.realpathSync(localFilePath);
-                            console.log("Localpath: " + f);
+                            localFilePath = __dirname + "/Services/" + fileName;
+                            
+                            console.log("Localpath: " + localFilePath);
                             
                             fs.writeFileSync(localFilePath, scriptContent);
                             
@@ -426,7 +426,7 @@ function MicroServiceBusHost(settings) {
                     }
                     // Load an instance of the base class
                     // Extend the base class with the new class
-                    var newMicroService = extend(new MicroService(), reload("./Services/" + fileName));
+                    var newMicroService = extend(new MicroService(), reload(localFilePath));
                     
                     newMicroService.OrganizationId = organizationId;
                     newMicroService.ItineraryId = itineraryId;
