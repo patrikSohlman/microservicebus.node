@@ -9,6 +9,7 @@ function Com(nodeName, sbSettings) {
     console.log("Start COM...");
     var sbSettings = sbSettings;
     var stop = false;
+    console.log("Starting COM...0");    
     storage.initSync(); // Used for persistent storage if off-line
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
     
