@@ -16,7 +16,8 @@ function Com(nodeName, sbSettings) {
     sbSettings.trackingKeyName = "node";
     sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
     
-    
+    console.log("Starting COM...1");
+     
     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
@@ -36,6 +37,8 @@ function Com(nodeName, sbSettings) {
         var trackingSender;
     }
     else if (sbSettings.protocol == "rest") {
+        console.log("Starting COM...2");
+
         var listenReq;
         var listenReqInit = false;
         
@@ -45,6 +48,7 @@ function Com(nodeName, sbSettings) {
         }
         var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
         var restTrackingToken  = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+        console.log("Starting COM...3");
 
     }
     this.onQueueMessageReceivedCallback = null;
