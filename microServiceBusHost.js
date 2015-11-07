@@ -184,6 +184,7 @@ function MicroServiceBusHost(settings) {
         console.log("signInMessage => Successfully logged in");
         
         log(settings.nodeName + ' successfully logged in');
+        
         signInResponse = response;
         
         var sbSettings = {
