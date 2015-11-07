@@ -1,7 +1,4 @@
 {
     "debug": true,
-    "hubUri": "wss://microservicebus-northeurope-stage.azurewebsites.net",
-    "nodeName": "ApiApp1",
-    "organizationId": "6cc321f3-94bf-49c3-853c-d93143fec457",
-    "machineName": "Breeze-Mikael"
+    "hubUri": "wss://microservicebus.com"
 }
