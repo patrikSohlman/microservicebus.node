@@ -56,6 +56,7 @@ function MicroServiceBusHost(settings) {
     var com;
     var checkConnectionInterval;
     var loadedItineraries = 0;
+    var _startWebServer = false;
     // Azure API App support
     var port = process.env.PORT || 1337;
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
@@ -373,7 +374,8 @@ function MicroServiceBusHost(settings) {
                 
              }, function(err, results) {
                 onStarted(itineraries.length, exceptionsLoadingItineraries);
-                startListen();
+                if(_startWebServer) 
+                    startListen();
              });
 
         };
@@ -394,8 +396,10 @@ function MicroServiceBusHost(settings) {
                     var isEnabled = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'enabled'; }).value;
                     
-                    if (host != settings.nodeName)
+                    if (host != settings.nodeName) {
+                        done();
                         return;
+                    }
                     
                     var scriptFileUri = settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
                     scriptFileUri = scriptFileUri.replace('wss://', 'https://');
@@ -541,7 +545,9 @@ function MicroServiceBusHost(settings) {
                     // Start the service
                     try {
                         newMicroService.Start();
-                        
+                        if (activity.userData.type == "azureApiAppInboundService")
+                            _startWebServer = true;
+
                         _inboundServices.push(newMicroService);
                         
                         var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
