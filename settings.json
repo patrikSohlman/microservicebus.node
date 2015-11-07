@@ -1,4 +1,4 @@
 {
     "debug": true,
-    "hubUri": "wss://microservicebus.com"
+    "hubUri": "wss://microservicebus.com" 
 }
