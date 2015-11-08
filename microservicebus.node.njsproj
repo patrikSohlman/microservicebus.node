@@ -14,7 +14,7 @@
     <ProjectGuid>e5509fe2-c037-42a1-8bec-77cb62d5047b</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>server.js</StartupFile>
+    <StartupFile>Tests/UnitTests.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>

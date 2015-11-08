@@ -992,8 +992,8 @@ function MicroServiceBusHost(settings) {
                     console.log('You may also host name:'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234 -host nodejs00001'.yellow);
                     console.log('');
-                    
-                    process.abort();
+                    onStarted(0,1);
+                    //process.abort();
                 }
             }
         }
@@ -1009,7 +1009,8 @@ function MicroServiceBusHost(settings) {
                     console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
                     console.log('node start.js /c <Verification code> [/h <Host name>]'.yellow);
                     console.log('Eg: node start.js /c V5VUYFSY [/h MyHostName]'.yellow);
-                    process.exit();
+                    onStarted(0,1);
+                    //process.exit();
                 }
                 
                 settings.nodeName = process.argv[3];

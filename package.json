@@ -4,6 +4,7 @@
     "name": "microServiceBus.com",
     "url": "https://microservicebus.com"
   },
+  "license": "MIT",
   "dependencies": {
     "adm-zip": "0.4.7",
     "amqp10": "2.0.3",

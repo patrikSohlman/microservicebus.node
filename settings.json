@@ -1,4 +1,6 @@
 {
     "debug": true,
-    "hubUri": "wss://microservicebus.com" 
+    "huburi": "wss://microservicebus.com",
+    "nodename": "testnode1",
+    "organizationid": "65b22e1f-a17e-432f-b9f2-b7057423a786"
 }
