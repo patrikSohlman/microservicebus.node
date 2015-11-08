@@ -1,55 +1,26 @@
 ﻿var test = require('unit.js');
+var fs = require('fs');
 
-//var sleep = require('sleep');
-//require('colors');
-//console.log('**** TESTING ***'.yellow);
+console.log("organizationId: " + process.env.organizationId)
 
-//var loadedItineraries = 0;
-//var loadedExceptions = 0;
-//var isLoaded = false;
-//var isTimeout = false;
+
 //var MicroServiceBusHost = require("../microServiceBusHost.js");
-//var microServiceBusHost = new MicroServiceBusHost();
+
+//try {
+//    var data = fs.readFileSync(__dirname + '/../settings.json'); 
+//    var settings = JSON.parse(data);
+//}
+//catch (err) {
+//    console.log('Invalid settings file.' + err.message);
+//    test.ok(false, "node did not start corrrectly. " + err.message);
+//}
+//var microServiceBusHost = new MicroServiceBusHost(settings);
 
 //microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-//    loadedItineraries = loadedCount;
-//    loadedExceptions = exceptionCount;
-//    isLoaded = true;
-//    console.log("Host is started.".green);
+//    test.ok(false, "node started");
 //});
 
-//microServiceBusHost.Start(true);
-
-//setTimeout(function () {
-//    console.log("timeout...")
-//    if (!isLoaded) {
-//        microServiceBusHost.Stop();
-//        delete microServiceBusHost;
-//    }
-//    isLoaded = true;
-//    isTimeout = true;
-//}, 20000);
-
-//while (!isLoaded) {
-//    require('deasync').runLoopOnce();
-//}
-
-//if (!isTimeout) {
-//    microServiceBusHost.Stop();
-//    delete microServiceBusHost;
-//}
-
-//logReason(!isTimeout, "The host did not start up in time (20 seconds)");
-//test.must(!isTimeout).be.true();
-
-//logReason(!isTimeout, "One or more services didn't start");
-//test.must(loadedExceptions == 0).be.true();
-
-//function logReason(succeeded, reason) { 
-//    if (!succeeded)
-//        console.log(reason.red);
-//}
- 
+//microServiceBusHost.Start();
 
 // just for example of tested value
 var example = "22";
