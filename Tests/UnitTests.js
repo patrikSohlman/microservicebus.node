@@ -38,10 +38,10 @@ describe('SignIn', function () {
                         exceptionCount.should.equal(0);
                     });
                     it('simulatorTemperatureSensor.js should exist after login', function () {
-                        fs.statSync(__dirname + "/../Services/simulatorTemperatureSensor.js");
+                        fs.statSync(__dirname + "/../Services/azureApiAppInboundService.js");
                     });
                     it('nullOutboundService.js should exist after login', function () {
-                        fs.statSync(__dirname + "/../Services/nullOutboundService.js");
+                        fs.statSync(__dirname + "/../Services/javascriptaction.js ");
                     });
                     it('calling test should work', function () {
                         var url = 'http://localhost:9090';
