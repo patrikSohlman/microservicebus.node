@@ -12,13 +12,14 @@ var loggedInComplete = false;
 process.env.organizationid = "65b22e1f-a17e-432f-b9f2-b7057423a786";
 
 describe('SignIn', function () {
-    it('ENV organizationId should be set', function () {
+    it('ENV organizationId should be set', function (done) {
         var orgId = process.env.organizationId;
         if (orgId == undefined)
             throw "organizationId is not set as an environment variable";
+        done();
     });
 
-    it('Save settings should work', function () {
+    it('Save settings should work', function (done) {
         
         settings = {
             "debug": false,
@@ -28,6 +29,7 @@ describe('SignIn', function () {
             "port" : 9090
         }
         util.saveSettings(settings);
+        done();
     });
 
     it('Sign in should work', function () {
