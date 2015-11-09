@@ -1,11 +1,12 @@
-﻿var util = require('../Utils.js');
+﻿var mocha = require('mocha')
+var util = require('../Utils.js');
 var test = require('unit.js');
 var fs = require('fs');
-
 var assert = require('assert');
 var MicroServiceBusHost = require("../microServiceBusHost.js");
-var settings;
 
+var settings;
+var loggedInComplete = false;
 process.env.organizationid = "65b22e1f-a17e-432f-b9f2-b7057423a786";
 
 describe('SignIn', function () {
@@ -19,9 +20,9 @@ describe('SignIn', function () {
         
         settings = {
             "debug": true,
-            "huburi": "wss://microservicebus.com",
-            "nodename": "testnode1",
-            "organizationid" : process.env.organizationid
+            "hubUri": "wss://microservicebus.com",
+            "nodeName": "TestNode1",
+            "organizationId" : process.env.organizationid
         }
         util.saveSettings(settings);
     });
@@ -42,31 +43,21 @@ describe('SignIn', function () {
                     });
                 });
             });
+            loggedInComplete = true;
         });
 
         microServiceBusHost.Start();
+        while (loggedInComplete == false) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) {
+                console.log();
+            }
+        }
     });
 });
 
 
 
 
-
-//util.saveSettings(settings);
-
-//var microServiceBusHost = new MicroServiceBusHost(settings);
-
-//microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-//    test.ok(false, "node started");
-//});
-
-//microServiceBusHost.Start();
-
-// just for example of tested value
-//var example = "22";
-// assert that example variable is a string
-//test.string(example);
-//// or with Must.js
-//test.must(example).be.a.string();
-//// or with assert
-//test.assert(typeof example === 'string');

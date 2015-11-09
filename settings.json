@@ -1,6 +1,7 @@
 {
     "debug": true,
-    "huburi": "wss://microservicebus.com",
-    "nodename": "testnode1",
-    "organizationid": "65b22e1f-a17e-432f-b9f2-b7057423a786"
+    "hubUri": "wss://microservicebus.com",
+    "nodeName": "TestNode1",
+    "organizationId": "65b22e1f-a17e-432f-b9f2-b7057423a786",
+    "machineName": "CND5215QH6"
 }
