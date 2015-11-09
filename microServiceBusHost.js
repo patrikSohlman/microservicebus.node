@@ -29,7 +29,6 @@ var extend = require('extend');
 var async = require('async');
 var request = require("request");
 var reload = require('require-reload')(require);
-var guid = require('guid');
 var os = require("os");
 var https = require('https');
 var fs = require('fs');

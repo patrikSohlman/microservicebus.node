@@ -19,7 +19,6 @@
     "express": "4.13.3",
     "extend": "3.0.0",
     "graceful-fs": "4.1.2",
-    "guid": "0.0.12",
     "jsonpath": "^0.2.0",
     "moment": "2.10.3",
     "mssql": "2.2.0",
@@ -32,7 +31,8 @@
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
     "swaggerize-express": "^4.0.5",
-    "sync-request": "2.0.1"
+    "sync-request": "2.0.1",
+    "uuid": "^2.0.1"
   },
   "description": "node.js host for microservicebus. Please visit microservicebus.com for more information.",
   "devDependencies": {
@@ -47,7 +47,9 @@
     "mocha-jshint": "^2.2.5",
     "unit.js": "^2.0.0"
   },
-  "engines": { "node": "0.12.6" },
+  "engines": {
+    "node": "0.12.6"
+  },
   "keywords": [
     "IoT",
     "Integration",
