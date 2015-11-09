@@ -762,8 +762,7 @@ function MicroServiceBusHost(settings) {
         
         app.use(swaggerize({
             api: require('./swagger.json'),
-            docspath: '/swagger/docs/v1',
-            handlers: './Handlers/'
+            docspath: '/swagger/docs/v1'
         }));
         app.use('/', express.static(__dirname + '/html'));
         
