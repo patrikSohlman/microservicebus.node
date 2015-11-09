@@ -1,5 +1,5 @@
 {
-    "debug": true,
+    "debug": false,
     "hubUri": "wss://microservicebus.com",
     "nodeName": "TestNode1",
     "organizationId": "65b22e1f-a17e-432f-b9f2-b7057423a786",
