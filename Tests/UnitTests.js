@@ -4,6 +4,7 @@ var test = require('unit.js');
 var fs = require('fs');
 var assert = require('assert');
 var request = require('supertest');
+var express = require('express');
 var MicroServiceBusHost = require("../microServiceBusHost.js");
 
 var settings;
@@ -34,30 +35,32 @@ describe('SignIn', function () {
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
             describe('PostLogin', function () {
                 describe('#ServicesExists', function () {
-                    it('Should start without errors', function () {
+                    it('Should start without errors', function (done) {
                         exceptionCount.should.equal(0);
+                        done();
                     });
-                    it('simulatorTemperatureSensor.js should exist after login', function () {
-                        fs.statSync(__dirname + "/../Services/azureApiAppInboundService.js");
+                    it('azureApiAppInboundService.js should exist after login', function (done) {
+                        var ret = fs.statSync(__dirname + "/../Services/azureApiAppInboundService.js");
+                        ret.should.be.type('object');
+                        done();
                     });
-                    it('nullOutboundService.js should exist after login', function () {
-                        fs.statSync(__dirname + "/../Services/javascriptaction.js ");
+                    it('javascriptaction.js should exist after login', function (done) {
+                        var ret = fs.statSync(__dirname + "/../Services/javascriptaction.js");
+                        ret.should.be.type('object');
+                        done();
                     });
-                    it('calling test should work', function () {
+                    it('calling test should work', function (done) {
                         var url = 'http://localhost:9090';
                         request(url)
 		                    .get('/api/data/azureApiAppInboundService1/test')
-		                    .send('')
 		                    .expect('Content-Type', /json/)
 		                    .expect(200)//Status code
 		                    .end(function (err, res) {
                                 if (err) {
                                     throw err;
                                 }
-                            
-                                console.log('HELLO');
                                 res.body.should.have.property('result');
-                                res.body.result.should.equal(false);
+                                res.body.result.should.equal(true);
                                 done();
                             });
                     });
