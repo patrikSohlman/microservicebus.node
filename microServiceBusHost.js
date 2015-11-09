@@ -65,7 +65,7 @@ function MicroServiceBusHost(settings) {
     var swaggerize = require('swaggerize-express');
     var bodyParser = require('body-parser')
     var app = express();
-    
+    var server;
     // END Azure API App support
     
     
@@ -140,7 +140,11 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when itineraries has been updated
     client.on('integrationHub', 'updateItinerary', function (updatedItinerary) {
         console.log("updateItinerary => ");
-        
+        if (_startWebServer) {
+            server.close();
+            app = null;
+            app = express();
+        }
         // Stop all services
         console.log("");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
@@ -373,7 +377,6 @@ function MicroServiceBusHost(settings) {
                 
              }, function(err, results) {
                 onStarted(itineraries.length, exceptionsLoadingItineraries);
-                if(_startWebServer) 
                     startListen();
              });
 
@@ -751,6 +754,9 @@ function MicroServiceBusHost(settings) {
 
     // Start listener
     function startListen() {
+        if (!_startWebServer)
+            return;
+            
         if (settings.port != undefined)
             port = settings.port;
         
@@ -758,7 +764,7 @@ function MicroServiceBusHost(settings) {
         console.log("Server port: " + port);
 
         app.use(bodyParser.json());
-        var server = http.createServer(app);
+        server = http.createServer(app);
         
         app.use(swaggerize({
             api: require('./swagger.json'),
