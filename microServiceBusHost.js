@@ -56,6 +56,7 @@ function MicroServiceBusHost(settings) {
     var com;
     var checkConnectionInterval;
     var loadedItineraries = 0;
+    var exceptionsLoadingItineraries = 0;
     var _startWebServer = false;
     // Azure API App support
     var port = process.env.PORT || 1337;
@@ -65,7 +66,7 @@ function MicroServiceBusHost(settings) {
     var swaggerize = require('swaggerize-express');
     var bodyParser = require('body-parser')
     var app = express();
-    console.log("Server port:" + port);
+    
     // END Azure API App support
     
     
@@ -355,8 +356,6 @@ function MicroServiceBusHost(settings) {
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        
-        var exceptionsLoadingItineraries = 0;
         
         if (itineraries.length == 0)
             onStarted(0, 0);
@@ -753,6 +752,12 @@ function MicroServiceBusHost(settings) {
 
     // Start listener
     function startListen() {
+        if (settings.port != undefined)
+            port = settings.port;
+        
+        console.log();
+        console.log("Server port: " + port);
+
         app.use(bodyParser.json());
         var server = http.createServer(app);
         

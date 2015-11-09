@@ -3,6 +3,7 @@ var util = require('../Utils.js');
 var test = require('unit.js');
 var fs = require('fs');
 var assert = require('assert');
+var request = require('sync-request');
 var MicroServiceBusHost = require("../microServiceBusHost.js");
 
 var settings;
@@ -22,7 +23,8 @@ describe('SignIn', function () {
             "debug": true,
             "hubUri": "wss://microservicebus.com",
             "nodeName": "TestNode1",
-            "organizationId" : process.env.organizationid
+            "organizationId" : process.env.organizationid,
+            "port" : 9090
         }
         util.saveSettings(settings);
     });
@@ -41,6 +43,7 @@ describe('SignIn', function () {
                     it('microservice.js should exist after login', function () {
                         fs.statSync(__dirname + "/../Services/nullOutboundService.js");
                     });
+                    
                 });
             });
             loggedInComplete = true;
