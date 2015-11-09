@@ -34,7 +34,7 @@ describe('SignIn', function () {
         var microServiceBusHost = new MicroServiceBusHost(settings);
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
             describe('PostLogin', function () {
-                describe('#ServicesExists', function () {
+                describe('Verify signin', function () {
                     it('Should start without errors', function (done) {
                         exceptionCount.should.equal(0);
                         done();
