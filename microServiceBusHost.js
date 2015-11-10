@@ -822,7 +822,7 @@ function MicroServiceBusHost(settings) {
             swagger["host"] = "localhost:" + port;
             var swaggerData = JSON.stringify(swagger);
             
-            fs.writeFileSync('./swagger.json', swaggerData);
+            fs.writeFileSync(__dirname + '/swagger.json', swaggerData);
 
         }
         catch (err) {
