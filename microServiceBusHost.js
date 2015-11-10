@@ -796,9 +796,9 @@ function MicroServiceBusHost(settings) {
             console.log("***************************");
             console.log(__dirname);
             console.log("***************************");
-            var data = fs.readFileSync('./swaggerTemplate.json');
+            var data = fs.readFileSync(__dirname + '/swaggerTemplate.json');
             var swagger = JSON.parse(data);
-            data = fs.readFileSync('./swaggerPathTemplate.json');
+            data = fs.readFileSync(__dirname + '/swaggerPathTemplate.json');
             var pathTemplate = JSON.parse(data);
 
             for (var i = 0; i<app._router.stack.length; i++) {
@@ -830,6 +830,7 @@ function MicroServiceBusHost(settings) {
         }
         catch (err) {
             console.log('Invalid swagger file.'.red);
+            console.log(JSON.stringify(err).red);
             process.abort();
         }
     }
