@@ -38,6 +38,7 @@
     <Compile Include="Com.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
+    <Compile Include="restore.js" />
     <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
     <Compile Include="Services\sqlCommand.js" />
@@ -58,6 +59,7 @@
     <Content Include="Metadata\_apiDefinition.swagger.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="sim.bat" />
     <Content Include="swagger.json" />
     <Content Include="swaggerPathTemplate.json" />
     <Content Include="swaggerTemplate.json" />

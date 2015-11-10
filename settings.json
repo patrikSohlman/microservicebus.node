@@ -1,7 +1,5 @@
 {
     "debug": false,
     "hubUri": "wss://microservicebus.com",
-    "nodeName": "ApiApp1",
-    "organizationId": "6cc321f3-94bf-49c3-853c-d93143fec457",
-    "machineName": "CND5215QH6"
+    "port": 80
 }

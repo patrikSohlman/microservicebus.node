@@ -758,11 +758,12 @@ function MicroServiceBusHost(settings) {
             port = settings.port;
         
         console.log();
-        console.log("Server port: " + port);
 
         app.use(bodyParser.json());
         server = http.createServer(app);
+        
         genrateSwagger();
+
         app.use(swaggerize({
             api: require('./swagger.json'),
             docspath: '/swagger/docs/v1'
@@ -770,17 +771,21 @@ function MicroServiceBusHost(settings) {
         app.use('/', express.static(__dirname + '/html'));
         
         app._router.stack.forEach(function (endpoint) {
-            if (endpoint.route != undefined)
-                log(endpoint.route.path);
+            if (endpoint.route != undefined) {
+                if(endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
+                    log("GET:    " + endpoint.route.path);
+                if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
+                    log("DELETE: " + endpoint.route.path);
+                if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
+                    log("POST:   " + endpoint.route.path);
+                if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
+                    log("PUT:    " + endpoint.route.path);
+            }
         });
         
         server.listen(port, 'localhost', function () {
-            //if (baseHost === 'localhost') {
-            //    app.setHost(baseHost + ':' + port);
-            //} else {
-            //    app.setHost(baseHost);
-            //}
-            console.log("Server started ..");
+            console.log();
+            log("Server started on port " + port);
         });
     }
     
@@ -965,16 +970,14 @@ function MicroServiceBusHost(settings) {
             IsFirstAction : msg.IsFirstAction,
             TimeStamp : utcNow,
             IsFault : true,
-            State : status,
-            FaultCode : fault,
-            FaultDescription : faultDescription
+            State : status
         };
         com.Track(trackingMessage);
     };
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-        console.log("Log: " + message.grey);
+        console.log(">: " + message.grey);
         client.invoke( 
             'integrationHub',
 		    'logMessage',	
@@ -1013,6 +1016,9 @@ function MicroServiceBusHost(settings) {
     MicroServiceBusHost.prototype.Start = function (testFlag) {
         var args = process.argv.slice(2);
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
+            if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
+                settings.nodeName = args[1];
+            }
             console.log('Logging in using settings'.grey);
         }
         else if (args.length > 0) { // Starting using code
@@ -1031,13 +1037,7 @@ function MicroServiceBusHost(settings) {
                         existingHostName = args[3];
                     
                     break;
-                case '/n':
-                case '-n':
-                case '/node':
-                case '-node':
-                    settings.nodeName = process.argv[1];
-                    break;
-                default: {
+               default: {
                     console.log('Sorry, invalid arguments.'.red);
                     console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
