@@ -62,8 +62,8 @@
     <Content Include="sim.bat" />
     <Content Include="swagger.json" />
     <Content Include="swaggerPathTemplate.json" />
-    <Content Include="swaggerTemplate.json" />
     <Content Include="settings.json" />
+    <Content Include="swaggerTemplate.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
