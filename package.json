@@ -69,7 +69,7 @@
     "lint": "jshint Utils.js",
     "test": "mocha Tests/UnitTests.js"
   },
-  "version": "0.0.13",
+  "version": "0.0.14",
   "config": {
     "blanket": {
       "data-cover-never": "node_modules",
