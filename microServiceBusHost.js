@@ -793,6 +793,9 @@ function MicroServiceBusHost(settings) {
     function genrateSwagger() {
         // Load template
         try {
+            console.log("***************************");
+            console.log(__dirname);
+            console.log("***************************");
             var data = fs.readFileSync('./swaggerTemplate.json');
             var swagger = JSON.parse(data);
             data = fs.readFileSync('./swaggerPathTemplate.json');
@@ -821,9 +824,7 @@ function MicroServiceBusHost(settings) {
             }
             swagger["host"] = "localhost:" + port;
             var swaggerData = JSON.stringify(swagger);
-            console.log("***************************");
-            console.log(__dirname + '/swagger.json');
-            console.log("***************************");
+            
             fs.writeFileSync(__dirname + '/swagger.json', swaggerData);
 
         }
