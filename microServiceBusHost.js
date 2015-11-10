@@ -794,8 +794,12 @@ function MicroServiceBusHost(settings) {
         // Load template
         try {
             console.log("***************************");
-            console.log(__dirname);
+            var files = fs.readdirSync(__dirname);
+            files.forEach(function (file) {
+                console.log(file.green);
+            });
             console.log("***************************");
+
             var data = fs.readFileSync(__dirname + '/swaggerTemplate.json');
             var swagger = JSON.parse(data);
             data = fs.readFileSync(__dirname + '/swaggerPathTemplate.json');
