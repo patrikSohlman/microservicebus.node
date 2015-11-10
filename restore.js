@@ -11,6 +11,10 @@ files.forEach(function (file) {
 });
 console.log("Services removed".green);
 
+// Delete folders
+deleteFolderRecursive('./microServiceBus.BizTalk');
+console.log("Deleted".green);
+
 // Update settings
 settings = {
     "debug": false,
@@ -24,4 +28,16 @@ console.log();
 console.log("UPDATE VERSION!".red + " Current package version: " + pjson.version.green);
 
 
-
+function deleteFolderRecursive(path) {
+    if (fs.existsSync(path)) {
+        fs.readdirSync(path).forEach(function (file, index) {
+            var curPath = path + "/" + file;
+            if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                deleteFolderRecursive(curPath);
+            } else { // delete file
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(path);
+    }
+};
