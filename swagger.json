@@ -1,39 +1,13 @@
-﻿{
+{
   "swagger": "2.0",
   "info": {
-    "version": "v1",
-    "title": "APIAppTemplateForMicroservicebus"
+    "title": "microservicebus API",
+    "version": "v1"
   },
-  "host": "localhost:10556",
+  "host": "localhost:1886",
   "schemes": [ "http" ],
   "paths": {
-    "/api/{serviceid}": {
-      "get": {
-        "tags": [ "microservicebus" ],
-        "operationId": "microservicebus_GetByServiceid",
-        "consumes": [ ],
-        "produces": [ "application/json", "text/json", "application/xml", "text/xml" ],
-        "parameters": [
-          {
-            "name": "serviceid",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": { "$ref": "#/definitions/Object" }
-            }
-          }
-        },
-        "deprecated": false
-      }
-    },
-    "/api/{serviceid}/{uri}": {
+    "/api/data/azureApiAppInboundService2/fleet": {
       "get": {
         "tags": [ "microservicebus" ],
         "operationId": "microservicebus_GetByServiceidAndUri",
@@ -61,9 +35,9 @@
         },
         "deprecated": false
       },
-      "put": {
+      "delete": {
         "tags": [ "microservicebus" ],
-        "operationId": "microservicebus_PutByServiceidAndUriAndMsg",
+        "operationId": "microservicebus_DeleteByServiceidAndUriAndMsg",
         "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
         "produces": [ ],
         "parameters": [
@@ -117,9 +91,9 @@
         "responses": { "204": { "description": "No Content" } },
         "deprecated": false
       },
-      "delete": {
+      "put": {
         "tags": [ "microservicebus" ],
-        "operationId": "microservicebus_DeleteByServiceidAndUriAndMsg",
+        "operationId": "microservicebus_PutByServiceidAndUriAndMsg",
         "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
         "produces": [ ],
         "parameters": [
@@ -143,6 +117,35 @@
           }
         ],
         "responses": { "204": { "description": "No Content" } },
+        "deprecated": false
+      }
+    },
+    "/api/data/azureApiAppInboundService1/cars": {
+      "get": {
+        "tags": [ "microservicebus" ],
+        "operationId": "microservicebus_GetByServiceidAndUri",
+        "consumes": [ ],
+        "produces": [ "application/json", "text/json", "application/xml", "text/xml" ],
+        "parameters": [
+          {
+            "name": "serviceid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": { "$ref": "#/definitions/Object" }
+          }
+        },
         "deprecated": false
       }
     }

@@ -38,8 +38,11 @@ var color = require('colors');
 var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
-var _downloadedScripts = [];
-
+var http = require('http');
+var express = require('express');
+var swaggerize = require('swaggerize-express');
+var bodyParser = require('body-parser')
+    
 function MicroServiceBusHost(settings) {
     // Callbacks
     this.onStarted = null;
@@ -51,23 +54,17 @@ function MicroServiceBusHost(settings) {
     var _inboundServices = []; // all started services
     var _hasDisconnected = false;
     var _shoutDown = false;
+    var _downloadedScripts = [];
     var signInResponse;
     var com;
     var checkConnectionInterval;
     var loadedItineraries = 0;
     var exceptionsLoadingItineraries = 0;
     var _startWebServer = false;
-    // Azure API App support
     var port = process.env.PORT || 1337;
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
-    var http = require('http');
-    var express = require('express');
-    var swaggerize = require('swaggerize-express');
-    var bodyParser = require('body-parser')
     var app = express();
     var server;
-    // END Azure API App support
-    
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -765,7 +762,7 @@ function MicroServiceBusHost(settings) {
 
         app.use(bodyParser.json());
         server = http.createServer(app);
-        
+        genrateSwagger();
         app.use(swaggerize({
             api: require('./swagger.json'),
             docspath: '/swagger/docs/v1'
@@ -785,6 +782,48 @@ function MicroServiceBusHost(settings) {
             //}
             console.log("Server started ..");
         });
+    }
+    
+    // Create a swagger file
+    function genrateSwagger() {
+        // Load template
+        try {
+            var data = fs.readFileSync('./swaggerTemplate.json');
+            var swagger = JSON.parse(data);
+            data = fs.readFileSync('./swaggerPathTemplate.json');
+            var pathTemplate = JSON.parse(data);
+
+            for (var i = 0; i<app._router.stack.length; i++) {
+                var endpoint = app._router.stack[i];
+                if (endpoint["route"] != undefined) {
+                    
+                    if (swagger.paths[endpoint.route.path] == undefined)
+                        swagger.paths[endpoint.route.path] = {};
+                    
+                    if (endpoint.route.methods.get) {
+                        swagger.paths[endpoint.route.path].get = pathTemplate['get']
+                    }
+                    if (endpoint.route.methods.delete) {
+                        swagger.paths[endpoint.route.path].delete = pathTemplate['delete']
+                    }
+                    if (endpoint.route.methods.post) {
+                        swagger.paths[endpoint.route.path].post = pathTemplate['post']
+                    }
+                    if (endpoint.route.methods.put) {
+                        swagger.paths[endpoint.route.path].put = pathTemplate['put']
+                    }
+                }
+            }
+            swagger["host"] = "localhost:" + port;
+            var swaggerData = JSON.stringify(swagger);
+            
+            fs.writeFileSync('./swagger.json', swaggerData);
+
+        }
+        catch (err) {
+            console.log('Invalid swagger file.'.red);
+            process.abort();
+        }
     }
     
     // Returns the next services in line to be executed.
@@ -985,23 +1024,29 @@ function MicroServiceBusHost(settings) {
                     temporaryVerificationCode = args[1];
                     
                     if (args[2] != null && args[3] != null && // jshint ignore:line
-                        (args[2] == '/h' || 
-                        args[2] == '-h' ||
-                        args[2] == '/host' ||
-                        args[2] == '-host'))
+                        (args[2] == '/n' || 
+                        args[2] == '-n' ||
+                        args[2] == '/node' ||
+                        args[2] == '-node'))
                         existingHostName = args[3];
                     
+                    break;
+                case '/n':
+                case '-n':
+                case '/node':
+                case '-node':
+                    settings.nodeName = process.argv[1];
                     break;
                 default: {
                     console.log('Sorry, invalid arguments.'.red);
                     console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
                     console.log('');
-                    console.log('You may also host name:'.yellow);
-                    console.log('Eg: microServiceBus.js -code ABCD1234 -host nodejs00001'.yellow);
+                    console.log('You can also specify the node:'.yellow);
+                    console.log('Eg: microServiceBus.js -code ABCD1234 -node nodejs00001'.yellow);
                     console.log('');
                     onStarted(0,1);
-                    //process.abort();
+                    process.abort();
                 }
             }
         }
@@ -1015,8 +1060,8 @@ function MicroServiceBusHost(settings) {
                     console.log('Missing arguments'.red);
                     console.log('Make sure to start using arguments; verification code (/c) and optionally host name.'.yellow);
                     console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
-                    console.log('node start.js /c <Verification code> [/h <Host name>]'.yellow);
-                    console.log('Eg: node start.js /c V5VUYFSY [/h MyHostName]'.yellow);
+                    console.log('node start.js /c <Verification code> [/n <Node name>]'.yellow);
+                    console.log('Eg: node start.js /c V5VUYFSY [/n MyHostName]'.yellow);
                     onStarted(0,1);
                     //process.exit();
                 }

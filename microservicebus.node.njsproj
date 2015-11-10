@@ -43,7 +43,6 @@
     <Compile Include="Services\sqlCommand.js" />
     <Compile Include="simulator.js" />
     <Compile Include="start.js" />
-    <Compile Include="swagger.json" />
     <Compile Include="Tests\UnitTests.js" />
     <Compile Include="Utils.js" />
     <Content Include=".npmignore" />
@@ -59,6 +58,9 @@
     <Content Include="Metadata\_apiDefinition.swagger.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="swagger.json" />
+    <Content Include="swaggerPathTemplate.json" />
+    <Content Include="swaggerTemplate.json" />
     <Content Include="settings.json" />
   </ItemGroup>
   <ItemGroup>

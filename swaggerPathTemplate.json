@@ -1,0 +1,113 @@
+{
+  "get": {
+    "tags": [ "microservicebus" ],
+    "operationId": "microservicebus_GetByServiceidAndUri",
+    "consumes": [ ],
+    "produces": [ "application/json", "text/json", "application/xml", "text/xml" ],
+    "parameters": [
+      {
+        "name": "serviceid",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "uri",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "OK",
+        "schema": { "$ref": "#/definitions/Object" }
+      }
+    },
+    "deprecated": false
+  },
+  "put": {
+    "tags": [ "microservicebus" ],
+    "operationId": "microservicebus_PutByServiceidAndUriAndMsg",
+    "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+    "produces": [ ],
+    "parameters": [
+      {
+        "name": "serviceid",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "uri",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "msg",
+        "in": "body",
+        "required": true,
+        "schema": { "$ref": "#/definitions/Object" }
+      }
+    ],
+    "responses": { "204": { "description": "No Content" } },
+    "deprecated": false
+  },
+  "post": {
+    "tags": [ "microservicebus" ],
+    "operationId": "microservicebus_PostByServiceidAndUriAndMsg",
+    "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+    "produces": [ ],
+    "parameters": [
+      {
+        "name": "serviceid",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "uri",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "msg",
+        "in": "body",
+        "required": true,
+        "schema": { "$ref": "#/definitions/Object" }
+      }
+    ],
+    "responses": { "204": { "description": "No Content" } },
+    "deprecated": false
+  },
+  "delete": {
+    "tags": [ "microservicebus" ],
+    "operationId": "microservicebus_DeleteByServiceidAndUriAndMsg",
+    "consumes": [ "application/json", "text/json", "application/xml", "text/xml", "application/x-www-form-urlencoded" ],
+    "produces": [ ],
+    "parameters": [
+      {
+        "name": "serviceid",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "uri",
+        "in": "path",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "name": "msg",
+        "in": "body",
+        "required": true,
+        "schema": { "$ref": "#/definitions/Object" }
+      }
+    ],
+    "responses": { "204": { "description": "No Content" } },
+    "deprecated": false
+  }
+}
