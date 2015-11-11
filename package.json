@@ -42,6 +42,7 @@
     "grunt-contrib-jshint": "^0.11.3",
     "gulp": "^3.9.0",
     "gulp-scp2": "^0.2.0",
+    "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
     "mocha-jshint": "^2.2.5",
     "supertest": "^1.1.0",

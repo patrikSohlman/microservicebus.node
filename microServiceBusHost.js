@@ -402,7 +402,9 @@ function MicroServiceBusHost(settings) {
                         return;
                     }
                     
-                    var scriptFileUri = settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
+                    var scriptFileUri = activity.userData.isCustom== true?
+                                        settings.hubUri + '/api/Scripts/' + settings.organizationId + "/" + activity.userData.type + '.js':
+                                        settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
                     scriptFileUri = scriptFileUri.replace('wss://', 'https://');
                     
                     var integrationId = activity.userData.integrationId;

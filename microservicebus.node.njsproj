@@ -47,6 +47,7 @@
     <Compile Include="test\failedSignIn.js" />
     <Compile Include="test\successfulSignIn.js" />
     <Compile Include="Utils.js" />
+    <Content Include=".coveralls.yml" />
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
     <Content Include="BEFORE PUBLISH.md" />
