@@ -35,7 +35,6 @@
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
   "devDependencies": {
-    "blanket": "^1.1.9",
     "chai": "^3.3.0",
     "event-stream": "^3.3.1",
     "grunt": "^0.4.5",
@@ -67,13 +66,8 @@
   },
   "scripts": {
     "lint": "jshint Utils.js",
-    "test": "mocha Tests/UnitTests.js"
+    "mocha": "mocha Tests/successfulSignIn.js",
+    "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.14",
-  "config": {
-    "blanket": {
-      "data-cover-never": "node_modules",
-      "pattern": "microServiceBusHost.js"
-    }
-  }
+  "version": "0.0.14"
 }

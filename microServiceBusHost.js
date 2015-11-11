@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 var signalR = require('signalr-client');
 var npm = require('npm');
 var linq = require('node-linq').LINQ;
@@ -279,7 +280,8 @@ function MicroServiceBusHost(settings) {
                 return i.Name === destination && 
                         i.ItineraryId == message.ItineraryId;
             });
-            if (microService == null) {
+            /* istanbul ignore if */
+            if (microService == null) { 
                 var logm = "The service receiving this message is no longer configured to run on this node. This can happen when a service has been shut down and restarted on a different machine";
                 trackException(message, destination, "Failed", "90001", logm);
                 log(logm);
@@ -572,183 +574,6 @@ function MicroServiceBusHost(settings) {
         }
     }
     
-    function startService(activity, organizationId, itineraryId) {
-        try {
-            
-            if (activity.type == 'draw2d.Connection')
-                return;
-            
-            var host = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'host'; }).value;
-            
-            var isEnabled = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'enabled'; }).value;
-            
-            if (host != settings.nodeName)
-                return;
-            
-            var scriptFile = settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
-            scriptFile = scriptFile.replace('wss://', 'https://');
-            
-            var integrationId = activity.userData.integrationId;
-            
-            var fileName = path.basename(scriptFile);
-            
-            if (!isEnabled) {
-                var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(fileName, 40, ' ') + "|";
-                console.log(lineStatus); return;
-            }
-            var localFilePath;
-            
-            var exist = new linq(_downloadedScripts).First(function (s) { return s.name === fileName; }); // jshint ignore:line
-            
-            if (exist == null) { // jshint ignore:line
-                // Download the script file
-                try {
-                    var httpResponse = syncrequest('GET', scriptFile);
-                    if (httpResponse.statusCode != 200)
-                        throw 'Resourse not found';
-                    
-                    console.log("Downloaded complete...");
-                    var buff = new Buffer(httpResponse.body);
-                    var scriptContent = buff.toString('utf8');
-                    // Write the script files to disk
-                    localFilePath = __dirname + "/Services/" + fileName;
-                    
-                    console.log("Localpath: " + localFilePath);
-                    
-                    fs.writeFileSync(localFilePath, scriptContent);
-                    
-                    _downloadedScripts.push({ name: fileName });
-                }
-                        catch (ex) {
-                    console.log("Unable to get file:" + fileName + ". Exception:" + ex.message);
-                    var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(fileName, 40, ' ') + "|";
-                    
-                    console.log(lineStatus);
-                    return;
-                }
-                    
-            }
-            // Load an instance of the base class
-            // Extend the base class with the new class
-            var newMicroService = extend(new MicroService(), reload(localFilePath));
-            
-            newMicroService.OrganizationId = organizationId;
-            newMicroService.ItineraryId = itineraryId;
-            newMicroService.Name = activity.userData.id;
-            newMicroService.Itinerary = itinerary;
-            newMicroService.IntegrationId = integrationId;
-            newMicroService.Config = activity.userData.config;
-            newMicroService.IntegrationName = itinerary.integrationName;
-            newMicroService.Environment = itinerary.environment;
-            newMicroService.TrackingLevel = itinerary.trackingLevel;
-            newMicroService.App = app;
-            
-            // Eventhandler for messages sent back from the service
-            newMicroService.OnMessageReceived(function (integrationMessage, sender) {
-                
-                integrationMessage.OrganizationId = settings.organizationId;
-                
-                if (integrationMessage.FaultCode != null) {
-                    trackException(integrationMessage, 
-                                integrationMessage.LastActivity, 
-                                "Failed", 
-                                integrationMessage.FaultCode, 
-                                integrationMessage.FaultDescripton);
-                    
-                    console.log('Exception: '.red + integrationMessage.FaultDescripton);
-                    return;
-                }
-                
-                // Process the itinerary to find next service
-                var successors = getSuccessors(integrationMessage);
-                
-                successors.forEach(function (successor) {
-                    integrationMessage.Sender = settings.nodeName;
-                    
-                    var correlationValue = sender.CorrelationValue(null, integrationMessage);
-                    
-                    if (integrationMessage.LastActivity == integrationMessage.CreatedBy && correlationValue == null) // jshint ignore:line
-                        trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
-                    
-                    // Check for correlations
-                    if (correlationValue != null) { // jshint ignore:line
-                        // Follow correlation. Tracking is done on server side
-                        try {
-                            client.invoke(
-                                'integrationHub',
-		                                'followCorrelation',	
-		                                successor.userData.id, 
-                                        settings.nodeName,
-                                        correlationValue,
-                                        settings.organizationId,
-                                        integrationMessage);
-
-                        }
-                            catch (err) {
-                            console.log(err);
-                        }
-                    }
-                    else {
-                        // No correlation
-                        try {
-                            
-                            com.Submit(integrationMessage, 
-                                        successor.userData.host.toLowerCase(),
-                                        successor.userData.id);
-                            
-                            trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
-                        }
-                            catch (err) {
-                            console.log(err);
-                        }
-                    }
-                });
-
-            });
-            // [DEPRICATED]Eventhandler for any errors sent back from the service
-            newMicroService.OnError(function (source, errorId, errorDescription) {
-                console.log("The Error method is depricated. Please use the ThrowError method instead.".red);
-                console.log("Error at: ".red + source);
-                console.log("Error id: ".red + errorId);
-                console.log("Error desccription: ".red + errorDescription);
-            });
-            // Eventhandler for any debug information sent back from the service
-            newMicroService.OnDebug(function (source, info) {
-                if (settings.debug != null && settings.debug == true) {// jshint ignore:line
-                    console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                    log('DEBUG:[' + source.gray + '] => ' + info);
-                }
-            });
-            
-            // Start the service
-            try {
-                newMicroService.Start();
-                
-                _inboundServices.push(newMicroService);
-                
-                var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(fileName, 40, ' ') + "|";
-                console.log(lineStatus);
-
-            }
-            catch (ex) {
-                console.log('Unable to start service '.red + newMicroService.Name.red);
-                if (typeof ex === 'object')
-                    console.log(ex.message.red);
-                else
-                    console.log(ex.red);
-                
-                exceptionsLoadingItineraries++;
-            }
-            
-        }
-        catch (ex2) {
-            console.log('Unable to start service.'.red);
-            console.log(ex2.message.red);
-        }
-    }
-
     // Start listener
     function startListen() {
         if (!_startWebServer)
@@ -1022,6 +847,7 @@ function MicroServiceBusHost(settings) {
             }
             console.log('Logging in using settings'.grey);
         }
+        /* istanbul ignore if */
         else if (args.length > 0) { // Starting using code
             switch (args[0]) {
                 case '/c':
@@ -1046,11 +872,14 @@ function MicroServiceBusHost(settings) {
                     console.log('You can also specify the node:'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234 -node nodejs00001'.yellow);
                     console.log('');
-                    onStarted(0,1);
-                    process.abort();
+                    onStarted(0, 1);
+                    if(!testFlag)
+                        process.abort();
+                    onStarted(0, 1);
                 }
             }
         }
+        /* istanbul ignore if */
         else {// Wrong config
             if (temporaryVerificationCode != null) { // jshint ignore:line
     

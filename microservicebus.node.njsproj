@@ -44,7 +44,8 @@
     <Compile Include="Services\sqlCommand.js" />
     <Compile Include="simulator.js" />
     <Compile Include="start.js" />
-    <Compile Include="Tests\UnitTests.js" />
+    <Compile Include="test\failedSignIn.js" />
+    <Compile Include="test\successfulSignIn.js" />
     <Compile Include="Utils.js" />
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
@@ -70,7 +71,7 @@
     <Folder Include="Metadata\" />
     <Folder Include="Metadata\deploymentTemplates\" />
     <Folder Include="Metadata\Icons\" />
-    <Folder Include="Tests\" />
+    <Folder Include="test\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
