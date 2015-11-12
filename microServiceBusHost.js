@@ -208,8 +208,10 @@ function MicroServiceBusHost(settings) {
         com.OnSubmitQueueError(function (message) {
             console.log("OnSubmitError: ".red + message);
         });
-        com.OnQueueDebugCallback(function (message) { 
-            console.log("OnSubmitOk: ".green + message);
+        com.OnQueueDebugCallback(function (message) {
+            if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+                console.log("OnSubmitOk: ".green + message);
+            }
         });
         com.Start();
         
