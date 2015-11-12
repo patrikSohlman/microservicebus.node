@@ -24,7 +24,7 @@ describe('SignIn', function () {
     it('Save settings should work', function (done) {
         
         settings = {
-            "debug": true,
+            "debug": false,
             "hubUri": "wss://microservicebus.com",
             "nodeName": "TestNode1",
             "organizationId" : process.env.organizationid,
