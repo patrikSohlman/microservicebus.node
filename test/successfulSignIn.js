@@ -24,7 +24,7 @@ describe('SignIn', function () {
     it('Save settings should work', function (done) {
         
         settings = {
-            "debug": false,
+            "debug": true,
             "hubUri": "wss://microservicebus.com",
             "nodeName": "TestNode1",
             "organizationId" : process.env.organizationid,
@@ -35,6 +35,7 @@ describe('SignIn', function () {
     });
 
     it('Sign in should work', function () {
+        this.timeout(10000);
         loggedInComplete = false;
         microServiceBusHost = new MicroServiceBusHost(settings);
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
@@ -55,7 +56,9 @@ describe('SignIn', function () {
                         done();
                     });
                     it('calling test should work', function (done) {
+                        this.timeout(5000);
                         var url = 'http://localhost:9090';
+                        
                         request(url)
 		                    .get('/api/data/azureApiAppInboundService1/test')
 		                    .expect('Content-Type', /json/)

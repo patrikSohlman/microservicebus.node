@@ -208,6 +208,9 @@ function MicroServiceBusHost(settings) {
         com.OnSubmitQueueError(function (message) {
             console.log("OnSubmitError: ".red + message);
         });
+        com.OnQueueDebugCallback(function (message) { 
+            console.log("OnSubmitOk: ".green + message);
+        });
         com.Start();
         
         _itineraries = signInResponse.itineraries;
