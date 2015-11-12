@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
+var color = require('colors');
 var signalR = require('signalr-client');
 var npm = require('npm');
 var linq = require('node-linq').LINQ;
@@ -35,7 +35,6 @@ var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
-var color = require('colors');
 var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
@@ -805,7 +804,10 @@ function MicroServiceBusHost(settings) {
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-        console.log(">: " + message.grey);
+        var time = moment();
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
+
+        console.log(utcNow.yellow + ">: " + message.grey);
         client.invoke( 
             'integrationHub',
 		    'logMessage',	
@@ -895,7 +897,9 @@ function MicroServiceBusHost(settings) {
                     console.log('node start.js /c <Verification code> [/n <Node name>]'.yellow);
                     console.log('Eg: node start.js /c V5VUYFSY [/n MyHostName]'.yellow);
                     onStarted(0,1);
-                    //process.exit();
+                    if (!testFlag)
+                        process.abort();
+                    onStarted(0, 1);
                 }
                 
                 settings.nodeName = process.argv[3];
@@ -910,7 +914,7 @@ function MicroServiceBusHost(settings) {
                 
                 util.saveSettings(settings);
                 
-                console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
+                console.log('OrganizationId: ' + settings.organizationId.gray + ' node: ' + settings.nodeName.gray);
                 console.log('Hub: ' + settings.hubUri.gray);
                 console.log('');
             }
@@ -941,7 +945,7 @@ function MicroServiceBusHost(settings) {
             settings.machineName = os.hostname();
             util.saveSettings(settings);
             
-            console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
+            console.log('OrganizationId: ' + settings.organizationId.gray + ' node: ' + settings.nodeName.gray);
             console.log('Hub: ' + settings.hubUri.gray);
             console.log('');
         }
