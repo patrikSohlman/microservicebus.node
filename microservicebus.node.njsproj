@@ -5,7 +5,8 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <Name>microservicebus.node</Name>
     <RootNamespace>microservicebus.host</RootNamespace>
-    <ScriptArguments>/c DYUO03X9 /h nodeJs-00004</ScriptArguments>
+    <ScriptArguments>
+    </ScriptArguments>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -14,7 +15,7 @@
     <ProjectGuid>e5509fe2-c037-42a1-8bec-77cb62d5047b</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>server.js</StartupFile>
+    <StartupFile>start.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -37,14 +38,16 @@
     <Compile Include="Com.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
+    <Compile Include="restore.js" />
     <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
     <Compile Include="Services\sqlCommand.js" />
     <Compile Include="simulator.js" />
     <Compile Include="start.js" />
-    <Compile Include="swagger.json" />
-    <Compile Include="Tests\UnitTests.js" />
+    <Compile Include="test\failedSignIn.js" />
+    <Compile Include="test\successfulSignIn.js" />
     <Compile Include="Utils.js" />
+    <Content Include=".coveralls.yml" />
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
     <Content Include="BEFORE PUBLISH.md" />
@@ -58,14 +61,18 @@
     <Content Include="Metadata\_apiDefinition.swagger.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="sim.bat" />
+    <Content Include="swagger.json" />
+    <Content Include="swaggerPathTemplate.json" />
     <Content Include="settings.json" />
+    <Content Include="swaggerTemplate.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
     <Folder Include="Metadata\" />
     <Folder Include="Metadata\deploymentTemplates\" />
     <Folder Include="Metadata\Icons\" />
-    <Folder Include="Tests\" />
+    <Folder Include="test\" />
     <Folder Include="Services\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->

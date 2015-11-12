@@ -1,6 +1,6 @@
 ﻿
 var extend = require('extend');
-var guid = require('guid');
+var guid = require('uuid');
 var npm = require('npm');
 var linq = require('node-linq').LINQ;
 var fs = require('graceful-fs');
@@ -253,7 +253,7 @@ function MicroService(microService) {
             variables = itinerary.variables.concat(varaiables);
        
         var integrationMessage = {
-            InterchangeId : guid.raw(),
+            InterchangeId : guid.v1(),
             IntegrationId : this.IntegrationId,
             IntegrationName : this.IntegrationName,
             Environment : this.Environment,

@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+var color = require('colors');
 var signalR = require('signalr-client');
 var npm = require('npm');
 var linq = require('node-linq').LINQ;
@@ -29,17 +30,19 @@ var extend = require('extend');
 var async = require('async');
 var request = require("request");
 var reload = require('require-reload')(require);
-var guid = require('guid');
 var os = require("os");
 var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
-var color = require('colors');
 var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
-var _downloadedScripts = [];
+var http = require('http');
+var express = require('express');
+var swaggerize = require('swaggerize-express');
+var bodyParser = require('body-parser')
+var guid = require('uuid');
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -52,22 +55,17 @@ function MicroServiceBusHost(settings) {
     var _inboundServices = []; // all started services
     var _hasDisconnected = false;
     var _shoutDown = false;
+    var _downloadedScripts = [];
     var signInResponse;
     var com;
     var checkConnectionInterval;
     var loadedItineraries = 0;
+    var exceptionsLoadingItineraries = 0;
     var _startWebServer = false;
-    // Azure API App support
     var port = process.env.PORT || 1337;
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
-    var http = require('http');
-    var express = require('express');
-    var swaggerize = require('swaggerize-express');
-    var bodyParser = require('body-parser')
     var app = express();
-    console.log("Server port:" + port);
-    // END Azure API App support
-    
+    var server;
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -94,7 +92,11 @@ function MicroServiceBusHost(settings) {
                 com.Stop();
             }
         },
-        onerror: function (error) { console.log("Connection: " + "Error: ".red, error); },
+        onerror: function (error) {
+            console.log("Connection: " + "Error: ".red, error);
+            if (error.endsWith("does not exist for the organization"))
+                onStarted(0, 1);
+        },
         messageReceived: function (message) {
             //console.log("Websocket messageReceived: ", message);
             //return false;
@@ -109,7 +111,7 @@ function MicroServiceBusHost(settings) {
             console.log("Connection: " + "Reconnected ".green);
         },
         reconnecting: function (retry /* { inital: true/false, count: 0} */) {
-            console.log("Connection: " + "Retrying: ".yellow, retry);
+            console.log("Connection: " + "Retrying to connect ".yellow);
             //return retry.count >= 3; /* cancel retry true */
             return true;
         }
@@ -140,7 +142,11 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when itineraries has been updated
     client.on('integrationHub', 'updateItinerary', function (updatedItinerary) {
         console.log("updateItinerary => ");
-        
+        if (_startWebServer) {
+            server.close();
+            app = null;
+            app = express();
+        }
         // Stop all services
         console.log("");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
@@ -181,8 +187,6 @@ function MicroServiceBusHost(settings) {
     
     // Called by HUB when signin  has been successful
     client.on('integrationHub', 'signInMessage', function (response) {
-        console.log("signInMessage => Successfully logged in");
-        
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
@@ -209,6 +213,11 @@ function MicroServiceBusHost(settings) {
         com.OnSubmitQueueError(function (message) {
             console.log("OnSubmitError: ".red + message);
         });
+        com.OnQueueDebugCallback(function (message) {
+            if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+                console.log("OnSubmitOk: ".green + message);
+            }
+        });
         com.Start();
         
         _itineraries = signInResponse.itineraries;
@@ -220,18 +229,15 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when node has been successfully created
     client.on('integrationHub', 'nodeCreated', function (nodeData) {
         
-        console.log("nodeCreated => Successfully created node: " + nodeData.nodeName.green);
-        
-        log(settings.nodeName + ' Successfully created node: ' + nodeData.nodeName);
-        
         nodeData.machineName = os.hostname();
         
         settings = extend(settings, nodeData);
         
+        log(' Successfully created node: ' + nodeData.nodeName);
+        
         var data = JSON.stringify(settings);
         
         fs.writeFileSync('./settings.json', data);
-        
         
         signIn();
     });
@@ -278,6 +284,7 @@ function MicroServiceBusHost(settings) {
                 return i.Name === destination && 
                         i.ItineraryId == message.ItineraryId;
             });
+            /* istanbul ignore if */
             if (microService == null) {
                 var logm = "The service receiving this message is no longer configured to run on this node. This can happen when a service has been shut down and restarted on a different machine";
                 trackException(message, destination, "Failed", "90001", logm);
@@ -356,8 +363,6 @@ function MicroServiceBusHost(settings) {
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         
-        var exceptionsLoadingItineraries = 0;
-        
         if (itineraries.length == 0)
             onStarted(0, 0);
         
@@ -368,21 +373,20 @@ function MicroServiceBusHost(settings) {
             }
             var itineraryId = itinerary.itineraryId;
             
-             async.map(itinerary.activities, function(activity, callback) {
-                startServiceAsync(activity, organizationId, itineraryId, function () { 
+            async.map(itinerary.activities, function (activity, callback) {
+                startServiceAsync(activity, organizationId, itineraryId, function () {
                     callback(null, null);
                 });
                 
-             }, function(err, results) {
+            }, function (err, results) {
                 onStarted(itineraries.length, exceptionsLoadingItineraries);
-                if(_startWebServer) 
-                    startListen();
-             });
+                startListen();
+            });
 
         };
     }
     
-    function startServiceAsync(activity, organizationId, itineraryId, done) {      
+    function startServiceAsync(activity, organizationId, itineraryId, done) {
         try {
             if (activity.type == 'draw2d.Connection') {
                 done();
@@ -390,154 +394,178 @@ function MicroServiceBusHost(settings) {
             }
             
             async.waterfall([
-                Init = function (callback) { 
-                    var host = new linq(activity.userData.config.generalConfig)
+                Init = function (callback) {
+                    try {
+                        var host = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'host'; }).value;
-                    
-                    var isEnabled = new linq(activity.userData.config.generalConfig)
+                        
+                        var isEnabled = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'enabled'; }).value;
-                    
-                    if (host != settings.nodeName) {
+                        
+                        if (host != settings.nodeName) {
+                            done();
+                            return;
+                        }
+                        
+                        var scriptFileUri = activity.userData.isCustom == true?
+                                        settings.hubUri + '/api/Scripts/' + settings.organizationId + "/" + activity.userData.type + '.js':
+                                        settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
+                        scriptFileUri = scriptFileUri.replace('wss://', 'https://');
+                        
+                        var integrationId = activity.userData.integrationId;
+                        
+                        var scriptfileName = path.basename(scriptFileUri);
+                        
+                        if (!isEnabled) {
+                            var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(scriptfileName, 40, ' ') + "|";
+                            console.log(lineStatus); return;
+                        }
+                        var localFilePath;
+                        
+                        var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
+                        
+                        callback(null, exist, scriptFileUri, scriptfileName, integrationId);
+                    }
+                    catch (error1) {
+                        log(error1.message);
                         done();
-                        return;
                     }
-                    
-                    var scriptFileUri = settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
-                    scriptFileUri = scriptFileUri.replace('wss://', 'https://');
-                    
-                    var integrationId = activity.userData.integrationId;
-                    
-                    var scriptfileName = path.basename(scriptFileUri);
-                    
-                    if (!isEnabled) {
-                        var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(scriptfileName, 40, ' ') + "|";
-                        console.log(lineStatus); return;
-                    }
-                    var localFilePath;
-                    
-                    var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
-
-                    callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                 },
-                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {  
-                    if (exist != null) {
-                        callback(null, localFilePath);
-                        return;
+                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
+                    try {
+                        if (exist != null) {
+                            callback(null, localFilePath, integrationId, scriptfileName);
+                            return;
+                        }
+                        else {
+                            request(scriptFileUri, function (err, response, scriptContent) {
+                                if (response.statusCode != 200 || err != null) {
+                                    console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
+                                    var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(scriptfileName, 40, ' ') + "|";
+                                    console.log(lineStatus);
+                                    done();
+                                }
+                                else {
+                                    localFilePath = __dirname + "/Services/" + scriptfileName;
+                                    fs.writeFileSync(localFilePath, scriptContent);
+                                    _downloadedScripts.push({ name: scriptfileName });
+                                    callback(null, localFilePath, integrationId, scriptfileName);
+                                }
+                            });
+                        }
                     }
-                    else {
-                        request(scriptFileUri, function (err, response, scriptContent) {
-                            if (response.statusCode != 200 || err != null) {
-                                console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
-                                var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(scriptfileName, 40, ' ') + "|";
-                                console.log(lineStatus);
-                                callback(null, null, null, null);
-                            }
-                            else {
-                                localFilePath = __dirname + "/Services/" + scriptfileName;
-                                fs.writeFileSync(localFilePath, scriptContent);
-                                _downloadedScripts.push({ name: scriptfileName });
-                                callback(null, localFilePath, integrationId, scriptfileName);
-                            }
-                        });
+                    catch (error2) {
+                        log(error2.message);
+                        done();
                     }
                 },
                 CreateService = function (localFilePath, integrationId, scriptfileName, callback) {
-                    if (localFilePath == null) { 
-                        callback(null, null);
-                    }
-                    // Load an instance of the base class
-                    // Extend the base class with the new class
-                    var newMicroService = extend(new MicroService(), reload(localFilePath));
-                    
-                    newMicroService.OrganizationId = organizationId;
-                    newMicroService.ItineraryId = itineraryId;
-                    newMicroService.Name = activity.userData.id;
-                    newMicroService.Itinerary = itinerary;
-                    newMicroService.IntegrationId = integrationId;
-                    newMicroService.Config = activity.userData.config;
-                    newMicroService.IntegrationName = itinerary.integrationName;
-                    newMicroService.Environment = itinerary.environment;
-                    newMicroService.TrackingLevel = itinerary.trackingLevel;
-                    newMicroService.App = app;
-                    
-                    // Eventhandler for messages sent back from the service
-                    newMicroService.OnMessageReceived(function (integrationMessage, sender) {
+                    try {
+                        if (localFilePath == null) {
+                            callback(null, null);
+                        }
+                        // Load an instance of the base class
+                        // Extend the base class with the new class
+                        var newMicroService = extend(new MicroService(), reload(localFilePath));
                         
-                        integrationMessage.OrganizationId = settings.organizationId;
+                        newMicroService.OrganizationId = organizationId;
+                        newMicroService.ItineraryId = itineraryId;
+                        newMicroService.Name = activity.userData.id;
+                        newMicroService.Itinerary = itinerary;
+                        newMicroService.IntegrationId = integrationId;
+                        newMicroService.Config = activity.userData.config;
+                        newMicroService.IntegrationName = itinerary.integrationName;
+                        newMicroService.Environment = itinerary.environment;
+                        newMicroService.TrackingLevel = itinerary.trackingLevel;
+                        newMicroService.App = app;
                         
-                        if (integrationMessage.FaultCode != null) {
-                            trackException(integrationMessage, 
+                        // Eventhandler for messages sent back from the service
+                        newMicroService.OnMessageReceived(function (integrationMessage, sender) {
+                            try {
+                                integrationMessage.OrganizationId = settings.organizationId;
+                                
+                                if (integrationMessage.FaultCode != null) {
+                                    trackException(integrationMessage, 
                                 integrationMessage.LastActivity, 
                                 "Failed", 
                                 integrationMessage.FaultCode, 
                                 integrationMessage.FaultDescripton);
-                            
-                            console.log('Exception: '.red + integrationMessage.FaultDescripton);
-                            return;
-                        }
-                        
-                        // Process the itinerary to find next service
-                        var successors = getSuccessors(integrationMessage);
-                        
-                        successors.forEach(function (successor) {
-                            integrationMessage.Sender = settings.nodeName;
-                            
-                            var correlationValue = sender.CorrelationValue(null, integrationMessage);
-                            
-                            if (integrationMessage.LastActivity == integrationMessage.CreatedBy && correlationValue == null) // jshint ignore:line
-                                trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
-                            
-                            // Check for correlations
-                            if (correlationValue != null) { // jshint ignore:line
-                                // Follow correlation. Tracking is done on server side
-                                try {
-                                    client.invoke(
-                                        'integrationHub',
-		                                'followCorrelation',	
-		                                successor.userData.id, 
-                                        settings.nodeName,
-                                        correlationValue,
-                                        settings.organizationId,
-                                        integrationMessage);
-
-                                }
-                            catch (err) {
-                                    console.log(err);
-                                }
-                            }
-                            else {
-                                // No correlation
-                                try {
                                     
-                                    com.Submit(integrationMessage, 
+                                    console.log('Exception: '.red + integrationMessage.FaultDescripton);
+                                    return;
+                                }
+                                
+                                // Process the itinerary to find next service
+                                var successors = getSuccessors(integrationMessage);
+                                
+                                successors.forEach(function (successor) {
+                                    integrationMessage.Sender = settings.nodeName;
+                                    
+                                    var correlationValue = sender.CorrelationValue(null, integrationMessage);
+                                    
+                                    if (integrationMessage.LastActivity == integrationMessage.CreatedBy && correlationValue == null) // jshint ignore:line
+                                        trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
+                                    
+                                    // Check for correlations
+                                    if (correlationValue != null) { // jshint ignore:line
+                                        // Follow correlation. Tracking is done on server side
+                                        try {
+                                            client.invoke(
+                                                'integrationHub',
+		                                    'followCorrelation',	
+		                                    successor.userData.id, 
+                                            settings.nodeName,
+                                            correlationValue,
+                                            settings.organizationId,
+                                            integrationMessage);
+
+                                        }
+                                    catch (err) {
+                                            console.log(err);
+                                        }
+                                    }
+                                    else {
+                                        // No correlation
+                                        try {
+                                            
+                                            com.Submit(integrationMessage, 
                                         successor.userData.host.toLowerCase(),
                                         successor.userData.id);
-                                    
-                                    trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
-                                }
-                            catch (err) {
-                                    console.log(err);
-                                }
+                                            
+                                            trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
+                                        }
+                                    catch (err) {
+                                            console.log(err);
+                                        }
+                                    }
+                                });
+                            }
+                            catch (generalEx) { 
+                                log(generalEx.message);
                             }
                         });
-
-                    });
-                    // [DEPRICATED]Eventhandler for any errors sent back from the service
-                    newMicroService.OnError(function (source, errorId, errorDescription) {
-                        console.log("The Error method is depricated. Please use the ThrowError method instead.".red);
-                        console.log("Error at: ".red + source);
-                        console.log("Error id: ".red + errorId);
-                        console.log("Error desccription: ".red + errorDescription);
-                    });
-                    // Eventhandler for any debug information sent back from the service
-                    newMicroService.OnDebug(function (source, info) {
-                        if (settings.debug != null && settings.debug == true) {// jshint ignore:line
-                            console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                            log('DEBUG:[' + source.gray + '] => ' + info);
-                        }
-                    });
-
-                    callback(null, newMicroService, scriptfileName);
+                        // [DEPRICATED]Eventhandler for any errors sent back from the service
+                        newMicroService.OnError(function (source, errorId, errorDescription) {
+                            console.log("The Error method is depricated. Please use the ThrowError method instead.".red);
+                            console.log("Error at: ".red + source);
+                            console.log("Error id: ".red + errorId);
+                            console.log("Error desccription: ".red + errorDescription);
+                        });
+                        // Eventhandler for any debug information sent back from the service
+                        newMicroService.OnDebug(function (source, info) {
+                            if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+                                console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
+                                log('DEBUG:[' + source.gray + '] => ' + info);
+                            }
+                        });
+                        
+                        callback(null, newMicroService, scriptfileName);
+                    }
+                    catch (error3) {
+                        console.log('Unable to start service '.red + newMicroService.Name.red);
+                        log(erro3.message);
+                        done();
+                    }
                 },
                 StartService = function (newMicroService, scriptfileName, callback) {
                     if (newMicroService == null) {
@@ -548,7 +576,7 @@ function MicroServiceBusHost(settings) {
                         newMicroService.Start();
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
-
+                        
                         _inboundServices.push(newMicroService);
                         
                         var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
@@ -574,208 +602,87 @@ function MicroServiceBusHost(settings) {
         }
     }
     
-    function startService(activity, organizationId, itineraryId) {
-        try {
-            
-            if (activity.type == 'draw2d.Connection')
-                return;
-            
-            var host = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'host'; }).value;
-            
-            var isEnabled = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'enabled'; }).value;
-            
-            if (host != settings.nodeName)
-                return;
-            
-            var scriptFile = settings.hubUri + '/api/Scripts/' + activity.userData.type + '.js';
-            scriptFile = scriptFile.replace('wss://', 'https://');
-            
-            var integrationId = activity.userData.integrationId;
-            
-            var fileName = path.basename(scriptFile);
-            
-            if (!isEnabled) {
-                var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(fileName, 40, ' ') + "|";
-                console.log(lineStatus); return;
-            }
-            var localFilePath;
-            
-            var exist = new linq(_downloadedScripts).First(function (s) { return s.name === fileName; }); // jshint ignore:line
-            
-            if (exist == null) { // jshint ignore:line
-                // Download the script file
-                try {
-                    var httpResponse = syncrequest('GET', scriptFile);
-                    if (httpResponse.statusCode != 200)
-                        throw 'Resourse not found';
-                    
-                    console.log("Downloaded complete...");
-                    var buff = new Buffer(httpResponse.body);
-                    var scriptContent = buff.toString('utf8');
-                    // Write the script files to disk
-                    localFilePath = __dirname + "/Services/" + fileName;
-                    
-                    console.log("Localpath: " + localFilePath);
-                    
-                    fs.writeFileSync(localFilePath, scriptContent);
-                    
-                    _downloadedScripts.push({ name: fileName });
-                }
-                        catch (ex) {
-                    console.log("Unable to get file:" + fileName + ". Exception:" + ex.message);
-                    var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(fileName, 40, ' ') + "|";
-                    
-                    console.log(lineStatus);
-                    return;
-                }
-                    
-            }
-            // Load an instance of the base class
-            // Extend the base class with the new class
-            var newMicroService = extend(new MicroService(), reload(localFilePath));
-            
-            newMicroService.OrganizationId = organizationId;
-            newMicroService.ItineraryId = itineraryId;
-            newMicroService.Name = activity.userData.id;
-            newMicroService.Itinerary = itinerary;
-            newMicroService.IntegrationId = integrationId;
-            newMicroService.Config = activity.userData.config;
-            newMicroService.IntegrationName = itinerary.integrationName;
-            newMicroService.Environment = itinerary.environment;
-            newMicroService.TrackingLevel = itinerary.trackingLevel;
-            newMicroService.App = app;
-            
-            // Eventhandler for messages sent back from the service
-            newMicroService.OnMessageReceived(function (integrationMessage, sender) {
-                
-                integrationMessage.OrganizationId = settings.organizationId;
-                
-                if (integrationMessage.FaultCode != null) {
-                    trackException(integrationMessage, 
-                                integrationMessage.LastActivity, 
-                                "Failed", 
-                                integrationMessage.FaultCode, 
-                                integrationMessage.FaultDescripton);
-                    
-                    console.log('Exception: '.red + integrationMessage.FaultDescripton);
-                    return;
-                }
-                
-                // Process the itinerary to find next service
-                var successors = getSuccessors(integrationMessage);
-                
-                successors.forEach(function (successor) {
-                    integrationMessage.Sender = settings.nodeName;
-                    
-                    var correlationValue = sender.CorrelationValue(null, integrationMessage);
-                    
-                    if (integrationMessage.LastActivity == integrationMessage.CreatedBy && correlationValue == null) // jshint ignore:line
-                        trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
-                    
-                    // Check for correlations
-                    if (correlationValue != null) { // jshint ignore:line
-                        // Follow correlation. Tracking is done on server side
-                        try {
-                            client.invoke(
-                                'integrationHub',
-		                                'followCorrelation',	
-		                                successor.userData.id, 
-                                        settings.nodeName,
-                                        correlationValue,
-                                        settings.organizationId,
-                                        integrationMessage);
-
-                        }
-                            catch (err) {
-                            console.log(err);
-                        }
-                    }
-                    else {
-                        // No correlation
-                        try {
-                            
-                            com.Submit(integrationMessage, 
-                                        successor.userData.host.toLowerCase(),
-                                        successor.userData.id);
-                            
-                            trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
-                        }
-                            catch (err) {
-                            console.log(err);
-                        }
-                    }
-                });
-
-            });
-            // [DEPRICATED]Eventhandler for any errors sent back from the service
-            newMicroService.OnError(function (source, errorId, errorDescription) {
-                console.log("The Error method is depricated. Please use the ThrowError method instead.".red);
-                console.log("Error at: ".red + source);
-                console.log("Error id: ".red + errorId);
-                console.log("Error desccription: ".red + errorDescription);
-            });
-            // Eventhandler for any debug information sent back from the service
-            newMicroService.OnDebug(function (source, info) {
-                if (settings.debug != null && settings.debug == true) {// jshint ignore:line
-                    console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                    log('DEBUG:[' + source.gray + '] => ' + info);
-                }
-            });
-            
-            // Start the service
-            try {
-                newMicroService.Start();
-                
-                _inboundServices.push(newMicroService);
-                
-                var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(fileName, 40, ' ') + "|";
-                console.log(lineStatus);
-
-            }
-            catch (ex) {
-                console.log('Unable to start service '.red + newMicroService.Name.red);
-                if (typeof ex === 'object')
-                    console.log(ex.message.red);
-                else
-                    console.log(ex.red);
-                
-                exceptionsLoadingItineraries++;
-            }
-            
-        }
-        catch (ex2) {
-            console.log('Unable to start service.'.red);
-            console.log(ex2.message.red);
-        }
-    }
-
     // Start listener
     function startListen() {
+        if (!_startWebServer)
+            return;
+        
+        if (settings.port != undefined)
+            port = settings.port;
+        
+        console.log();
+        
         app.use(bodyParser.json());
-        var server = http.createServer(app);
+        server = http.createServer(app);
+        
+        genrateSwagger();
         
         app.use(swaggerize({
             api: require('./swagger.json'),
-            docspath: '/swagger/docs/v1',
-            handlers: './Handlers/'
+            docspath: '/swagger/docs/v1'
         }));
         app.use('/', express.static(__dirname + '/html'));
         
         app._router.stack.forEach(function (endpoint) {
-            if (endpoint.route != undefined)
-                log(endpoint.route.path);
+            if (endpoint.route != undefined) {
+                if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
+                    log("GET:    " + endpoint.route.path);
+                if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
+                    log("DELETE: " + endpoint.route.path);
+                if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
+                    log("POST:   " + endpoint.route.path);
+                if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
+                    log("PUT:    " + endpoint.route.path);
+            }
         });
         
         server.listen(port, 'localhost', function () {
-            //if (baseHost === 'localhost') {
-            //    app.setHost(baseHost + ':' + port);
-            //} else {
-            //    app.setHost(baseHost);
-            //}
-            console.log("Server started ..");
+            console.log();
+            log("Server started on port " + port);
         });
+    }
+    
+    // Create a swagger file
+    function genrateSwagger() {
+        // Load template
+        try {
+            var data = fs.readFileSync(__dirname + '/swaggerTemplate.json');
+            var swagger = JSON.parse(data);
+            data = fs.readFileSync(__dirname + '/swaggerPathTemplate.json');
+            var pathTemplate = JSON.parse(data);
+            
+            for (var i = 0; i < app._router.stack.length; i++) {
+                var endpoint = app._router.stack[i];
+                if (endpoint["route"] != undefined) {
+                    
+                    if (swagger.paths[endpoint.route.path] == undefined)
+                        swagger.paths[endpoint.route.path] = {};
+                    
+                    if (endpoint.route.methods.get) {
+                        swagger.paths[endpoint.route.path].get = pathTemplate['get']
+                    }
+                    if (endpoint.route.methods.delete) {
+                        swagger.paths[endpoint.route.path].delete = pathTemplate['delete']
+                    }
+                    if (endpoint.route.methods.post) {
+                        swagger.paths[endpoint.route.path].post = pathTemplate['post']
+                    }
+                    if (endpoint.route.methods.put) {
+                        swagger.paths[endpoint.route.path].put = pathTemplate['put']
+                    }
+                }
+            }
+            swagger["host"] = "localhost:" + port;
+            var swaggerData = JSON.stringify(swagger);
+            
+            fs.writeFileSync(__dirname + '/swagger.json', swaggerData);
+
+        }
+        catch (err) {
+            console.log('Invalid swagger file.'.red);
+            console.log(JSON.stringify(err).red);
+            process.abort();
+        }
     }
     
     // Returns the next services in line to be executed.
@@ -863,15 +770,16 @@ function MicroServiceBusHost(settings) {
     function trackMessage(msg, lastActionId, status) {
         
         var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
-        
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+        var messageId = guid.v1();
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.nodeName ,
+            Node : settings.nodeName ,
+            MessageId: messageId,
             OrganizationId : settings.organizationId,
             InterchangeId : msg.InterchangeId,
             ItineraryId : msg.ItineraryId,
@@ -895,15 +803,17 @@ function MicroServiceBusHost(settings) {
     function trackException(msg, lastActionId, status, fault, faultDescription) {
         
         var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
-        
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+        var messageId = guid.v1();
+
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.nodeName ,
+            Node : settings.nodeName ,
+            MessageId: messageId,
             Variables : null,
             OrganizationId : settings.organizationId,
             IntegrationName : msg.IntegrationName,
@@ -917,16 +827,17 @@ function MicroServiceBusHost(settings) {
             IsFirstAction : msg.IsFirstAction,
             TimeStamp : utcNow,
             IsFault : true,
-            State : status,
-            FaultCode : fault,
-            FaultDescription : faultDescription
+            State : status
         };
         com.Track(trackingMessage);
     };
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-        console.log("Log: " + message.grey);
+        var time = moment();
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
+        
+        console.log(utcNow.yellow + ">: " + message.grey);
         client.invoke( 
             'integrationHub',
 		    'logMessage',	
@@ -963,11 +874,14 @@ function MicroServiceBusHost(settings) {
     // process.on('SIGINT', gracefulShutdown);
     
     MicroServiceBusHost.prototype.Start = function (testFlag) {
-        
         var args = process.argv.slice(2);
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
+            if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
+                settings.nodeName = args[1];
+            }
             console.log('Logging in using settings'.grey);
         }
+        /* istanbul ignore if */
         else if (args.length > 0) { // Starting using code
             switch (args[0]) {
                 case '/c':
@@ -977,10 +891,10 @@ function MicroServiceBusHost(settings) {
                     temporaryVerificationCode = args[1];
                     
                     if (args[2] != null && args[3] != null && // jshint ignore:line
-                        (args[2] == '/h' || 
-                        args[2] == '-h' ||
-                        args[2] == '/host' ||
-                        args[2] == '-host'))
+                        (args[2] == '/n' || 
+                        args[2] == '-n' ||
+                        args[2] == '/node' ||
+                        args[2] == '-node'))
                         existingHostName = args[3];
                     
                     break;
@@ -989,14 +903,17 @@ function MicroServiceBusHost(settings) {
                     console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
                     console.log('');
-                    console.log('You may also host name:'.yellow);
-                    console.log('Eg: microServiceBus.js -code ABCD1234 -host nodejs00001'.yellow);
+                    console.log('You can also specify the node:'.yellow);
+                    console.log('Eg: microServiceBus.js -code ABCD1234 -node nodejs00001'.yellow);
                     console.log('');
-                    
-                    process.abort();
+                    onStarted(0, 1);
+                    if (!testFlag)
+                        process.abort();
+                    onStarted(0, 1);
                 }
             }
         }
+        /* istanbul ignore if */
         else {// Wrong config
             if (temporaryVerificationCode != null) { // jshint ignore:line
     
@@ -1007,9 +924,12 @@ function MicroServiceBusHost(settings) {
                     console.log('Missing arguments'.red);
                     console.log('Make sure to start using arguments; verification code (/c) and optionally host name.'.yellow);
                     console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
-                    console.log('node start.js /c <Verification code> [/h <Host name>]'.yellow);
-                    console.log('Eg: node start.js /c V5VUYFSY [/h MyHostName]'.yellow);
-                    process.exit();
+                    console.log('node start.js /c <Verification code> [/n <Node name>]'.yellow);
+                    console.log('Eg: node start.js /c V5VUYFSY [/n MyHostName]'.yellow);
+                    onStarted(0, 1);
+                    if (!testFlag)
+                        process.abort();
+                    onStarted(0, 1);
                 }
                 
                 settings.nodeName = process.argv[3];
@@ -1024,8 +944,9 @@ function MicroServiceBusHost(settings) {
                 
                 util.saveSettings(settings);
                 
-                console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
-                console.log('Hub: ' + settings.hubUri.gray);
+                console.log('OrganizationId: ' + settings.organizationId.gray);
+                console.log('Node:           ' + settings.nodeName.gray);
+                console.log('Hub:            ' + settings.hubUri.gray);
                 console.log('');
             }
         }
@@ -1040,11 +961,11 @@ function MicroServiceBusHost(settings) {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         
         
-        if (testFlag != true) {
-            process.on('uncaughtException', function (err) {
-                console.log('Uncaught exception: '.red + err);
-            });
-        }
+        //if (testFlag != true) {
+        //    process.on('uncaughtException', function (err) {
+        //        console.log('Uncaught exception: '.red + err);
+        //    });
+        //}
         client.start();
         
         // Startig using proper config
@@ -1055,8 +976,9 @@ function MicroServiceBusHost(settings) {
             settings.machineName = os.hostname();
             util.saveSettings(settings);
             
-            console.log('OrganizationId: ' + settings.organizationId.gray + ' Host: ' + settings.nodeName.gray);
-            console.log('Hub: ' + settings.hubUri.gray);
+            console.log('OrganizationId: ' + settings.organizationId.gray);
+            console.log('Node:           ' + settings.nodeName.gray);
+            console.log('Hub:            ' + settings.hubUri.gray);
             console.log('');
         }
     };
