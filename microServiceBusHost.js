@@ -91,7 +91,11 @@ function MicroServiceBusHost(settings) {
                 com.Stop();
             }
         },
-        onerror: function (error) { console.log("Connection: " + "Error: ".red, error); },
+        onerror: function (error) {
+            console.log("Connection: " + "Error: ".red, error);
+            if (error.endsWith("does not exist for the organization"))
+                onStarted(0, 1);
+        },
         messageReceived: function (message) {
             //console.log("Websocket messageReceived: ", message);
             //return false;
