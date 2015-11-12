@@ -17,13 +17,7 @@ function Com(nodeName, sbSettings) {
     }    
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
      
-    sbSettings.trackingHubName = "trackingHub";
-    sbSettings.trackingKeyName = "node";
-    sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
-    
-    
-     
-    if (sbSettings.protocol == "amqp") {
+     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
         

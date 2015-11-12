@@ -42,6 +42,7 @@ var http = require('http');
 var express = require('express');
 var swaggerize = require('swaggerize-express');
 var bodyParser = require('body-parser')
+var guid = require('uuid');
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -769,15 +770,16 @@ function MicroServiceBusHost(settings) {
     function trackMessage(msg, lastActionId, status) {
         
         var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
-        
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+        var messageId = guid.v1();
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.nodeName ,
+            Node : settings.nodeName ,
+            MessageId: messageId,
             OrganizationId : settings.organizationId,
             InterchangeId : msg.InterchangeId,
             ItineraryId : msg.ItineraryId,
@@ -801,15 +803,17 @@ function MicroServiceBusHost(settings) {
     function trackException(msg, lastActionId, status, fault, faultDescription) {
         
         var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
-        
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+        var messageId = guid.v1();
+
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Host : settings.nodeName ,
+            Node : settings.nodeName ,
+            MessageId: messageId,
             Variables : null,
             OrganizationId : settings.organizationId,
             IntegrationName : msg.IntegrationName,
@@ -957,11 +961,11 @@ function MicroServiceBusHost(settings) {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         
         
-        if (testFlag != true) {
-            process.on('uncaughtException', function (err) {
-                console.log('Uncaught exception: '.red + err);
-            });
-        }
+        //if (testFlag != true) {
+        //    process.on('uncaughtException', function (err) {
+        //        console.log('Uncaught exception: '.red + err);
+        //    });
+        //}
         client.start();
         
         // Startig using proper config
