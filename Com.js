@@ -17,13 +17,7 @@ function Com(nodeName, sbSettings) {
     }    
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
      
-    sbSettings.trackingHubName = "trackingHub";
-    sbSettings.trackingKeyName = "node";
-    sbSettings.trackingKey = "y91/MdzHnoxK7k/DoBjGIcFQRp/3yVMBIBiPB1c+dnU=";
-    
-    
-     
-    if (sbSettings.protocol == "amqp") {
+     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
         
@@ -55,7 +49,8 @@ function Com(nodeName, sbSettings) {
     this.onQueueMessageReceivedCallback = null;
     this.onQueueErrorReceiveCallback = null;
     this.onQueueErrorSubmitCallback = null;
-    
+    this.onQueueDebugCallback = null;
+
     Com.prototype.Start = function () {
         stop = false;
         if (sbSettings.protocol == "amqp")
@@ -122,6 +117,9 @@ function Com(nodeName, sbSettings) {
     };
     Com.prototype.OnSubmitQueueError = function (callback) {
         onQueueErrorSubmitCallback = callback;
+    };
+    Com.prototype.OnQueueDebugCallback = function (callback) {
+        onQueueDebugCallback = callback;
     };
     
     // AMQP
@@ -239,6 +237,7 @@ function Com(nodeName, sbSettings) {
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
+                    onQueueDebugCallback("Submitted message to " + node);
                 }
                 else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
@@ -358,7 +357,7 @@ function Com(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorReceiveCallback("Unable to send message. " + err.code + " - " + err.message)
+                    onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message)
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -367,6 +366,7 @@ function Com(nodeName, sbSettings) {
                             listenMessaging();
                             return;
                         }
+                        onQueueDebugCallback("Received message topic");
                         var message = JSON.parse(res.body);
                         var responseData = {
                             body : message,

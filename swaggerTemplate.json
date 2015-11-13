@@ -1,0 +1,17 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "microservicebus API",
+    "version": "v1"
+  },
+  "host": "localhost:10556",
+  "schemes": [ "http" ],
+  "paths": {
+  },
+  "definitions": {
+    "Object": {
+      "type": "object",
+      "properties": { }
+    }
+  }
+}
