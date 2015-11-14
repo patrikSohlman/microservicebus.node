@@ -222,8 +222,11 @@ function MicroServiceBusHost(settings) {
         
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
+        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
         
-        setTimeout(function () { restorePersistedMessages(); }, 3000);
+        setTimeout(function () {
+            restorePersistedMessages();
+        }, 3000);
     });
     
     // Called by HUB when node has been successfully created
@@ -540,7 +543,7 @@ function MicroServiceBusHost(settings) {
                                     }
                                 });
                             }
-                            catch (generalEx) { 
+                            catch (generalEx) {
                                 log(generalEx.message);
                             }
                         });
@@ -805,7 +808,7 @@ function MicroServiceBusHost(settings) {
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
         var messageId = guid.v1();
-
+        
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
@@ -860,20 +863,25 @@ function MicroServiceBusHost(settings) {
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
+        console.log("bye")
+        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Offline", settings.organizationId);
         console.log("Received kill signal, shutting down gracefully.");
         log(settings.nodeName + ' signing out...');
+        setTimeout(function () {
+            client.end();
+            process.exit();
+        }, 100);
         
-        client.end();
-        process.exit();
     }
     
-    // listen for TERM signal .e.g. kill 
-    //process.on('SIGTERM', gracefulShutdown);
-    
-    // listen for INT signal e.g. Ctrl-C
-    // process.on('SIGINT', gracefulShutdown);
-    
     MicroServiceBusHost.prototype.Start = function (testFlag) {
+        if (!testFlag) {
+            // listen for TERM signal .e.g. kill 
+            process.on('SIGTERM', gracefulShutdown);
+            
+            // listen for INT signal e.g. Ctrl-C
+            process.on('SIGINT', gracefulShutdown);
+        }
         var args = process.argv.slice(2);
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {

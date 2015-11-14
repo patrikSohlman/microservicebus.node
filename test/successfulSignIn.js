@@ -81,7 +81,7 @@ describe('SignIn', function () {
             loggedInComplete1 = true;
         });
 
-        microServiceBusHost.Start();
+        microServiceBusHost.Start(true);
         while (loggedInComplete1 == false) {
             try {
                 require('deasync').runLoopOnce();
