@@ -293,7 +293,15 @@ function MicroService(microService) {
             default:
                 throw 'Unsuported category';
         }
-        var property = new linq(cat).First(function (c) { return c.id === prop; });
+        try {
+            var property = new linq(cat).First(function (c) { return c.id === prop; });
+        }
+        catch (e) { 
+            throw "Property " + prop + " of category " + category + " not found in service setup configuration.";
+        }
+        if (property == undefined)
+            throw "Property " + prop + " of category " + category + " not found in service setup configuration.";
+
         return property.value;
     }
 }

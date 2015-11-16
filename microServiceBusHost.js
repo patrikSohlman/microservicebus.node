@@ -610,6 +610,8 @@ function MicroServiceBusHost(settings) {
         if (!_startWebServer)
             return;
         
+        _startWebServer = false; // prevent the server from being restarted if connection is lost
+
         if (settings.port != undefined)
             port = settings.port;
         
