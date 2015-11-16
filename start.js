@@ -1,6 +1,7 @@
 ﻿require('colors');
 var util = require('./Utils.js');
 var pjson = require('./package.json');
+var checkVersion = require('package-json');
 var fs = require('fs');
 var maxWidth = 75;
 
@@ -14,6 +15,21 @@ console.log(util.padRight(" GIT repository: https://github.com/microServiceBus/m
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
 
 console.log();
+
+checkVersion("microservicebus.node")
+			.then(function (rawData) {
+    
+    var latest = rawData['dist-tags'].latest;
+    if (latest != pjson.version) {
+        console.log();
+        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+        console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
+        console.log(util.padRight("type: 'npm update' to get the latest version", maxWidth, ' ').bgRed.gray.bold);
+        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+        console.log();
+        
+    }
+});
 
 // Load settings
 try {

@@ -25,6 +25,7 @@
     "node-persist": "0.0.6",
     "node-rest-client": "1.5.1",
     "npm": "2.13.2",
+    "package-json": "^2.2.1",
     "request": "2.65.0",
     "require-reload": "0.2.2",
     "scp": "0.0.3",
@@ -70,5 +71,5 @@
     "mocha": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.15"
+  "version": "0.0.16"
 }
