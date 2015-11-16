@@ -94,8 +94,11 @@ function MicroServiceBusHost(settings) {
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
-            if (error.endsWith("does not exist for the organization"))
-                onStarted(0, 1);
+            try {
+                if (error.endsWith("does not exist for the organization"))
+                    onStarted(0, 1);
+            }
+            catch (e) { }
         },
         messageReceived: function (message) {
             //console.log("Websocket messageReceived: ", message);
@@ -269,7 +272,7 @@ function MicroServiceBusHost(settings) {
             
             var hostData = {
                 Name : settings.nodeName ,
-                MachineName : settings.MachineName,
+                machineName : settings.machineName,
                 OrganizationID : settings.organizationId
             };
             client.invoke(
@@ -611,40 +614,53 @@ function MicroServiceBusHost(settings) {
             return;
         
         _startWebServer = false; // prevent the server from being restarted if connection is lost
-
-        if (settings.port != undefined)
-            port = settings.port;
-        
-        console.log();
-        
-        app.use(bodyParser.json());
-        server = http.createServer(app);
-        
-        genrateSwagger();
-        
-        app.use(swaggerize({
-            api: require('./swagger.json'),
-            docspath: '/swagger/docs/v1'
-        }));
-        app.use('/', express.static(__dirname + '/html'));
-        
-        app._router.stack.forEach(function (endpoint) {
-            if (endpoint.route != undefined) {
-                if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
-                    log("GET:    " + endpoint.route.path);
-                if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
-                    log("DELETE: " + endpoint.route.path);
-                if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
-                    log("POST:   " + endpoint.route.path);
-                if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
-                    log("PUT:    " + endpoint.route.path);
-            }
-        });
-        
-        server.listen(port, 'localhost', function () {
+        try {
+            if (settings.port != undefined)
+                port = settings.port;
+            
             console.log();
-            log("Server started on port " + port);
-        });
+            
+            app.use(bodyParser.json());
+            server = http.createServer(app);
+            
+            genrateSwagger();
+            
+            app.use(swaggerize({
+                api: require('./swagger.json'),
+                docspath: '/swagger/docs/v1'
+            }));
+            
+            app.use('/', express.static(__dirname + '/html'));
+            
+            var myErrorHandler = function (err, req, res, next) {
+            };
+
+            app.configure(function () {
+                app.use(myErrorHandler);
+            });
+
+            app._router.stack.forEach(function (endpoint) {
+                if (endpoint.route != undefined) {
+                    if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
+                        log("GET:    " + endpoint.route.path);
+                    if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
+                        log("DELETE: " + endpoint.route.path);
+                    if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
+                        log("POST:   " + endpoint.route.path);
+                    if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
+                        log("PUT:    " + endpoint.route.path);
+                }
+            });
+            
+            
+            server.listen(port, 'localhost', function () {
+                console.log();
+                log("Server started on port " + port);
+            });
+        }
+        catch (e) { 
+            console.log('Unable to start listening on port ' + port);
+        }
     }
     
     // Create a swagger file
