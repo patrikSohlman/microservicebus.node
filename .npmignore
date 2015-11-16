@@ -1,7 +1,6 @@
 ﻿gulpfile.js
 Gruntfile.js
 simulator.js
-restore.js
 BEFORE PUBLISH.md
 .travis.yml
 *.dat

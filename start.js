@@ -24,7 +24,8 @@ checkVersion("microservicebus.node")
         console.log();
         console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
         console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
-        console.log(util.padRight("type: 'npm update' to get the latest version", maxWidth, ' ').bgRed.gray.bold);
+        console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
+        console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
         console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
         console.log();
         

@@ -91,6 +91,12 @@ function MicroServiceBusHost(settings) {
             if (com != null) {
                 com.Stop();
             }
+            if (_startWebServer) {
+                console.log("Server:      " + "Shoutting down web server".yellow);
+                server.close();
+                app = null;
+                app = express();
+            }
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
@@ -613,7 +619,6 @@ function MicroServiceBusHost(settings) {
         if (!_startWebServer)
             return;
         
-        _startWebServer = false; // prevent the server from being restarted if connection is lost
         try {
             if (settings.port != undefined)
                 port = settings.port;
@@ -632,13 +637,6 @@ function MicroServiceBusHost(settings) {
             
             app.use('/', express.static(__dirname + '/html'));
             
-            var myErrorHandler = function (err, req, res, next) {
-            };
-
-            app.configure(function () {
-                app.use(myErrorHandler);
-            });
-
             app._router.stack.forEach(function (endpoint) {
                 if (endpoint.route != undefined) {
                     if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
