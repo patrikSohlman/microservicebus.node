@@ -35,7 +35,6 @@ var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
-var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
 var http = require('http');
@@ -189,6 +188,38 @@ function MicroServiceBusHost(settings) {
         loadItineraries(settings.organizationId, _itineraries);
     });
     
+    // Called by HUB when itineraries has been updated
+    client.on('integrationHub', 'changeState', function (state) {
+        console.log("changeState => ");
+
+        // Stop all services
+        console.log("");
+        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+        
+        _inboundServices.forEach(function (service) {
+            try {
+                if (state == "Active") {
+                    // Check if disabled!
+                    service.Start();
+                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(" ", 40, ' ') + "|";
+                    console.log(lineStatus);
+                }
+                else {
+                    service.Stop();
+                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
+                    console.log(lineStatus);
+                }
+            }
+            catch (ex) {
+                console.log('Unable to stop '.red + service.Name.red);
+                console.log(ex.message.red);
+            }
+        });
+
+    });
+
     // Incoming message from HUB
     client.on('integrationHub', 'sendMessage', function (message, destination) {
         //receiveMessage(message, destination);

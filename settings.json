@@ -1,5 +1,8 @@
 {
-    "debug": false,
+    "debug": true,
     "hubUri": "wss://microservicebus.com",
-    "port": 80
+    "port": 80,
+    "nodeName": "mikael",
+    "organizationId": "92c57318-8aef-4be4-b357-c8933f4de05b",
+    "machineName": "Breeze-Mikael"
 }

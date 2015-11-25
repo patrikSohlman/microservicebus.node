@@ -31,7 +31,6 @@
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
     "swaggerize-express": "^4.0.5",
-    "sync-request": "2.0.1",
     "uuid": "^2.0.1"
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
