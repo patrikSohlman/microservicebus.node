@@ -190,34 +190,35 @@ function MicroServiceBusHost(settings) {
     
     // Called by HUB when itineraries has been updated
     client.on('integrationHub', 'changeState', function (state) {
-        console.log("changeState => ");
-
-        // Stop all services
-        console.log("");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+        console.log();
+        if (state == "Active")
+            console.log("State changed to " + state.green);
+        else
+            console.log("State changed to " + state.yellow);
         
-        _inboundServices.forEach(function (service) {
-            try {
-                if (state == "Active") {
-                    // Check if disabled!
-                    service.Start();
-                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(" ", 40, ' ') + "|";
-                    console.log(lineStatus);
-                }
-                else {
+        if (state != "Active") {
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            
+            _inboundServices.forEach(function (service) {
+                try {
                     service.Stop();
                     var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
                     console.log(lineStatus);
+                
                 }
-            }
-            catch (ex) {
-                console.log('Unable to stop '.red + service.Name.red);
-                console.log(ex.message.red);
-            }
-        });
-
+                catch (ex) {
+                    console.log('Unable to stop '.red + service.Name.red);
+                    console.log(ex.message.red);
+                }
+            });
+        }
+        else { 
+            _downloadedScripts = [];
+            _inboundServices = [];
+            loadItineraries(settings.organizationId, _itineraries);
+        }
     });
 
     // Incoming message from HUB
@@ -230,7 +231,14 @@ function MicroServiceBusHost(settings) {
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
+        settings.state = response.state;
+
+        if (settings.state  == "Active")
+            console.log("State: " + settings.state .green);
+        else
+            console.log("State: " + settings.state .yellow);
         
+
         var sbSettings = {
             sbNamespace : response.sbNamespace,
             topic : response.topic,
@@ -242,6 +250,7 @@ function MicroServiceBusHost(settings) {
             protocol : response.protocol.toLowerCase()
         };
         com = new Com(settings.nodeName, sbSettings);
+
         com.OnQueueMessageReceived(function (sbMessage) {
             var message = sbMessage.body;
             var service = sbMessage.applicationProperties.value.service;
@@ -616,13 +625,17 @@ function MicroServiceBusHost(settings) {
                     }
                     // Start the service
                     try {
-                        newMicroService.Start();
+                        _inboundServices.push(newMicroService);
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
+                        var serviceStatus = "Started".green;
+
+                        if (settings.state == "Active")
+                            newMicroService.Start();
+                        else
+                            serviceStatus = "Stopped".yellow;
                         
-                        _inboundServices.push(newMicroService);
-                        
-                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
+                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
                         console.log(lineStatus);
                         callback(null, 'done');
                     }
