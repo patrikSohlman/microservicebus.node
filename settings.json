@@ -1,5 +1,0 @@
-{
-    "debug": false,
-    "hubUri": "wss://microservicebus.com",
-    "port": 80
-}

@@ -34,10 +34,17 @@ checkVersion("microservicebus.node")
 
 // Load settings
 try {
-    var data = fs.readFileSync('./settings.json');
-    var settings = JSON.parse(data);
+    var settings = {
+        "debug": false,
+        "hubUri": "wss://microservicebus.com",
+        "port": 80
+    }
+    if (fs.existsSync('./settings.json')) {
+        var data = fs.readFileSync('./settings.json');
+        settings = JSON.parse(data);
+    }
 }
-    catch (err) {
+catch (err) {
     console.log('Invalid settings file.'.red);
     process.abort();
 }

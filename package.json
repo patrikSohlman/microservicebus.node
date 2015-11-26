@@ -30,8 +30,8 @@
     "require-reload": "0.2.2",
     "scp": "0.0.3",
     "signalr-client": "0.0.14",
-    "swaggerize-express": "^4.0.5",
-    "uuid": "^2.0.1"
+    "swaggerize-express": "4.0.5",
+    "uuid": "2.0.1"
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
   "devDependencies": {
@@ -49,7 +49,7 @@
     "unit.js": "^2.0.0"
   },
   "engines": {
-    "node": "0.12.6"
+    "node": ">=0.12.0 <5.0"
   },
   "keywords": [
     "IoT",
@@ -70,5 +70,5 @@
     "mocha": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.18"
+  "version": "0.0.21"
 }
