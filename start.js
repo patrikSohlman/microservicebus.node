@@ -1,6 +1,7 @@
 ﻿require('colors');
 var util = require('./Utils.js');
 var pjson = require('./package.json');
+var checkVersion = require('package-json');
 var fs = require('fs');
 var maxWidth = 75;
 
@@ -15,12 +16,35 @@ console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
 
 console.log();
 
+checkVersion("microservicebus.node")
+			.then(function (rawData) {
+    
+    var latest = rawData['dist-tags'].latest;
+    if (latest != pjson.version) {
+        console.log();
+        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+        console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
+        console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
+        console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
+        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+        console.log();
+        
+    }
+});
+
 // Load settings
 try {
-    var data = fs.readFileSync('./settings.json');
-    var settings = JSON.parse(data);
+    var settings = {
+        "debug": false,
+        "hubUri": "wss://microservicebus.com",
+        "port": 80
+    }
+    if (fs.existsSync('./settings.json')) {
+        var data = fs.readFileSync('./settings.json');
+        settings = JSON.parse(data);
+    }
 }
-    catch (err) {
+catch (err) {
     console.log('Invalid settings file.'.red);
     process.abort();
 }

@@ -35,7 +35,6 @@ var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
-var syncrequest = require('sync-request');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
 var http = require('http');
@@ -91,11 +90,20 @@ function MicroServiceBusHost(settings) {
             if (com != null) {
                 com.Stop();
             }
+            if (_startWebServer) {
+                console.log("Server:      " + "Shoutting down web server".yellow);
+                server.close();
+                app = null;
+                app = express();
+            }
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
-            if (error.endsWith("does not exist for the organization"))
-                onStarted(0, 1);
+            try {
+                if (error.endsWith("does not exist for the organization"))
+                    onStarted(0, 1);
+            }
+            catch (e) { }
         },
         messageReceived: function (message) {
             //console.log("Websocket messageReceived: ", message);
@@ -180,6 +188,39 @@ function MicroServiceBusHost(settings) {
         loadItineraries(settings.organizationId, _itineraries);
     });
     
+    // Called by HUB when itineraries has been updated
+    client.on('integrationHub', 'changeState', function (state) {
+        console.log();
+        if (state == "Active")
+            console.log("State changed to " + state.green);
+        else
+            console.log("State changed to " + state.yellow);
+        
+        if (state != "Active") {
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            
+            _inboundServices.forEach(function (service) {
+                try {
+                    service.Stop();
+                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
+                    console.log(lineStatus);
+                
+                }
+                catch (ex) {
+                    console.log('Unable to stop '.red + service.Name.red);
+                    console.log(ex.message.red);
+                }
+            });
+        }
+        else { 
+            _downloadedScripts = [];
+            _inboundServices = [];
+            loadItineraries(settings.organizationId, _itineraries);
+        }
+    });
+
     // Incoming message from HUB
     client.on('integrationHub', 'sendMessage', function (message, destination) {
         //receiveMessage(message, destination);
@@ -190,7 +231,14 @@ function MicroServiceBusHost(settings) {
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
+        settings.state = response.state;
+
+        if (settings.state  == "Active")
+            console.log("State: " + settings.state .green);
+        else
+            console.log("State: " + settings.state .yellow);
         
+
         var sbSettings = {
             sbNamespace : response.sbNamespace,
             topic : response.topic,
@@ -202,6 +250,7 @@ function MicroServiceBusHost(settings) {
             protocol : response.protocol.toLowerCase()
         };
         com = new Com(settings.nodeName, sbSettings);
+
         com.OnQueueMessageReceived(function (sbMessage) {
             var message = sbMessage.body;
             var service = sbMessage.applicationProperties.value.service;
@@ -222,8 +271,11 @@ function MicroServiceBusHost(settings) {
         
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
+        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
         
-        setTimeout(function () { restorePersistedMessages(); }, 3000);
+        setTimeout(function () {
+            restorePersistedMessages();
+        }, 3000);
     });
     
     // Called by HUB when node has been successfully created
@@ -266,7 +318,7 @@ function MicroServiceBusHost(settings) {
             
             var hostData = {
                 Name : settings.nodeName ,
-                MachineName : settings.MachineName,
+                machineName : settings.machineName,
                 OrganizationID : settings.organizationId
             };
             client.invoke(
@@ -540,7 +592,7 @@ function MicroServiceBusHost(settings) {
                                     }
                                 });
                             }
-                            catch (generalEx) { 
+                            catch (generalEx) {
                                 log(generalEx.message);
                             }
                         });
@@ -573,13 +625,17 @@ function MicroServiceBusHost(settings) {
                     }
                     // Start the service
                     try {
-                        newMicroService.Start();
+                        _inboundServices.push(newMicroService);
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
+                        var serviceStatus = "Started".green;
+
+                        if (settings.state == "Active")
+                            newMicroService.Start();
+                        else
+                            serviceStatus = "Stopped".yellow;
                         
-                        _inboundServices.push(newMicroService);
-                        
-                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
+                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
                         console.log(lineStatus);
                         callback(null, 'done');
                     }
@@ -607,39 +663,58 @@ function MicroServiceBusHost(settings) {
         if (!_startWebServer)
             return;
         
-        if (settings.port != undefined)
-            port = settings.port;
-        
-        console.log();
-        
-        app.use(bodyParser.json());
-        server = http.createServer(app);
-        
-        genrateSwagger();
-        
-        app.use(swaggerize({
-            api: require('./swagger.json'),
-            docspath: '/swagger/docs/v1'
-        }));
-        app.use('/', express.static(__dirname + '/html'));
-        
-        app._router.stack.forEach(function (endpoint) {
-            if (endpoint.route != undefined) {
-                if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
-                    log("GET:    " + endpoint.route.path);
-                if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
-                    log("DELETE: " + endpoint.route.path);
-                if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
-                    log("POST:   " + endpoint.route.path);
-                if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
-                    log("PUT:    " + endpoint.route.path);
-            }
-        });
-        
-        server.listen(port, 'localhost', function () {
+        try {
+            if (settings.port != undefined)
+                port = settings.port;
+            
             console.log();
-            log("Server started on port " + port);
-        });
+            
+            app.use(bodyParser.json());
+            server = http.createServer(app);
+            
+            genrateSwagger();
+            
+            app.use(swaggerize({
+                api: require('./swagger.json'),
+                docspath: '/swagger/docs/v1'
+            }));
+            
+            // parse application/x-www-form-urlencoded
+            app.use(bodyParser.urlencoded({ extended: false }))
+            
+            // parse application/json
+            app.use(bodyParser.json())
+            
+            app.use(function (req, res) {
+                res.setHeader('Content-Type', 'text/plain')
+                res.write('you posted:\n')
+                res.end(JSON.stringify(req.body, null, 2))
+            })
+
+            app.use('/', express.static(__dirname + '/html'));
+            
+            app._router.stack.forEach(function (endpoint) {
+                if (endpoint.route != undefined) {
+                    if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
+                        log("GET:    " + endpoint.route.path);
+                    if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
+                        log("DELETE: " + endpoint.route.path);
+                    if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
+                        log("POST:   " + endpoint.route.path);
+                    if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
+                        log("PUT:    " + endpoint.route.path);
+                }
+            });
+            
+            
+            server.listen(port, 'localhost', function () {
+                console.log();
+                log("Server started on port " + port);
+            });
+        }
+        catch (e) { 
+            console.log('Unable to start listening on port ' + port);
+        }
     }
     
     // Create a swagger file
@@ -805,7 +880,7 @@ function MicroServiceBusHost(settings) {
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
         var messageId = guid.v1();
-
+        
         var trackingMessage =
  {
             _message : msg.MessageBuffer,
@@ -860,20 +935,25 @@ function MicroServiceBusHost(settings) {
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
+        console.log("bye")
+        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Offline", settings.organizationId);
         console.log("Received kill signal, shutting down gracefully.");
         log(settings.nodeName + ' signing out...');
+        setTimeout(function () {
+            client.end();
+            process.exit();
+        }, 100);
         
-        client.end();
-        process.exit();
     }
     
-    // listen for TERM signal .e.g. kill 
-    //process.on('SIGTERM', gracefulShutdown);
-    
-    // listen for INT signal e.g. Ctrl-C
-    // process.on('SIGINT', gracefulShutdown);
-    
     MicroServiceBusHost.prototype.Start = function (testFlag) {
+        if (!testFlag) {
+            // listen for TERM signal .e.g. kill 
+            process.on('SIGTERM', gracefulShutdown);
+            
+            // listen for INT signal e.g. Ctrl-C
+            process.on('SIGINT', gracefulShutdown);
+        }
         var args = process.argv.slice(2);
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
