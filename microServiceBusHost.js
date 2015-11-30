@@ -953,6 +953,10 @@ function MicroServiceBusHost(settings) {
             
             // listen for INT signal e.g. Ctrl-C
             process.on('SIGINT', gracefulShutdown);
+
+            process.on('uncaughtException', function (err) {
+                console.log('Uncaught exception: '.red + err);
+            });
         }
         var args = process.argv.slice(2);
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
