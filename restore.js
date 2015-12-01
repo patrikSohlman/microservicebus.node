@@ -15,15 +15,15 @@ console.log("Services removed".green);
 deleteFolderRecursive('./microServiceBus.BizTalk');
 console.log("Deleted".green);
 
-if (fs.existsSync('./settings.json'))
-    fs.unlinkSync('./settings.json');
+//if (fs.existsSync('./settings.json'))
+//    fs.unlinkSync('./settings.json');
 // Update settings
-//settings = {
-//    "debug": false,
-//    "hubUri": "wss://microservicebus.com",
-//    "port" : 80
-//}
-//util.saveSettings(settings);
+settings = {
+    "debug": false,
+    "hubUri": "wss://microservicebus.com",
+    "port" : 80
+}
+util.saveSettings(settings);
 console.log("Settings updated".green);
 console.log();
 
