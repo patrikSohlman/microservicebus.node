@@ -42,6 +42,7 @@ var express = require('express');
 var swaggerize = require('swaggerize-express');
 var bodyParser = require('body-parser')
 var guid = require('uuid');
+var pjson = require('./package.json');
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -320,7 +321,8 @@ function MicroServiceBusHost(settings) {
             var hostData = {
                 Name : settings.nodeName ,
                 machineName : settings.machineName,
-                OrganizationID : settings.organizationId
+                OrganizationID : settings.organizationId,
+                npmVersion : pjson.version
             };
             client.invoke(
                 'integrationHub', 

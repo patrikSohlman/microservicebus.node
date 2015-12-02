@@ -70,5 +70,5 @@
     "mocha": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.24"
+  "version": "0.0.25"
 }
