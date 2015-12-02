@@ -529,10 +529,10 @@ function MicroServiceBusHost(settings) {
                         var newMicroService = extend(new MicroService(), reload(localFilePath));
                         
                         newMicroService.OrganizationId = organizationId;
-                        newMicroService.ItineraryId = itinerary.id;
+                        newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
                         newMicroService.Itinerary = itinerary;
-                        newMicroService.IntegrationId = itinerary.integrationId;
+                        newMicroService.IntegrationId = activity.userData.integrationId;
                         newMicroService.Config = activity.userData.config;
                         newMicroService.IntegrationName = itinerary.integrationName;
                         newMicroService.Environment = itinerary.environment;
