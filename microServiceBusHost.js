@@ -42,6 +42,7 @@ var express = require('express');
 var swaggerize = require('swaggerize-express');
 var bodyParser = require('body-parser')
 var guid = require('uuid');
+var pjson = require('./package.json');
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -191,6 +192,7 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when itineraries has been updated
     client.on('integrationHub', 'changeState', function (state) {
         console.log();
+        settings.state = state;
         if (state == "Active")
             console.log("State changed to " + state.green);
         else
@@ -319,7 +321,8 @@ function MicroServiceBusHost(settings) {
             var hostData = {
                 Name : settings.nodeName ,
                 machineName : settings.machineName,
-                OrganizationID : settings.organizationId
+                OrganizationID : settings.organizationId,
+                npmVersion : pjson.version
             };
             client.invoke(
                 'integrationHub', 
@@ -425,11 +428,16 @@ function MicroServiceBusHost(settings) {
             }
             var itineraryId = itinerary.itineraryId;
             
-            async.map(itinerary.activities, function (activity, callback) {
-                startServiceAsync(activity, organizationId, itineraryId, function () {
+            // encapsulate each activity to work in async
+            var intineratyActivities = [];
+            for (var i = 0; i < itinerary.activities.length; i++) {
+                intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+            }
+            async.map(intineratyActivities, function (intineratyActivity, callback) {
+                startServiceAsync(intineratyActivity, organizationId, function () {
                     callback(null, null);
                 });
-                
+
             }, function (err, results) {
                 onStarted(itineraries.length, exceptionsLoadingItineraries);
                 startListen();
@@ -437,9 +445,11 @@ function MicroServiceBusHost(settings) {
 
         };
     }
-    
-    function startServiceAsync(activity, organizationId, itineraryId, done) {
+     
+    function startServiceAsync(intineratyActivity, organizationId, done) {
         try {
+            var activity = intineratyActivity.activity;
+            var itinerary = intineratyActivity.itinerary;
             if (activity.type == 'draw2d.Connection') {
                 done();
                 return;
@@ -521,10 +531,10 @@ function MicroServiceBusHost(settings) {
                         var newMicroService = extend(new MicroService(), reload(localFilePath));
                         
                         newMicroService.OrganizationId = organizationId;
-                        newMicroService.ItineraryId = itineraryId;
+                        newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
                         newMicroService.Itinerary = itinerary;
-                        newMicroService.IntegrationId = integrationId;
+                        newMicroService.IntegrationId = activity.userData.integrationId;
                         newMicroService.Config = activity.userData.config;
                         newMicroService.IntegrationName = itinerary.integrationName;
                         newMicroService.Environment = itinerary.environment;
@@ -1097,4 +1107,4 @@ function MicroServiceBusHost(settings) {
         onStarted = callback;
     };
 }
-module.exports = MicroServiceBusHost;
+module.exports = MicroServiceBusHost; 
