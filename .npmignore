@@ -1,7 +1,6 @@
 ﻿gulpfile.js
 Gruntfile.js
 simulator.js
-settings.json
 BEFORE PUBLISH.md
 .travis.yml
 *.dat
