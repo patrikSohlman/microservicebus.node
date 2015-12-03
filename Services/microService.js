@@ -167,6 +167,7 @@ function MicroService(microService) {
             originalMessage = this.CreateMessage(messageBuffer, 'text/plain', [], false);
             originalMessage.IsFirstAction = true;
         }
+        originalMessage.LastActivity = this.Name;
         originalMessage.FaultCode = errorId;
         originalMessage.FaultDescripton = errorDescription;
         onMessageReceivedCallback(originalMessage, this);

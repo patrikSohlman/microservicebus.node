@@ -315,7 +315,7 @@ function MicroServiceBusHost(settings) {
             }
         }
 
-    // Logging in using settings
+        // Logging in using settings
         else {
             
             var hostData = {
@@ -445,7 +445,12 @@ function MicroServiceBusHost(settings) {
 
         };
     }
-     
+    
+    // Preforms the following tasks
+    // 1. Checks if the service is enabled and continues to set the name of the script 
+    // 2. Downloads the script
+    // 3. Creatig the service and extends it from MicroService, and registring the events
+    // 4. Starts the service
     function startServiceAsync(intineratyActivity, organizationId, done) {
         try {
             var activity = intineratyActivity.activity;
@@ -668,7 +673,8 @@ function MicroServiceBusHost(settings) {
         }
     }
     
-    // Start listener
+    // The listner is used for incoming REST calls and is started
+    // only if there is an inbound REST service
     function startListen() {
         if (!_startWebServer)
             return;
