@@ -75,8 +75,7 @@ function MicroServiceBusHost(settings) {
     );
     
     // Wire up signalR status events
-    client.serviceHandlers = {
-        
+    client.serviceHandlers = {       
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
             console.log("Connection: " + "Connect Failed".red);
@@ -944,8 +943,7 @@ function MicroServiceBusHost(settings) {
                 'integrationHub',
 		        'hello');
 
-        }, 5000);
-        
+        }, 5000);     
     }
     
     // this function is called when you want the server to die gracefully

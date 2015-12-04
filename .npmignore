@@ -16,6 +16,7 @@ BEFORE PUBLISH.md
 microServiceBus.BizTalk
 persist
 Services
+Metadata
 !Services/microService.js
 !Services/sqlCommand.js
 obj
