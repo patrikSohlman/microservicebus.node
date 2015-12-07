@@ -43,6 +43,7 @@ var swaggerize = require('swaggerize-express');
 var bodyParser = require('body-parser')
 var guid = require('uuid');
 var pjson = require('./package.json');
+var memwatch; // used for debug profiler
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -277,6 +278,8 @@ function MicroServiceBusHost(settings) {
         setTimeout(function () {
             restorePersistedMessages();
         }, 3000);
+
+        startProfiling();
     });
     
     // Called by HUB when node has been successfully created
@@ -732,6 +735,39 @@ function MicroServiceBusHost(settings) {
         }
     }
     
+    function startProfiling() { 
+        /*
+        if (settings.debug && memwatch == undefined) {
+            memwatch = require('memwatch');
+            memwatch.on('leak', function (info) {
+                console.log();
+                console.log(util.padRight("", 75, '*').yellow);
+                console.log("Leak Detection".yellow);
+                console.log(JSON.stringify(info).grey);
+                console.log(util.padRight("", 75, '*').yellow);
+            });
+            memwatch.on('stats', function (stats) {
+                console.log();
+                console.log(util.padRight("", 75, '*').yellow);
+                console.log("Heap Usage".yellow);
+                console.log(JSON.stringify(stats).grey);
+                console.log(util.padRight("", 75, '*').yellow);
+            });
+            
+            var hd = new memwatch.HeapDiff();
+            
+            timerEvent = setInterval(function () {
+                var diff = hd.end();
+                console.log();
+                console.log(util.padRight("", 75, '*').yellow);
+                console.log("Heap Diffing".yellow);
+                console.log(JSON.stringify(diff).grey);
+                console.log(util.padRight("", 75, '*').yellow);
+            }, 60000);
+        }
+        */
+    }
+
     // Create a swagger file
     function genrateSwagger() {
         // Load template
@@ -1037,8 +1073,9 @@ function MicroServiceBusHost(settings) {
                 if (settings.debug == null) // jshint ignore:line
                     settings.debug = false;
                 
+
                 if (settings.hubUri == null) // jshint ignore:line
-                    settings.debug = "wss://microservicebus.com";
+                    settings.hubUri = "wss://microservicebus.com";
                 
                 util.saveSettings(settings);
                 
