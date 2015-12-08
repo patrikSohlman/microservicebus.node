@@ -270,6 +270,34 @@ function MicroServiceBusHost(settings) {
         });
         com.Start();
         
+        //var mainScriptUri = 'https://localhost:44302/api/Scripts/main.js';
+        
+        //request(mainScriptUri, function (err, response, scriptContent) {
+        //    if (response.statusCode != 200 || err != null) {
+        //        console.log("Unable to get main script file:".red);
+        //        process.exit;
+        //    }
+        //    else {
+        //        localFilePath = __dirname + "/main.js";
+        //        //fs.writeFileSync(localFilePath, scriptContent);
+        //        var Main = reload(localFilePath);
+        //        var mainModule = new Main(settings);
+        //        mainModule.OnStarted(function (loadedCount, exceptionCount) {
+        //            console.log();
+        //        });
+        //        mainModule.OnLog(function (msg) {
+        //            log(msg);
+        //        });
+        //        mainModule.OnTrackException(function (msg, lastActionId, status, fault, faultDescription) {
+        //            trackException(msg, lastActionId, status, fault, faultDescription);
+        //        });
+        //        mainModule.OnTrackMessage(function (msg, lastActionId, status) {
+        //            trackMessage(msg, lastActionId, status);
+        //        });
+        
+        //        mainModule.Start(signInResponse.itineraries);
+        //    }
+        //})
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
         client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
@@ -552,10 +580,10 @@ function MicroServiceBusHost(settings) {
                                 
                                 if (integrationMessage.FaultCode != null) {
                                     trackException(integrationMessage, 
-                                integrationMessage.LastActivity, 
-                                "Failed", 
-                                integrationMessage.FaultCode, 
-                                integrationMessage.FaultDescripton);
+                                    integrationMessage.LastActivity, 
+                                    "Failed", 
+                                    integrationMessage.FaultCode, 
+                                    integrationMessage.FaultDescripton);
                                     
                                     console.log('Exception: '.red + integrationMessage.FaultDescripton);
                                     return;
@@ -595,8 +623,8 @@ function MicroServiceBusHost(settings) {
                                         try {
                                             
                                             com.Submit(integrationMessage, 
-                                        successor.userData.host.toLowerCase(),
-                                        successor.userData.id);
+                                                successor.userData.host.toLowerCase(),
+                                                successor.userData.id);
                                             
                                             trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                         }
@@ -880,7 +908,7 @@ function MicroServiceBusHost(settings) {
             IsFault : false,
             FaultCode : msg.FaultCode,
             FaultDescription : msg.FaultDescripton,
-            IsFirstAction : msg.IsFirstAction,
+            IsFirstAction : status == "Started"? msg.IsFirstAction : "Completed",
             TimeStamp : utcNow,
             State : status,
             Variables : msg.Variables
