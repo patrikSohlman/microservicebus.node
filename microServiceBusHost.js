@@ -228,6 +228,7 @@ function MicroServiceBusHost(settings) {
         settings.debug = debug;
         
     });
+
     // Incoming message from HUB
     client.on('integrationHub', 'sendMessage', function (message, destination) {
         //receiveMessage(message, destination);
