@@ -75,7 +75,7 @@ function MicroServiceBusHost(settings) {
     );
     
     // Wire up signalR status events
-    client.serviceHandlers = {       
+    client.serviceHandlers = {
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
             console.log("Connection: " + "Connect Failed".red);
@@ -215,13 +215,18 @@ function MicroServiceBusHost(settings) {
                 }
             });
         }
-        else { 
+        else {
             _downloadedScripts = [];
             _inboundServices = [];
             loadItineraries(settings.organizationId, _itineraries);
         }
     });
 
+    client.on('integrationHub', 'changeDebug', function (debug) {
+        console.log("Debug state changed to ".grey + debug);
+        settings.debug = debug;
+        
+    });
     // Incoming message from HUB
     client.on('integrationHub', 'sendMessage', function (message, destination) {
         //receiveMessage(message, destination);
@@ -233,13 +238,14 @@ function MicroServiceBusHost(settings) {
         
         signInResponse = response;
         settings.state = response.state;
+        settings.debug = response.debug;
 
-        if (settings.state  == "Active")
-            console.log("State: " + settings.state .green);
+        if (settings.state == "Active")
+            console.log("State: " + settings.state.green);
         else
-            console.log("State: " + settings.state .yellow);
+            console.log("State: " + settings.state.yellow);
         
-
+        
         var sbSettings = {
             sbNamespace : response.sbNamespace,
             topic : response.topic,
@@ -251,7 +257,7 @@ function MicroServiceBusHost(settings) {
             protocol : response.protocol.toLowerCase()
         };
         com = new Com(settings.nodeName, sbSettings);
-
+        
         com.OnQueueMessageReceived(function (sbMessage) {
             var message = sbMessage.body;
             var service = sbMessage.applicationProperties.value.service;
@@ -589,6 +595,8 @@ function MicroServiceBusHost(settings) {
                                     return;
                                 }
                                 
+                                trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
+                                    
                                 // Process the itinerary to find next service
                                 var successors = getSuccessors(integrationMessage);
                                 
@@ -596,9 +604,6 @@ function MicroServiceBusHost(settings) {
                                     integrationMessage.Sender = settings.nodeName;
                                     
                                     var correlationValue = sender.CorrelationValue(null, integrationMessage);
-                                    
-                                    if (integrationMessage.LastActivity == integrationMessage.CreatedBy && correlationValue == null) // jshint ignore:line
-                                        trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
                                     
                                     // Check for correlations
                                     if (correlationValue != null) { // jshint ignore:line
@@ -671,7 +676,7 @@ function MicroServiceBusHost(settings) {
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
                         var serviceStatus = "Started".green;
-
+                        
                         if (settings.state == "Active")
                             newMicroService.Start();
                         else
@@ -733,7 +738,7 @@ function MicroServiceBusHost(settings) {
                 res.write('you posted:\n')
                 res.end(JSON.stringify(req.body, null, 2))
             })
-
+            
             app.use('/', express.static(__dirname + '/html'));
             
             app._router.stack.forEach(function (endpoint) {
@@ -755,7 +760,7 @@ function MicroServiceBusHost(settings) {
                 log("Server started on port " + port);
             });
         }
-        catch (e) { 
+        catch (e) {
             console.log('Unable to start listening on port ' + port);
         }
     }
@@ -890,8 +895,12 @@ function MicroServiceBusHost(settings) {
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
         var messageId = guid.v1();
+        
+        if (msg.IsFirstAction && status == "Completed")
+            msg.IsFirstAction = false;
+
         var trackingMessage =
- {
+        {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
@@ -908,7 +917,7 @@ function MicroServiceBusHost(settings) {
             IsFault : false,
             FaultCode : msg.FaultCode,
             FaultDescription : msg.FaultDescripton,
-            IsFirstAction : status == "Started"? msg.IsFirstAction : "Completed",
+            IsFirstAction : msg.IsFirstAction,
             TimeStamp : utcNow,
             State : status,
             Variables : msg.Variables
@@ -971,7 +980,7 @@ function MicroServiceBusHost(settings) {
                 'integrationHub',
 		        'hello');
 
-        }, 5000);     
+        }, 5000);
     }
     
     // this function is called when you want the server to die gracefully
@@ -995,7 +1004,7 @@ function MicroServiceBusHost(settings) {
             
             // listen for INT signal e.g. Ctrl-C
             process.on('SIGINT', gracefulShutdown);
-
+            
             process.on('uncaughtException', function (err) {
                 console.log('Uncaught exception: '.red + err);
             });
