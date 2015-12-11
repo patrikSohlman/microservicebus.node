@@ -280,34 +280,6 @@ function MicroServiceBusHost(settings) {
         });
         com.Start();
         
-        //var mainScriptUri = 'https://localhost:44302/api/Scripts/main.js';
-        
-        //request(mainScriptUri, function (err, response, scriptContent) {
-        //    if (response.statusCode != 200 || err != null) {
-        //        console.log("Unable to get main script file:".red);
-        //        process.exit;
-        //    }
-        //    else {
-        //        localFilePath = __dirname + "/main.js";
-        //        //fs.writeFileSync(localFilePath, scriptContent);
-        //        var Main = reload(localFilePath);
-        //        var mainModule = new Main(settings);
-        //        mainModule.OnStarted(function (loadedCount, exceptionCount) {
-        //            console.log();
-        //        });
-        //        mainModule.OnLog(function (msg) {
-        //            log(msg);
-        //        });
-        //        mainModule.OnTrackException(function (msg, lastActionId, status, fault, faultDescription) {
-        //            trackException(msg, lastActionId, status, fault, faultDescription);
-        //        });
-        //        mainModule.OnTrackMessage(function (msg, lastActionId, status) {
-        //            trackMessage(msg, lastActionId, status);
-        //        });
-        
-        //        mainModule.Start(signInResponse.itineraries);
-        //    }
-        //})
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
         client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
@@ -316,8 +288,6 @@ function MicroServiceBusHost(settings) {
             restorePersistedMessages();
         }, 3000);
         
-        //startProfiling();
-
         keypress(process.stdin);
         
         // listen for the "keypress" event
@@ -630,13 +600,12 @@ function MicroServiceBusHost(settings) {
                                         try {
                                             client.invoke(
                                                 'integrationHub',
-		                                    'followCorrelation',	
-		                                    successor.userData.id, 
-                                            settings.nodeName,
-                                            correlationValue,
-                                            settings.organizationId,
-                                            integrationMessage);
-
+		                                        'followCorrelation',	
+		                                        successor.userData.id, 
+                                                settings.nodeName,
+                                                correlationValue,
+                                                settings.organizationId,
+                                                integrationMessage);
                                         }
                                     catch (err) {
                                             console.log(err);
@@ -647,8 +616,8 @@ function MicroServiceBusHost(settings) {
                                         try {
                                             
                                             com.Submit(integrationMessage, 
-                                                successor.userData.host.toLowerCase(),
-                                                successor.userData.id);
+                                                        successor.userData.host.toLowerCase(),
+                                                        successor.userData.id);
                                             
                                             trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                         }
@@ -784,16 +753,6 @@ function MicroServiceBusHost(settings) {
         }
     }
     
-    function startProfiling() { 
-        if (settings.debug) {
-            setInterval(function () {
-                heapdump.writeSnapshot(function (err, filename) {
-                    console.log('dump written to', filename);
-                });
-            }, 10000);
-        }
-    }
-
     // Create a swagger file
     function genrateSwagger() {
         // Load template

@@ -13,6 +13,9 @@ console.log("Services removed".green);
 
 // Delete folders
 deleteFolderRecursive('./microServiceBus.BizTalk');
+deleteFolderRecursive('./data');
+deleteFolderRecursive('./output');
+deleteFolderRecursive('./persist');
 console.log("Deleted".green);
 
 //if (fs.existsSync('./settings.json'))
