@@ -67,7 +67,9 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-    
+    var heapdump = require('heapdump');
+    var keypress = require('keypress');
+
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
@@ -278,8 +280,21 @@ function MicroServiceBusHost(settings) {
         setTimeout(function () {
             restorePersistedMessages();
         }, 3000);
+        
+        //startProfiling();
 
-        startProfiling();
+        keypress(process.stdin);
+        
+        // listen for the "keypress" event
+        process.stdin.on('keypress', function (ch, key) {
+            if (key.name == 'd') {
+                heapdump.writeSnapshot(function (err, filename) {
+                    console.log('Dump written to'.yellow, filename.yellow);
+                });
+            }
+        });
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
     });
     
     // Called by HUB when node has been successfully created
@@ -736,36 +751,13 @@ function MicroServiceBusHost(settings) {
     }
     
     function startProfiling() { 
-        /*
-        if (settings.debug && memwatch == undefined) {
-            memwatch = require('memwatch');
-            memwatch.on('leak', function (info) {
-                console.log();
-                console.log(util.padRight("", 75, '*').yellow);
-                console.log("Leak Detection".yellow);
-                console.log(JSON.stringify(info).grey);
-                console.log(util.padRight("", 75, '*').yellow);
-            });
-            memwatch.on('stats', function (stats) {
-                console.log();
-                console.log(util.padRight("", 75, '*').yellow);
-                console.log("Heap Usage".yellow);
-                console.log(JSON.stringify(stats).grey);
-                console.log(util.padRight("", 75, '*').yellow);
-            });
-            
-            var hd = new memwatch.HeapDiff();
-            
-            timerEvent = setInterval(function () {
-                var diff = hd.end();
-                console.log();
-                console.log(util.padRight("", 75, '*').yellow);
-                console.log("Heap Diffing".yellow);
-                console.log(JSON.stringify(diff).grey);
-                console.log(util.padRight("", 75, '*').yellow);
-            }, 60000);
+        if (settings.debug) {
+            setInterval(function () {
+                heapdump.writeSnapshot(function (err, filename) {
+                    console.log('dump written to', filename);
+                });
+            }, 10000);
         }
-        */
     }
 
     // Create a swagger file
