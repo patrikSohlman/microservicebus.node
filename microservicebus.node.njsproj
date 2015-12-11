@@ -23,7 +23,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <ProjectView>ShowAllFiles</ProjectView>
+    <ProjectView>ProjectFiles</ProjectView>
     <StartWebBrowser>False</StartWebBrowser>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -51,14 +51,6 @@
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
     <Content Include="BEFORE PUBLISH.md" />
-    <Content Include="Metadata\deploymentTemplates\apiappconfig.azureresource.json" />
-    <Content Include="Metadata\Icons\hero.png" />
-    <Content Include="Metadata\Icons\large.png" />
-    <Content Include="Metadata\Icons\medium.png" />
-    <Content Include="Metadata\Icons\small.png" />
-    <Content Include="Metadata\Icons\wide.png" />
-    <Content Include="Metadata\UIDefinition.json" />
-    <Content Include="Metadata\_apiDefinition.swagger.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="settings.json" />
@@ -69,9 +61,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
-    <Folder Include="Metadata\" />
-    <Folder Include="Metadata\deploymentTemplates\" />
-    <Folder Include="Metadata\Icons\" />
     <Folder Include="test\" />
     <Folder Include="Services\" />
   </ItemGroup>
