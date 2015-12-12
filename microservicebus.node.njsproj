@@ -36,6 +36,7 @@
     <Compile Include="Gruntfile.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="Com.js" />
+    <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
     <Compile Include="restore.js" />
     <Compile Include="server.js" />
@@ -59,6 +60,7 @@
     <Content Include="swaggerTemplate.json" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="handlers\" />
     <Folder Include="test\" />
     <Folder Include="Services\" />
   </ItemGroup>

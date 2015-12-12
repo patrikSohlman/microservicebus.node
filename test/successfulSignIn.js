@@ -62,7 +62,7 @@ describe('SignIn', function () {
                     request(url)
 		                .get('/api/data/azureApiAppInboundService1/test')
 		                .expect('Content-Type', /json/)
-		                .expect(200)//Status code
+		                .expect(200) //Status code
 		                .end(function (err, res) {
                             if (err) {
                                 throw err;
