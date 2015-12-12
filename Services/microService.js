@@ -87,6 +87,7 @@ function MicroService(microService) {
         var integrationMessage = this.CreateMessage(messageBuffer, contentType, varaiables, isBinary);
         onMessageReceivedCallback(integrationMessage, this);
     };
+    
     // Submits reponse message back to host
     MicroService.prototype.SubmitResponseMessage = function (payload, context, contentType) {
         
@@ -126,6 +127,7 @@ function MicroService(microService) {
         
         onMessageReceivedCallback(integrationMessage, this);
     };
+    
     // Call indicating the outbound message has been processed.
     MicroService.prototype.Done = function (integrationMessage, destination) {
         onCompletedCallback(integrationMessage, destination);
@@ -243,16 +245,18 @@ function MicroService(microService) {
     };
 
     // Internal
-    MicroService.prototype.CreateMessage = function (messageBuffer, contentType, varaiables, isBinary) {
+    MicroService.prototype.CreateMessage = function (messageBuffer, contentType, variables, isBinary) {
         
         // clone itinerary
         var json = JSON.stringify(this.Itinerary);
         var itinerary = JSON.parse(json);
         
         
-        if (varaiables != null && itinerary.variables != null)
-            variables = itinerary.variables.concat(varaiables);
-       
+        if (variables != null && itinerary.variables != null)
+            variables = itinerary.variables.concat(variables);
+        
+        itinerary.variables = variables;
+
         var integrationMessage = {
             InterchangeId : guid.v1(),
             IntegrationId : this.IntegrationId,
@@ -270,7 +274,7 @@ function MicroService(microService) {
             IsLargeMessage : false,
             IsCorrelation : false,
             IsFirstAction : true,
-            Variables : varaiables
+            Variables : variables
         };
         
         return integrationMessage;
