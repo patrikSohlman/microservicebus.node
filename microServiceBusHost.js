@@ -43,6 +43,7 @@ var swaggerize = require('swaggerize-express');
 var bodyParser = require('body-parser')
 var guid = require('uuid');
 var pjson = require('./package.json');
+var keypress = require('keypress');
 var memwatch; // used for debug profiler
 
 function MicroServiceBusHost(settings) {
@@ -67,8 +68,6 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-    var heapdump = require('heapdump');
-    var keypress = require('keypress');
 
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -265,6 +264,7 @@ function MicroServiceBusHost(settings) {
         // listen for the "keypress" event
         process.stdin.on('keypress', function (ch, key) {
             if (key.name == 'd') {
+                var heapdump = require('heapdump');
                 heapdump.writeSnapshot(function (err, filename) {
                     console.log('Dump written to'.yellow, filename.yellow);
                 });
@@ -329,7 +329,7 @@ function MicroServiceBusHost(settings) {
     // Stopping all services
     function stopAllServices() { 
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         
         for (var i = 0; i < _inboundServices.length; i++) {
@@ -431,13 +431,12 @@ function MicroServiceBusHost(settings) {
     function loadItineraries(organizationId, itineraries) {
         console.log("");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         
         if (itineraries.length == 0)
             onStarted(0, 0);
-        
-        
+
         async.map(itineraries, function (itinerary, callback) {
             var itineraryId = itinerary.itineraryId;
             
@@ -452,7 +451,6 @@ function MicroServiceBusHost(settings) {
                 });
 
             }, function (err, results) {
-                var r = 123;
                 callback(null, null);
             });
 
@@ -474,45 +472,7 @@ function MicroServiceBusHost(settings) {
             onStarted(itineraries.length, exceptionsLoadingItineraries);
             startListen();
         });
-        
-
-        //for (var n in itineraries) {
-        //    itinerary = itineraries[n];
-        //    if (_shoutDown) {
-        //        break;
-        //    }
-        //    var itineraryId = itinerary.itineraryId;
-            
-        //    // encapsulate each activity to work in async
-        //    var intineratyActivities = [];
-        //    for (var i = 0; i < itinerary.activities.length; i++) {
-        //        intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
-        //    }
-        //    async.map(intineratyActivities, function (intineratyActivity, callback) {
-        //        startServiceAsync(intineratyActivity, organizationId, function () {
-        //            callback(null, null);
-        //        });
-
-        //    }, function (err, results) {
-        //        for (i = 0; i < _inboundServices.length; i++) {
-        //            var newMicroService = _inboundServices[i];
-
-        //            var serviceStatus = "Started".green;
-                    
-        //            if (settings.state == "Active")
-        //                newMicroService.Start();
-        //            else
-        //                serviceStatus = "Stopped".yellow;
-                    
-        //            var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
-        //            console.log(lineStatus);
-        //        }
-
-        //        onStarted(itineraries.length, exceptionsLoadingItineraries);
-        //        startListen();
-        //    });
-
-        //};
+    
     }
     
     // Preforms the following tasks
@@ -554,7 +514,9 @@ function MicroServiceBusHost(settings) {
                         
                         if (!isEnabled) {
                             var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Disabled".grey + "  |" + util.padRight(scriptfileName, 40, ' ') + "|";
-                            console.log(lineStatus); return;
+                            console.log(lineStatus);
+                            done();
+                            return;
                         }
                         var localFilePath;
                         
@@ -631,7 +593,7 @@ function MicroServiceBusHost(settings) {
                                     return;
                                 }
                                 
-                                trackMessage(integrationMessage, integrationMessage.LastActivity, "Started");
+                                trackMessage(integrationMessage, integrationMessage.LastActivity, integrationMessage.IsFirstAction?"Started":"Completed");
                                     
                                 // Process the itinerary to find next service
                                 var successors = getSuccessors(integrationMessage);
@@ -654,7 +616,7 @@ function MicroServiceBusHost(settings) {
                                                 settings.organizationId,
                                                 integrationMessage);
                                         }
-                                    catch (err) {
+                                        catch (err) {
                                             console.log(err);
                                         }
                                     }
@@ -666,7 +628,7 @@ function MicroServiceBusHost(settings) {
                                                         successor.userData.host.toLowerCase(),
                                                         successor.userData.id);
                                             
-                                            trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
+                                            //trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                         }
                                     catch (err) {
                                             console.log(err);
@@ -1115,7 +1077,6 @@ function MicroServiceBusHost(settings) {
                 
                 util.saveSettings(settings);
                 
-                console.log('OrganizationId: ' + settings.organizationId.gray);
                 console.log('Node:           ' + settings.nodeName.gray);
                 console.log('Hub:            ' + settings.hubUri.gray);
                 console.log('');
@@ -1147,9 +1108,9 @@ function MicroServiceBusHost(settings) {
             settings.machineName = os.hostname();
             util.saveSettings(settings);
             
-            console.log('OrganizationId: ' + settings.organizationId.gray);
-            console.log('Node:           ' + settings.nodeName.gray);
-            console.log('Hub:            ' + settings.hubUri.gray);
+            console.log('');
+            console.log('Node: ' + settings.nodeName.gray);
+            console.log('Hub:  ' + settings.hubUri.gray);
             console.log('');
         }
     };
