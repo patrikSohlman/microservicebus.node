@@ -10,7 +10,7 @@ exports.padLeft = function (nr, n, str) {
 };
 
 exports.padRight = function (nr, n, str) {
-    if (nr.length > n)
+    if (nr != undefined && nr.length > n)
         nr = nr.substring(0, n);
     
     return nr + Array(n - String(nr).length + 1).join(str || '0');

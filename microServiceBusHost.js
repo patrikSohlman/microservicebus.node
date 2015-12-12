@@ -97,6 +97,7 @@ function MicroServiceBusHost(settings) {
                 app = null;
                 app = express();
             }
+            stopAllServices();
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
@@ -157,22 +158,8 @@ function MicroServiceBusHost(settings) {
             app = express();
         }
         // Stop all services
-        console.log("");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        
-        _inboundServices.forEach(function (service) {
-            try {
-                service.Stop();
-                var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
-                console.log(lineStatus);
-            }
-        catch (ex) {
-                console.log('Unable to stop '.red + service.Name.red);
-                console.log(ex.message.red);
-            }
-        });
+        stopAllServices();
+
         _downloadedScripts = [];
         _inboundServices = [];
         
@@ -199,22 +186,7 @@ function MicroServiceBusHost(settings) {
             console.log("State changed to " + state.yellow);
         
         if (state != "Active") {
-            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-            console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
-            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-            
-            _inboundServices.forEach(function (service) {
-                try {
-                    service.Stop();
-                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
-                    console.log(lineStatus);
-                
-                }
-                catch (ex) {
-                    console.log('Unable to stop '.red + service.Name.red);
-                    console.log(ex.message.red);
-                }
-            });
+            stopAllServices();
         }
         else {
             _downloadedScripts = [];
@@ -278,34 +250,6 @@ function MicroServiceBusHost(settings) {
         });
         com.Start();
         
-        //var mainScriptUri = 'https://localhost:44302/api/Scripts/main.js';
-        
-        //request(mainScriptUri, function (err, response, scriptContent) {
-        //    if (response.statusCode != 200 || err != null) {
-        //        console.log("Unable to get main script file:".red);
-        //        process.exit;
-        //    }
-        //    else {
-        //        localFilePath = __dirname + "/main.js";
-        //        //fs.writeFileSync(localFilePath, scriptContent);
-        //        var Main = reload(localFilePath);
-        //        var mainModule = new Main(settings);
-        //        mainModule.OnStarted(function (loadedCount, exceptionCount) {
-        //            console.log();
-        //        });
-        //        mainModule.OnLog(function (msg) {
-        //            log(msg);
-        //        });
-        //        mainModule.OnTrackException(function (msg, lastActionId, status, fault, faultDescription) {
-        //            trackException(msg, lastActionId, status, fault, faultDescription);
-        //        });
-        //        mainModule.OnTrackMessage(function (msg, lastActionId, status) {
-        //            trackMessage(msg, lastActionId, status);
-        //        });
-        
-        //        mainModule.Start(signInResponse.itineraries);
-        //    }
-        //})
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
         client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
@@ -369,6 +313,28 @@ function MicroServiceBusHost(settings) {
         }
     }
     
+    // Stopping all services
+    function stopAllServices() { 
+        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Script file", 40, ' ') + "|");
+        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+        
+        for (var i = 0; i < _inboundServices.length; i++) {
+            var service = _inboundServices[i];
+            try {
+                service.Stop();
+                var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
+                console.log(lineStatus);
+                service = undefined;
+                delete service;
+            }
+                catch (ex) {
+                console.log('Unable to stop '.red + service.Name.red);
+                console.log(ex.message.red);
+            }
+        }
+    }
+
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
@@ -458,11 +424,8 @@ function MicroServiceBusHost(settings) {
         if (itineraries.length == 0)
             onStarted(0, 0);
         
-        for (var n in itineraries) {
-            itinerary = itineraries[n];
-            if (_shoutDown) {
-                break;
-            }
+        
+        async.map(itineraries, function (itinerary, callback) {
             var itineraryId = itinerary.itineraryId;
             
             // encapsulate each activity to work in async
@@ -476,11 +439,67 @@ function MicroServiceBusHost(settings) {
                 });
 
             }, function (err, results) {
-                onStarted(itineraries.length, exceptionsLoadingItineraries);
-                startListen();
+                var r = 123;
+                callback(null, null);
             });
 
-        };
+        }, function (err, results) {
+            for (i = 0; i < _inboundServices.length; i++) {
+                var newMicroService = _inboundServices[i];
+                
+                var serviceStatus = "Started".green;
+                
+                if (settings.state == "Active")
+                    newMicroService.Start();
+                else
+                    serviceStatus = "Stopped".yellow;
+                
+                var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
+                console.log(lineStatus);
+            }
+            
+            onStarted(itineraries.length, exceptionsLoadingItineraries);
+            startListen();
+        });
+        
+
+        //for (var n in itineraries) {
+        //    itinerary = itineraries[n];
+        //    if (_shoutDown) {
+        //        break;
+        //    }
+        //    var itineraryId = itinerary.itineraryId;
+            
+        //    // encapsulate each activity to work in async
+        //    var intineratyActivities = [];
+        //    for (var i = 0; i < itinerary.activities.length; i++) {
+        //        intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+        //    }
+        //    async.map(intineratyActivities, function (intineratyActivity, callback) {
+        //        startServiceAsync(intineratyActivity, organizationId, function () {
+        //            callback(null, null);
+        //        });
+
+        //    }, function (err, results) {
+        //        for (i = 0; i < _inboundServices.length; i++) {
+        //            var newMicroService = _inboundServices[i];
+
+        //            var serviceStatus = "Started".green;
+                    
+        //            if (settings.state == "Active")
+        //                newMicroService.Start();
+        //            else
+        //                serviceStatus = "Stopped".yellow;
+                    
+        //            var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
+        //            console.log(lineStatus);
+        //        }
+
+        //        onStarted(itineraries.length, exceptionsLoadingItineraries);
+        //        startListen();
+        //    });
+
+        //};
     }
     
     // Preforms the following tasks
@@ -679,15 +698,15 @@ function MicroServiceBusHost(settings) {
                         _inboundServices.push(newMicroService);
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
-                        var serviceStatus = "Started".green;
+                        //var serviceStatus = "Started".green;
                         
-                        if (settings.state == "Active")
-                            newMicroService.Start();
-                        else
-                            serviceStatus = "Stopped".yellow;
+                        //if (settings.state == "Active")
+                        //    newMicroService.Start();
+                        //else
+                        //    serviceStatus = "Stopped".yellow;
                         
-                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
-                        console.log(lineStatus);
+                        //var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
+                        //console.log(lineStatus);
                         callback(null, 'done');
                     }
                     catch (ex) {
