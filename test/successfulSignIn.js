@@ -89,5 +89,81 @@ describe('SignIn', function () {
             catch (errr) {console.log();}
         }
     });
+    
+    it('Save settings should work', function (done) {
+        
+        settings = {
+            "debug": false,
+            "hubUri": "wss://microservicebus.com",
+            "nodeName": "WRONGHOST",
+            "organizationId" : process.env.organizationid,
+            "port" : 9090
+        }
+        util.saveSettings(settings);
+        done();
+    });
+    
+    it('Sign in with wrong node should not work', function () {
+        this.timeout(10000);
+        loggedInComplete1 = false;
+        microServiceBusHost = new MicroServiceBusHost(settings);
+        microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+            describe('Sign in with wrong node', function () {
+                
+                it('Should complete with errors', function (done) {
+                    exceptionCount.should.equal(1);
+                    done();
+                });
+                
+            });
+            loggedInComplete1 = true;
+        });
+        
+        microServiceBusHost.Start(true);
+        while (loggedInComplete1 == false) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) { console.log(); }
+        }
+    });
+
+    it('Save settings should work', function (done) {
+        
+        settings = {
+            "debug": false,
+            "hubUri": "wss://microservicebus.com",
+            "nodeName": "TestNode1",
+            "organizationId" : "65b22e1f-a17e-432f-b9f2-b7057423a782",
+            "port" : 9090
+        }
+        util.saveSettings(settings);
+        done();
+    });
+    
+    it('Sign in with wrong org should not work', function () {
+        this.timeout(10000);
+        loggedInComplete1 = false;
+        microServiceBusHost = new MicroServiceBusHost(settings);
+        microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+            describe('Sign in with wrong organization', function () {
+                
+                it('Should complete with errors', function (done) {
+                    exceptionCount.should.equal(1);
+                    done();
+                });
+                
+            });
+            loggedInComplete1 = true;
+        });
+        
+        microServiceBusHost.Start(true);
+        while (loggedInComplete1 == false) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) { console.log(); }
+        }
+    });
 
 });

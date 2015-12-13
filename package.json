@@ -70,8 +70,8 @@
   },
   "scripts": {
     "lint": "jshint Utils.js",
-    "mocha": "mocha Tests/successfulSignIn.js",
+    "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.31"
+  "version": "0.0.32"
 }

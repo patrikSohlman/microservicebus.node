@@ -135,6 +135,7 @@ function MicroServiceBusHost(settings) {
     // Called by HUB if it was ot able to process the request
     client.on('integrationHub', 'errorMessage', function (message) {
         console.log("errorMessage => " + message);
+        onStarted(0, 1);
     });
     
     // Called by HUB when user clicks on the Hosts page
