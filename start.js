@@ -57,5 +57,11 @@ var microServiceBusHost = new MicroServiceBusHost(settings);
 microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
     
 });
+microServiceBusHost.OnStopped(function () {
+    
+});
+microServiceBusHost.OnUpdatedItineraryComplete(function () {
+    
+});
 
 microServiceBusHost.Start();

@@ -58,6 +58,7 @@
     <Content Include="swagger.json" />
     <Content Include="swaggerPathTemplate.json" />
     <Content Include="swaggerTemplate.json" />
+    <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />

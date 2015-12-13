@@ -49,6 +49,8 @@ var memwatch; // used for debug profiler
 function MicroServiceBusHost(settings) {
     // Callbacks
     this.onStarted = null;
+    this.onStopped = null;
+    this.onUpdatedItineraryComplete = null;
     // Handle settings
     var temporaryVerificationCode;
     var existingHostName;
@@ -76,7 +78,7 @@ function MicroServiceBusHost(settings) {
         true
     );
     
-    // Wire up signalR status events
+    // Wire up signalR events
     client.serviceHandlers = {
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
@@ -92,12 +94,7 @@ function MicroServiceBusHost(settings) {
             if (com != null) {
                 com.Stop();
             }
-            if (_startWebServer) {
-                console.log("Server:      " + "Shoutting down web server".yellow);
-                server.close();
-                app = null;
-                app = express();
-            }
+            
             stopAllServices();
         },
         onerror: function (error) {
@@ -128,40 +125,59 @@ function MicroServiceBusHost(settings) {
         }
     };
     
-    client.on('integrationHub', 'broadcastMessage', function (message) {
-        console.log("broadcastMessage => " + message);
+    // Wire up signalR inbound events handlers
+    client.on('integrationHub', 'errorMessage', function (message) {
+        OnErrorMessage(message);
+    });
+    client.on('integrationHub', 'ping', function (message) {
+        OnPing(message); 
+    });
+    client.on('integrationHub', 'getEndpoints', function (message) {
+        OnGetEndpoints(message);
+    });    
+    client.on('integrationHub', 'updateItinerary', function (updatedItinerary) {
+        OnUpdateItinerary(updatedItinerary);
+    });
+    client.on('integrationHub', 'changeState', function (state) {
+        OnChangeState(state);
+    });
+    client.on('integrationHub', 'changeDebug', function (debug) {
+        OnChangeDebug(debug);
+    });
+    client.on('integrationHub', 'sendMessage', function (message, destination) {
+        OnSendMessage(message, destination)
+    });
+    client.on('integrationHub', 'signInMessage', function (response) {
+        OnSignInMessage(response);
+    });
+    client.on('integrationHub', 'nodeCreated', function (nodeData) {
+        OnNodeCreated(nodeData);
     });
     
     // Called by HUB if it was ot able to process the request
-    client.on('integrationHub', 'errorMessage', function (message) {
+    function OnErrorMessage(message) {
         console.log("errorMessage => " + message);
         onStarted(0, 1);
-    });
-    
+    };
     // Called by HUB when user clicks on the Hosts page
-    client.on('integrationHub', 'ping', function (message) {
+    function OnPing(message) {
+        
         console.log("ping => " + _inboundServices.length + " active services");
         
         client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
         
-    });
-    
+    }
     // Called by HUB to receive all active serices
-    client.on('integrationHub', 'getEndpoints', function (message) {
+    function OnGetEndpoints(message) {
         console.log("getEndpoints => " + message);
-    });
-    
+    }
     // Called by HUB when itineraries has been updated
-    client.on('integrationHub', 'updateItinerary', function (updatedItinerary) {
+    function OnUpdateItinerary(updatedItinerary) {
         console.log("updateItinerary => ");
-        if (_startWebServer) {
-            server.close();
-            app = null;
-            app = express();
-        }
+        
         // Stop all services
         stopAllServices();
-
+        
         _downloadedScripts = [];
         _inboundServices = [];
         
@@ -176,10 +192,9 @@ function MicroServiceBusHost(settings) {
         
         
         loadItineraries(settings.organizationId, _itineraries);
-    });
-    
+    }
     // Called by HUB when itineraries has been updated
-    client.on('integrationHub', 'changeState', function (state) {
+    function OnChangeState(state) {
         console.log();
         settings.state = state;
         if (state == "Active")
@@ -195,27 +210,25 @@ function MicroServiceBusHost(settings) {
             _inboundServices = [];
             loadItineraries(settings.organizationId, _itineraries);
         }
-    });
-
-    client.on('integrationHub', 'changeDebug', function (debug) {
+    }
+    // Update debug mode
+    function OnChangeDebug(debug) {
         console.log("Debug state changed to ".grey + debug);
         settings.debug = debug;
         
-    });
-
+    }
     // Incoming message from HUB
-    client.on('integrationHub', 'sendMessage', function (message, destination) {
+    function OnSendMessage (message, destination) {
         //receiveMessage(message, destination);
-    });
-    
+    }
     // Called by HUB when signin  has been successful
-    client.on('integrationHub', 'signInMessage', function (response) {
+    function OnSignInMessage (response) {
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
         settings.state = response.state;
         settings.debug = response.debug;
-
+        
         if (settings.state == "Active")
             console.log("State: " + settings.state.green);
         else
@@ -247,7 +260,7 @@ function MicroServiceBusHost(settings) {
         });
         com.OnQueueDebugCallback(function (message) {
             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
-                console.log("OnSubmitOk: ".green + message);
+                console.log("COM: ".green + message);
             }
         });
         com.Start();
@@ -260,23 +273,22 @@ function MicroServiceBusHost(settings) {
             restorePersistedMessages();
         }, 3000);
         
-        keypress(process.stdin);
+        //keypress(process.stdin);
         
-        // listen for the "keypress" event
-        process.stdin.on('keypress', function (ch, key) {
-            if (key.name == 'd') {
-                var heapdump = require('heapdump');
-                heapdump.writeSnapshot(function (err, filename) {
-                    console.log('Dump written to'.yellow, filename.yellow);
-                });
-            }
-        });
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
-    });
-    
-    // Called by HUB when node has been successfully created
-    client.on('integrationHub', 'nodeCreated', function (nodeData) {
+        //// listen for the "keypress" event
+        //process.stdin.on('keypress', function (ch, key) {
+        //    if (key.name == 'd') {
+        //        var heapdump = require('heapdump');
+        //        heapdump.writeSnapshot(function (err, filename) {
+        //            console.log('Dump written to'.yellow, filename.yellow);
+        //        });
+        //    }
+        //});
+        //process.stdin.setRawMode(true);
+        //process.stdin.resume();
+    }
+    // Called by HUB when node has been successfully created    
+    function OnNodeCreated (nodeData) {
         
         nodeData.machineName = os.hostname();
         
@@ -289,8 +301,10 @@ function MicroServiceBusHost(settings) {
         fs.writeFileSync('./settings.json', data);
         
         signIn();
-    });
+    }
     
+    
+
     // Signing in the to HUB
     function signIn() {
         
@@ -328,7 +342,17 @@ function MicroServiceBusHost(settings) {
     }
     
     // Stopping all services
-    function stopAllServices() { 
+    function stopAllServices() {
+        //if (com != null) {
+        //    com.Stop();
+        //}
+        if (_startWebServer) {
+            console.log("Server:      " + "Shutting down web server".yellow);
+            server.close();
+            app = null;
+            app = express();
+        }
+
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
@@ -471,6 +495,10 @@ function MicroServiceBusHost(settings) {
             }
             
             onStarted(itineraries.length, exceptionsLoadingItineraries);
+            
+            if(onUpdatedItineraryComplete != null)
+                onUpdatedItineraryComplete();
+
             startListen();
         });
     
@@ -1139,11 +1167,47 @@ function MicroServiceBusHost(settings) {
             client.serviceHandlers = null;
             client.end();
             delete client;
+            onStopped();
         } 
         catch (ex) { }
     };
     MicroServiceBusHost.prototype.OnStarted = function (callback) {
         onStarted = callback;
     };
+    MicroServiceBusHost.prototype.OnStopped = function (callback) {
+        onStopped = callback;
+    };
+    MicroServiceBusHost.prototype.OnUpdatedItineraryComplete = function (callback) {
+        onUpdatedItineraryComplete = callback;
+    };
+    
+    // Test methods
+    MicroServiceBusHost.prototype.TestOnPing = function (message) {
+        try {
+            OnPing(message);
+        }
+        catch (ex) {
+            return false;
+        }
+        return true;
+    }
+    MicroServiceBusHost.prototype.TestOnChangeDebug = function (debug) {
+        try {
+            OnChangeDebug(debug);
+        }
+        catch (ex) {
+            return false;
+        }
+        return true;
+    }
+    MicroServiceBusHost.prototype.TestOnUpdateItinerary = function (updatedItinerary) {
+        try {
+            OnUpdateItinerary(updatedItinerary);
+        }
+        catch (ex) {
+            return false;
+        }
+        return true;
+    }
 }
 module.exports = MicroServiceBusHost; 

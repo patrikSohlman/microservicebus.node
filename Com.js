@@ -14,10 +14,10 @@ function Com(nodeName, sbSettings) {
     catch (storageEx) {
         console.log("Local persistance is not allowed");
         storageIsEnabled = false;
-    }    
+    }
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
-     
-     if (sbSettings.protocol == "amqp") {
+    
+    if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
         
@@ -44,13 +44,13 @@ function Com(nodeName, sbSettings) {
             baseAddress += '/';
         }
         var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-        var restTrackingToken  = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+        var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
     }
     this.onQueueMessageReceivedCallback = null;
     this.onQueueErrorReceiveCallback = null;
     this.onQueueErrorSubmitCallback = null;
     this.onQueueDebugCallback = null;
-
+    
     Com.prototype.Start = function () {
         stop = false;
         if (sbSettings.protocol == "amqp")
@@ -204,6 +204,9 @@ function Com(nodeName, sbSettings) {
     
     // REST
     function startREST() {
+        // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
+        submitREST("{}", nodeName, "--dummy--"); 
+
         listenMessaging();
     }
     function stopREST() { 
@@ -211,12 +214,12 @@ function Com(nodeName, sbSettings) {
     function submitREST(message, node, service) {
         try {
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
-
+            
             httpRequest({
                 headers: {
                     "Authorization": restMessagingToken, 
                     "Content-Type" : "application/json",
-                    "node": node,
+                    "node": node.toLowerCase(),
                     "service" : service
                 },
                 uri: submitUri,
@@ -225,19 +228,20 @@ function Com(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message" )
+                    onQueueErrorSubmitCallback("Unable to send message")
                     console.log("Unable to send message. ");
                     var persistMessage = {
                         node: node,
                         service: service,
                         message: message
                     };
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.InterchangeId, persistMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
-                    onQueueDebugCallback("Submitted message to " + node);
+                    onQueueDebugCallback("Submitted message to " + node.toLowerCase() + ". status code:" + res.statusCode);
+                    //process.exit();
                 }
                 else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     console.log("Invalid token. Recreating token...")
@@ -252,7 +256,7 @@ function Com(nodeName, sbSettings) {
                         service: service,
                         message: message
                     };
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.instanceId, persistMessage);
                 }
             });
@@ -264,7 +268,7 @@ function Com(nodeName, sbSettings) {
     };
     function trackREST_(trackingMessage) {
         try {
-           var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
+            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
             httpRequest({
                 headers: {
@@ -279,7 +283,7 @@ function Com(nodeName, sbSettings) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.InterchangeId, message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -292,7 +296,7 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.instanceId, message);
                 }
             });
@@ -319,7 +323,7 @@ function Com(nodeName, sbSettings) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.InterchangeId, message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -332,7 +336,7 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    if(storageIsEnabled)
+                    if (storageIsEnabled)
                         storage.setItem(message.instanceId, message);
                 }
             });
@@ -344,9 +348,12 @@ function Com(nodeName, sbSettings) {
     };
     function listenMessaging() {
         try {
-            if (stop)
+            if (stop) {
+                onQueueDebugCallback("Queue listener is stopped");
+             
                 return;
-           var listenUri = baseAddress + sbSettings.topic + "/Subscriptions/" + nodeName + "/messages/head" + "?timeout=60"
+            }
+            var listenUri = baseAddress + sbSettings.topic + "/Subscriptions/" + nodeName + "/messages/head" + "?timeout=60"
             
             httpRequest({
                 headers: {
@@ -356,6 +363,11 @@ function Com(nodeName, sbSettings) {
                 method: 'DELETE'
             }, 
             function (err, res, body) {
+                if (res.statusCode == 200)
+                    onQueueDebugCallback("Receive status code:" + res.statusCode);
+                else
+                    onQueueErrorReceiveCallback("Receive status code:" + res.statusCode);
+
                 if (err != null) {
                     onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message)
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
@@ -366,16 +378,18 @@ function Com(nodeName, sbSettings) {
                             listenMessaging();
                             return;
                         }
-                        onQueueDebugCallback("Received message topic");
-                        var message = JSON.parse(res.body);
-                        var responseData = {
-                            body : message,
-                            applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                        if (res.headers.service != "--dummy--") {
+                            
+                            var message = JSON.parse(res.body);
+                            var responseData = {
+                                body : message,
+                                applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                            }
+                            onQueueMessageReceivedCallback(responseData);
                         }
-                        onQueueMessageReceivedCallback(responseData);
                     }
-                    catch (listenerror) { 
-                        console.log("Unable to parse incoming message. " + listenerror.code + " - " + listenerror.message);      
+                    catch (listenerror) {
+                        console.log("Unable to parse incoming message. " + listenerror.code + " - " + listenerror.message);
                     }
                 }
                 else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
