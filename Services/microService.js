@@ -238,7 +238,8 @@ function MicroService(microService) {
         // Parse with payload '[]'
         pattern = /\[(.*?)\]/g;
         
-        while ((match = pattern.exec(str)) != null) {
+        var regstr = str;
+        while ((match = pattern.exec(regstr)) != null) {
            str = str.replace('[' + match[1] + ']', payload[match[1]]);
         }
         return str;

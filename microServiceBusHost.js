@@ -497,7 +497,8 @@ function MicroServiceBusHost(settings) {
             console.log();
             
             // Start com to receive messages
-            com.Start();
+            if(settings.state === 'Active')
+                com.Start();
 
             if(onUpdatedItineraryComplete != null)
                 onUpdatedItineraryComplete();
