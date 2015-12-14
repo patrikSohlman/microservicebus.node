@@ -178,9 +178,6 @@ function MicroServiceBusHost(settings) {
         // Stop all services
         stopAllServices();
         
-        _downloadedScripts = [];
-        _inboundServices = [];
-        
         var itinerary = new linq(_itineraries).First(function (i) { return i.itineraryId === updatedItinerary.itineraryId; });
         
         for (var i = _itineraries.length; i--;) {
@@ -203,6 +200,7 @@ function MicroServiceBusHost(settings) {
             console.log("State changed to " + state.yellow);
         
         if (state != "Active") {
+
             stopAllServices();
         }
         else {
@@ -263,7 +261,7 @@ function MicroServiceBusHost(settings) {
                 console.log("COM: ".green + message);
             }
         });
-        com.Start();
+        //com.Start();
         
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
@@ -302,7 +300,6 @@ function MicroServiceBusHost(settings) {
         
         signIn();
     }
-    
     
 
     // Signing in the to HUB
@@ -343,9 +340,9 @@ function MicroServiceBusHost(settings) {
     
     // Stopping all services
     function stopAllServices() {
-        //if (com != null) {
-        //    com.Stop();
-        //}
+        if (com != null) {
+            com.Stop();
+        }
         if (_startWebServer) {
             console.log("Server:      " + "Shutting down web server".yellow);
             server.close();
@@ -371,6 +368,8 @@ function MicroServiceBusHost(settings) {
                 console.log(ex.message.red);
             }
         }
+        _downloadedScripts = [];
+        _inboundServices = [];
     }
 
     // Incoming messages
@@ -495,7 +494,11 @@ function MicroServiceBusHost(settings) {
             }
             
             onStarted(itineraries.length, exceptionsLoadingItineraries);
+            console.log();
             
+            // Start com to receive messages
+            com.Start();
+
             if(onUpdatedItineraryComplete != null)
                 onUpdatedItineraryComplete();
 

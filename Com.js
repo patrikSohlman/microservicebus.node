@@ -4,7 +4,9 @@ var Policy = require('amqp10').Policy;
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
+var util = require('./Utils.js');
 var storageIsEnabled = true;
+
 function Com(nodeName, sbSettings) {
     var sbSettings = sbSettings;
     var stop = false;
@@ -206,13 +208,19 @@ function Com(nodeName, sbSettings) {
     function startREST() {
         // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
         submitREST("{}", nodeName, "--dummy--"); 
-
+        
+        stop = false;
         listenMessaging();
     }
-    function stopREST() { 
+    function stopREST() {
+        stop = true;
     }
     function submitREST(message, node, service) {
         try {
+            var encryptedMsg = util.encrypt(message, './certs/sample.pub');
+
+            var msg = util.decrypt(encryptedMsg, './certs/sample.pem');
+
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
             
             httpRequest({
@@ -378,12 +386,13 @@ function Com(nodeName, sbSettings) {
                             listenMessaging();
                             return;
                         }
-                        if (res.headers.service != "--dummy--") {
+                        var service = res.headers.service.replace(/"/g, '');
+                        if (service != "--dummy--") {
                             
                             var message = JSON.parse(res.body);
                             var responseData = {
                                 body : message,
-                                applicationProperties: { value: { service: res.headers.service.replace(/"/g, '') } }
+                                applicationProperties: { value: { service: service } }
                             }
                             onQueueMessageReceivedCallback(responseData);
                         }
