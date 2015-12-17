@@ -217,10 +217,6 @@ function Com(nodeName, sbSettings) {
     }
     function submitREST(message, node, service) {
         try {
-            var encryptedMsg = util.encrypt(message, './certs/sample.pub');
-
-            var msg = util.decrypt(encryptedMsg, './certs/sample.pem');
-
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
             
             httpRequest({
