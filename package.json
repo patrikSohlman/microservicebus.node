@@ -62,7 +62,7 @@
     "microServiceBus",
     "Cloud"
   ],
-  "main": "microServiceBusHost.js",
+  "main": "start.js",
   "name": "microservicebus.node",
   "repository": {
     "type": "git",
