@@ -106,8 +106,7 @@ function MicroServiceBusHost(settings) {
             catch (e) { }
         },
         messageReceived: function (message) {
-            //console.log("Websocket messageReceived: ", message);
-            //return false;
+
         },
         bindingError: function (error) {
             console.log("Connection: " + "Binding Error: ".red, error);
@@ -120,7 +119,6 @@ function MicroServiceBusHost(settings) {
         },
         reconnecting: function (retry /* { inital: true/false, count: 0} */) {
             console.log("Connection: " + "Retrying to connect ".yellow);
-            //return retry.count >= 3; /* cancel retry true */
             return true;
         }
     };
@@ -261,7 +259,6 @@ function MicroServiceBusHost(settings) {
                 console.log("COM: ".green + message);
             }
         });
-        //com.Start();
         
         _itineraries = signInResponse.itineraries;
         loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
@@ -301,7 +298,6 @@ function MicroServiceBusHost(settings) {
         signIn();
     }
     
-
     // Signing in the to HUB
     function signIn() {
         
@@ -427,7 +423,6 @@ function MicroServiceBusHost(settings) {
             console.log("Error desccription: ".red + err.message);
             trackException(message, destination, "Failed", err.name, err.message);
         }
-    
     }
     
     // Restore persisted messages from ./persist folder
@@ -705,15 +700,7 @@ function MicroServiceBusHost(settings) {
                         _inboundServices.push(newMicroService);
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
-                        //var serviceStatus = "Started".green;
-                        
-                        //if (settings.state == "Active")
-                        //    newMicroService.Start();
-                        //else
-                        //    serviceStatus = "Stopped".yellow;
-                        
-                        //var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(scriptfileName, 40, ' ') + "|";
-                        //console.log(lineStatus);
+                     
                         callback(null, 'done');
                     }
                     catch (ex) {
@@ -850,8 +837,7 @@ function MicroServiceBusHost(settings) {
                                 .Where(function (connection) {
             return connection.type === 'draw2d.Connection' && connection.source.node === lastActionId;
         }).items;
-        
-        
+                
         var successors = [];
         
         connections.forEach(function (connection) {
@@ -1125,12 +1111,6 @@ function MicroServiceBusHost(settings) {
         // Only used for localhost
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         
-        
-        //if (testFlag != true) {
-        //    process.on('uncaughtException', function (err) {
-        //        console.log('Uncaught exception: '.red + err);
-        //    });
-        //}
         client.start();
         
         // Startig using proper config
@@ -1150,7 +1130,6 @@ function MicroServiceBusHost(settings) {
     MicroServiceBusHost.prototype.Stop = function () {
         _shoutDown = true;
         for (i in _inboundServices) {
-            // _inboundServices.forEach(function (service) {
             var service = _inboundServices[i];
             try {
                 service.Stop();

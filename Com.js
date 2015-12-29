@@ -362,8 +362,7 @@ function Com(nodeName, sbSettings) {
                 }
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    if (storageIsEnabled)
-                        storage.setItem(message.instanceId, message);
+
                 }
             });
 
@@ -389,11 +388,7 @@ function Com(nodeName, sbSettings) {
                 method: 'DELETE'
             }, 
             function (err, res, body) {
-                if (res.statusCode == 200)
-                    onQueueDebugCallback("Receive status code:" + res.statusCode);
-                else
-                    onQueueErrorReceiveCallback("Receive status code:" + res.statusCode);
-
+                
                 if (err != null) {
                     onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message)
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
