@@ -246,7 +246,6 @@ function MicroService(microService) {
     };
     
     MicroService.prototype.ParseString = function (str, payload, context) {
-        
         // Parse with context '{}'
         var match;
         
