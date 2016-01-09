@@ -77,8 +77,25 @@ catch (err) {
 var MicroServiceBusHost = require("./microServiceBusHost.js");
 var microServiceBusHost = new MicroServiceBusHost(settings);
 
+function formatNumber(num) {
+    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+}
+
 microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-    
+    if (settings.trackMemoryUsage != undefined && settings.trackMemoryUsage > 0) {
+        console.log("");
+        console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
+        console.log("|          rss           |        heapTotal       |        heapUsed       |".bgBlue.white.bold)
+        console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
+        
+        setInterval(function () {
+            memUsage = process.memoryUsage();
+            
+            var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
+            console.log(str.bgBlue.white.bold);
+        
+        }, settings.trackMemoryUsage);
+    }
 });
 microServiceBusHost.OnStopped(function () {
     

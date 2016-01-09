@@ -2,7 +2,8 @@
     "debug": false,
     "hubUri": "wss://microservicebus.com",
     "port": 80,
-    "nodeName": "laptop",
-    "organizationId": "99310f4c-f368-4d11-a600-9b43deaae37a",
+    "trackMemoryUsage": 0,
+    "nodeName": "per002",
+    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
     "machineName": "MIKAELS-LAPTOP"
 }

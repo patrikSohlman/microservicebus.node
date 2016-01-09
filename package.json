@@ -22,6 +22,7 @@
     "johnny-five": "0.9.7",
     "jsonpath": "0.2.0",
     "keypress": "^0.2.1",
+    "linq": "^3.0.5",
     "moment": "2.10.3",
     "node-linq": "0.0.5",
     "node-persist": "0.0.6",
@@ -73,5 +74,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "0.0.34"
+  "version": "0.0.35"
 }

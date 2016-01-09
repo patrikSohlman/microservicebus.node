@@ -205,29 +205,35 @@ function MicroService(microService) {
         var ret;
         var me = this;
         npm.load({loaded: true}, function (err) {
-            // catch errors
+            // All packages
             var packages = npmPackages.split(',');
+            var newPackages = [];
 
             for (var i = 0; i < packages.length; i++) {
                 var npmPackage = packages[i];
                 var packageFolder = path.resolve(npm.dir, npmPackage)
-                fs.stat(packageFolder, function (er, s) {
-                    if (er || !s.isDirectory()) {
-                        npm.commands.install([npmPackage], function (er, data) {
-                            ret = er;
-                        });
-                        npm.on("log", function (message) {
-                            if (logOutput)
-                                me.Debug(message);
-                        });
+                try {
+                    var stats = fs.lstatSync(packageFolder);
+                    if (!stats.isDirectory()) {
+                        newPackages.push(npmPackage);
                     }
-                    else {
-                        if (logOutput)
-                            me.Debug(npmPackage + ' is already installed');
-                        ret = null;
-                    }
+                }
+                catch(e) {
+                    newPackages.push(npmPackage);
+                }
+            }
+            
+            if (newPackages.length == 0)
+                ret = null;
+            else {
+                npm.commands.install(newPackages, function (er, data) {
+                    ret = er;
+                });
+                npm.on("log", function (message) {
+                    ret = null;
                 });
             }
+            
         });
         while (ret === undefined) {
             try {

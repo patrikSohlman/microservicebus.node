@@ -489,7 +489,7 @@ function MicroServiceBusHost(settings) {
             }
             
             onStarted(itineraries.length, exceptionsLoadingItineraries);
-            console.log();
+            
             
             // Start com to receive messages
             if(settings.state === 'Active')
