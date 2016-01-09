@@ -67,7 +67,6 @@ function MicroService(microService) {
         console.log("microserviceBus::Process - NOT IMPLEMENTED!");
     };
     
-    
     // Callback for messages going back to the host 
     MicroService.prototype.OnMessageReceived = function (callback) {
         onMessageReceivedCallback = callback;
@@ -255,20 +254,25 @@ function MicroService(microService) {
         
         while ((match = pattern.exec(str)) != null) {
             var variable = new linq(context.Variables).First(function (v) { return v.Variable === match[1]; });
-            if (variable != null) { 
+            if (variable != null) {
                 str = str.replace('{' + match[1] + '}', variable.Value);
+                return str;
             }
         }
         
-        if (context.ContentType == 'application/json' && typeof payload != "object") { 
-            payload = JSON.parse(payload);
+        if (context.ContentType != 'application/json') {
+            return str;
         }
+
         // Parse with payload '[]'
         pattern = /\[(.*?)\]/g;
         
         var regstr = str;
         while ((match = pattern.exec(regstr)) != null) {
-           str = str.replace('[' + match[1] + ']', payload[match[1]]);
+            
+            var expression = "message = " + payload + ";\nvar str = message." + match[1] + ";";
+            eval(expression);
+            return str;
         }
         return str;
     };

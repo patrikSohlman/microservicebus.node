@@ -70,7 +70,7 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-
+    
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
@@ -128,11 +128,11 @@ function MicroServiceBusHost(settings) {
         OnErrorMessage(message);
     });
     client.on('integrationHub', 'ping', function (message) {
-        OnPing(message); 
+        OnPing(message);
     });
     client.on('integrationHub', 'getEndpoints', function (message) {
         OnGetEndpoints(message);
-    });    
+    });
     client.on('integrationHub', 'updateItinerary', function (updatedItinerary) {
         OnUpdateItinerary(updatedItinerary);
     });
@@ -198,7 +198,7 @@ function MicroServiceBusHost(settings) {
             console.log("State changed to " + state.yellow);
         
         if (state != "Active") {
-
+            
             stopAllServices();
         }
         else {
@@ -214,11 +214,11 @@ function MicroServiceBusHost(settings) {
         
     }
     // Incoming message from HUB
-    function OnSendMessage (message, destination) {
+    function OnSendMessage(message, destination) {
         //receiveMessage(message, destination);
     }
     // Called by HUB when signin  has been successful
-    function OnSignInMessage (response) {
+    function OnSignInMessage(response) {
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
@@ -283,7 +283,7 @@ function MicroServiceBusHost(settings) {
         //process.stdin.resume();
     }
     // Called by HUB when node has been successfully created    
-    function OnNodeCreated (nodeData) {
+    function OnNodeCreated(nodeData) {
         
         nodeData.machineName = os.hostname();
         
@@ -345,7 +345,7 @@ function MicroServiceBusHost(settings) {
             app = null;
             app = express();
         }
-
+        
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
@@ -367,7 +367,7 @@ function MicroServiceBusHost(settings) {
         _downloadedScripts = [];
         _inboundServices = [];
     }
-
+    
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
@@ -377,11 +377,49 @@ function MicroServiceBusHost(settings) {
             });
             /* istanbul ignore if */
             if (microService == null) {
-                var logm = "The service receiving this message is no longer configured to run on this node. This can happen when a service has been shut down and restarted on a different machine";
-                trackException(message, destination, "Failed", "90001", logm);
-                log(logm);
-                console.log("Error: ".red + logm);
-                return;
+                
+                // isDynamicRoute means the node of the service was set to dynamic.
+                // A dynamicly configured node setting whould mean the node was never initilized
+                // and not part of the _inboundServices array.
+                // Therefor it need to be initilized and started.
+                if (message.isDynamicRoute) {
+                    
+                    // Find the activity
+                    var activity = new linq(message.Itinerary.activities)
+                                .First(function (c) { return c.userData.id === destination; });
+                    
+                    // Create a startServiceAsync request
+                    var intineratyActivity = {
+                        activity : activity,
+                        itinerary : message.Itinerary 
+                    };
+                    
+                    // Call startServiceAsync to initilized and start the service.
+                    startServiceAsync(intineratyActivity, settings.organizationId, true, function () {
+                        console.log("");
+                        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+                        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+
+                        microService = _inboundServices[_inboundServices.length - 1];
+                        var lineStatus = "|" + util.padRight(microService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(microService.IntegrationName, 40, ' ') + "|";
+                        console.log(lineStatus);
+                        
+                        console.log();
+                        
+                        // Set the isDynamicRoute to false and call this method again.
+                        message.isDynamicRoute = false;
+                        receiveMessage(message, destination)
+                    });
+                    return;
+                }
+                else {
+                    var logm = "The service receiving this message is no longer configured to run on this node. This can happen when a service has been shut down and restarted on a different machine";
+                    trackException(message, destination, "Failed", "90001", logm);
+                    log(logm);
+                    console.log("Error: ".red + logm);
+                    return;
+                }
             }
             
             message.IsFirstAction = false;
@@ -455,7 +493,7 @@ function MicroServiceBusHost(settings) {
         
         if (itineraries.length == 0)
             onStarted(0, 0);
-
+        
         async.map(itineraries, function (itinerary, callback) {
             var itineraryId = itinerary.itineraryId;
             
@@ -465,7 +503,7 @@ function MicroServiceBusHost(settings) {
                 intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
             }
             async.map(intineratyActivities, function (intineratyActivity, callback) {
-                startServiceAsync(intineratyActivity, organizationId, function () {
+                startServiceAsync(intineratyActivity, organizationId, false, function () {
                     callback(null, null);
                 });
 
@@ -492,12 +530,12 @@ function MicroServiceBusHost(settings) {
             
             
             // Start com to receive messages
-            if(settings.state === 'Active')
+            if (settings.state === 'Active')
                 com.Start();
-
-            if(onUpdatedItineraryComplete != null)
+            
+            if (onUpdatedItineraryComplete != null)
                 onUpdatedItineraryComplete();
-
+            
             startListen();
         });
     
@@ -508,7 +546,7 @@ function MicroServiceBusHost(settings) {
     // 2. Downloads the script
     // 3. Creatig the service and extends it from MicroService, and registring the events
     // 4. Starts the service
-    function startServiceAsync(intineratyActivity, organizationId, done) {
+    function startServiceAsync(intineratyActivity, organizationId, forceStart, done) {
         try {
             var activity = intineratyActivity.activity;
             var itinerary = intineratyActivity.itinerary;
@@ -526,7 +564,7 @@ function MicroServiceBusHost(settings) {
                         var isEnabled = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'enabled'; }).value;
                         
-                        if (host != settings.nodeName) {
+                        if (host != settings.nodeName && !forceStart) {
                             done();
                             return;
                         }
@@ -622,7 +660,7 @@ function MicroServiceBusHost(settings) {
                                 }
                                 
                                 trackMessage(integrationMessage, integrationMessage.LastActivity, integrationMessage.IsFirstAction?"Started":"Completed");
-                                    
+                                
                                 // Process the itinerary to find next service
                                 var successors = getSuccessors(integrationMessage);
                                 
@@ -651,9 +689,20 @@ function MicroServiceBusHost(settings) {
                                     else {
                                         // No correlation
                                         try {
+                                            var messageString = '';
+                                            if (message.ContentType != 'application/json') {
+                                                var buf = new Buffer(integrationMessage._messageBuffer, 'base64');
+                                                messageString = buf.toString('utf8');
+                                            }
                                             
-                                            com.Submit(integrationMessage, 
-                                                        successor.userData.host.toLowerCase(),
+                                            var destination = sender.ParseString(successor.userData.host, messageString, integrationMessage);
+                                            
+                                            integrationMessage.isDynamicRoute = destination != successor.userData.host;
+                                            if (destination == settings.nodeName)
+                                                receiveMessage(integrationMessage, successor.userData.id);
+                                            else
+                                                com.Submit(integrationMessage, 
+                                                        destination.toLowerCase(),
                                                         successor.userData.id);
                                             
                                             //trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
@@ -700,7 +749,7 @@ function MicroServiceBusHost(settings) {
                         _inboundServices.push(newMicroService);
                         if (activity.userData.type == "azureApiAppInboundService")
                             _startWebServer = true;
-                     
+                        
                         callback(null, 'done');
                     }
                     catch (ex) {
@@ -837,7 +886,7 @@ function MicroServiceBusHost(settings) {
                                 .Where(function (connection) {
             return connection.type === 'draw2d.Connection' && connection.source.node === lastActionId;
         }).items;
-                
+        
         var successors = [];
         
         connections.forEach(function (connection) {
@@ -914,9 +963,9 @@ function MicroServiceBusHost(settings) {
         
         if (msg.IsFirstAction && status == "Completed")
             msg.IsFirstAction = false;
-
+        
         var trackingMessage =
-        {
+ {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
@@ -1090,7 +1139,7 @@ function MicroServiceBusHost(settings) {
                 if (settings.debug == null) // jshint ignore:line
                     settings.debug = false;
                 
-
+                
                 if (settings.hubUri == null) // jshint ignore:line
                     settings.hubUri = "wss://microservicebus.com";
                 
