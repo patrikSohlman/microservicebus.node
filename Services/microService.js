@@ -263,6 +263,10 @@ function MicroService(microService) {
         if (context.ContentType != 'application/json') {
             return str;
         }
+        
+        if (context.ContentType == 'application/json' && typeof payload == "object") {
+            payload = JSON.stringify(payload);
+        }
 
         // Parse with payload '[]'
         pattern = /\[(.*?)\]/g;
@@ -272,6 +276,8 @@ function MicroService(microService) {
             
             var expression = "message = " + payload + ";\nvar str = message." + match[1] + ";";
             eval(expression);
+            str = regstr.replace('['+ match[1]+']', str);
+
             return str;
         }
         return str;
