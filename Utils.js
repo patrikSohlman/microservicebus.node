@@ -71,6 +71,7 @@ exports.mkdir = function (dir, callback) {
     fs.mkdirParent(dir, null, callback);
 };
 
+/* istanbul ignore next */
 exports.encrypt = function (payload, certificate) {
     var ursa;
     this.addNpmPackage('ursa', function (err) {
@@ -90,7 +91,7 @@ exports.encrypt = function (payload, certificate) {
     encryptedPayload = crt.encrypt(payload, 'utf8', 'base64');
     return encryptedPayload;
 };
-
+/* istanbul ignore next */
 exports.decrypt = function (encryptedPayload, certificate) {
     var ursa;
     this.addNpmPackage('ursa', function (err) {
@@ -110,7 +111,7 @@ exports.decrypt = function (encryptedPayload, certificate) {
     payload = key.decrypt(encryptedPayload, 'base64', 'utf8');
     return payload;
 };
-
+/* istanbul ignore next */
 exports.addNpmPackage = function (npmPackage, callback) {
     var ret;
     var me = this;
@@ -137,3 +138,4 @@ exports.addNpmPackage = function (npmPackage, callback) {
     }
     callback(ret);
 };
+

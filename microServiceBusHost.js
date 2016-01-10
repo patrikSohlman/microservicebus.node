@@ -79,6 +79,7 @@ function MicroServiceBusHost(settings) {
     );
     
     // Wire up signalR events
+    /* istanbul ignore next */
     client.serviceHandlers = {
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
@@ -283,6 +284,7 @@ function MicroServiceBusHost(settings) {
         //process.stdin.resume();
     }
     // Called by HUB when node has been successfully created    
+    /* istanbul ignore next */
     function OnNodeCreated(nodeData) {
         
         nodeData.machineName = os.hostname();
@@ -1239,6 +1241,10 @@ function MicroServiceBusHost(settings) {
         catch (ex) {
             return false;
         }
+        return true;
+    }
+    MicroServiceBusHost.prototype.TestOnChangeState = function (state) {
+        OnChangeState(state);
         return true;
     }
 }

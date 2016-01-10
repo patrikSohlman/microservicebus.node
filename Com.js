@@ -41,6 +41,7 @@ function Com(nodeName, sbSettings) {
     }
     sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
     
+    /* istanbul ignore if */
     if (sbSettings.protocol == "amqp") {
         var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
         var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
@@ -91,6 +92,7 @@ function Com(nodeName, sbSettings) {
             stopREST();
         }
     };
+    /* istanbul ignore next */
     Com.prototype.Submit = function (message, node, service) {
         if (sbSettings.protocol == "amqp")
             submitAMQP(message, node, service);
@@ -99,6 +101,7 @@ function Com(nodeName, sbSettings) {
         }
 
     };
+    /* istanbul ignore next */
     Com.prototype.SubmitCorrelation = function (message, correlationValue, lastActivity) {
         var request = {
             body: message, 
@@ -126,6 +129,7 @@ function Com(nodeName, sbSettings) {
         }
     };
     Com.prototype.Track = function (trackingMessage) {
+        /* istanbul ignore if */
         if (sbSettings.protocol == "amqp")
             trackAMQP(trackingMessage);
         else if (sbSettings.protocol == "rest") {
@@ -147,6 +151,7 @@ function Com(nodeName, sbSettings) {
     };
     
     // AMQP
+    /* istanbul ignore next */
     function startAMQP() {
         messageClient.connect(messageClientUri)
         .then(function () {
@@ -184,7 +189,9 @@ function Com(nodeName, sbSettings) {
             console.warn('Error send/receive: ', e);
         });
     }
+    /* istanbul ignore next */
     function stopAMQP() { }
+    /* istanbul ignore next */
     function submitAMQP(message, node, service) {
         while (messageSender === undefined) {
             try {
@@ -207,6 +214,7 @@ function Com(nodeName, sbSettings) {
             
         });
     };
+    /* istanbul ignore next */
     function trackAMQP(trackingMessage) {
         while (trackingSender === undefined) {
             try {
@@ -292,6 +300,7 @@ function Com(nodeName, sbSettings) {
             console.log("from submitREST");
         }
     };
+    /* istanbul ignore next */
     function trackREST_(trackingMessage) {
         try {
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
@@ -441,6 +450,7 @@ function Com(nodeName, sbSettings) {
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
         return token;
     }
+    /* istanbul ignore next */
     function initListenRequest() {
         if (!listenReqInit) {
             listenReqInit = true;

@@ -84,7 +84,47 @@ describe('SignIn', function () {
                         }
                         res.body.should.have.property('result');
                         res.body.result.should.equal(true);
-                        done();
+                        console.log("GET Complete");
+                        //done();
+                        request(url)
+		                        .delete('/api/data/azureApiAppInboundService1/test')
+		                        .expect('Content-Type', /json/)
+		                        .expect(200)//Status code
+		                        .end(function (err, res) {
+                            if (err) {
+                                throw err;
+                            }
+                            res.body.should.have.property('result');
+                            res.body.result.should.equal(true);
+                            console.log("DELETE Complete");
+                            request(url)
+		                        .post('/api/data/azureApiAppInboundService1/test')
+                                .send({ name: 'Manny', species: 'cat' })
+		                        .expect('Content-Type', /json/)
+		                        .expect(200)//Status code
+		                        .end(function (err, res) {
+                                if (err) {
+                                    throw err;
+                                }
+                                res.body.should.have.property('result');
+                                res.body.result.should.equal(true);
+                                console.log("POST Complete");
+                                request(url)
+		                            .put('/api/data/azureApiAppInboundService1/test')
+                                    .send({ name: 'Manny', species: 'cat' })
+		                            .expect('Content-Type', /json/)
+		                            .expect(200)//Status code
+		                            .end(function (err, res) {
+                                        if (err) {
+                                            throw err;
+                                        }
+                                        res.body.should.have.property('result');
+                                        res.body.result.should.equal(true);
+                                        console.log("PUT Complete");
+                                        done();
+                                    });
+                            });
+                        });
                     });
                 });
                 it('ping should work', function (done) {
@@ -106,6 +146,16 @@ describe('SignIn', function () {
                         done();
                     });
                     var TestOnUpdateItineraryResponse = microServiceBusHost.TestOnUpdateItinerary(updatedItinerary);
+                });
+                it('change to disabled state should work', function (done) {
+                    var changeStateResponse = microServiceBusHost.TestOnChangeState("Disable");
+                    changeStateResponse.should.equal(true);
+                    done();
+                });
+                it('change to enabled state should work', function (done) {
+                    var changeStateResponse = microServiceBusHost.TestOnChangeState("Active");
+                    changeStateResponse.should.equal(true);
+                    done();
                 });
                 it('stopping the node', function (done) {
                     step1Complete = true;
@@ -130,19 +180,6 @@ describe('SignIn', function () {
                     util.saveSettings(settings);
                     done();
                 });
-                
-                //it('Sign in with wrong node should not work', function () {
-                //    console.log("ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ");
-                    
-                //    microServiceBusHost.Start(true);
-                //    while (loggedInComplete2 == false) {
-                //        try {
-                //            require('deasync').runLoopOnce();
-                //        }
-                //    catch (errr) { console.log(); }
-                //    }
-                //});
-            
             });
         });
         microServiceBusHost.Start(true);
@@ -156,82 +193,6 @@ describe('SignIn', function () {
         
     });
 
-    //it('Save settings should work', function (done) {
-    //    settings = {
-    //        "debug": false,
-    //        "hubUri": "wss://microservicebus.com",
-    //        "nodeName": "WRONGHOST",
-    //        "organizationId" : process.env.organizationid,
-    //        "port" : 9090
-    //    }
-    //    util.saveSettings(settings);
-    //    done();
-    //});
-    
-    //it('Sign in with wrong node should not work', function () {
-    //    console.log("ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ");
-    //    this.timeout(10000);
-    //    loggedInComplete2 = false;
-    //    microServiceBusHost2 = new MicroServiceBusHost(settings);
-    //    microServiceBusHost2.OnUpdatedItineraryComplete(function () { });
-    //    microServiceBusHost2.OnStarted(function (loadedCount, exceptionCount) {
-    //        describe('Sign in with wrong node', function () {
-                
-    //            it('Should complete with errors', function (done) {
-    //                exceptionCount.should.equal(1);
-    //                done();
-    //            });
-                
-    //        });
-    //        loggedInComplete2 = true;
-    //    });
-        
-    //    microServiceBusHost2.Start(true);
-    //    while (loggedInComplete2 == false) {
-    //        try {
-    //            require('deasync').runLoopOnce();
-    //        }
-    //        catch (errr) { console.log(); }
-    //    }
-    //});
-
-    //it('Save settings should work', function (done) {
-        
-    //    settings = {
-    //        "debug": false,
-    //        "hubUri": "wss://microservicebus.com",
-    //        "nodeName": "TestNode1",
-    //        "organizationId" : "65b22e1f-a17e-432f-b9f2-b7057423a782",
-    //        "port" : 9090
-    //    }
-    //    util.saveSettings(settings);
-    //    done();
-    //});
-    
-    //it('Sign in with wrong org should not work', function () {
-    //    this.timeout(10000);
-    //    loggedInComplete1 = false;
-    //    microServiceBusHost = new MicroServiceBusHost(settings);
-    //    microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-    //        describe('Sign in with wrong organization', function () {
-                
-    //            it('Should complete with errors', function (done) {
-    //                exceptionCount.should.equal(1);
-    //                done();
-    //            });
-                
-    //        });
-    //        loggedInComplete1 = true;
-    //    });
-        
-    //    microServiceBusHost.Start(true);
-    //    while (loggedInComplete1 == false) {
-    //        try {
-    //            require('deasync').runLoopOnce();
-    //        }
-    //        catch (errr) { console.log(); }
-    //    }
-    //});
 
 });
 

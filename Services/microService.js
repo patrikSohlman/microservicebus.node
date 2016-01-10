@@ -153,7 +153,7 @@ function MicroService(microService) {
     MicroService.prototype.Done = function (integrationMessage, destination) {
         onCompletedCallback(integrationMessage, destination);
     };
-    
+    /* istanbul ignore next */
     MicroService.prototype.CorrelationValue = function (messageString, message) {
         var correlationNode = new linq(this.Config.generalConfig).First(function (c) { return c.id === 'correlationId'; });
         if (correlationNode != null && 
@@ -179,7 +179,7 @@ function MicroService(microService) {
             return null;
         }
     };
-
+    /* istanbul ignore next */
     MicroService.prototype.Error = function (source, errorId, errorDescription) {
         onErrorCallback(source, errorId, errorDescription);
     };
@@ -329,9 +329,6 @@ function MicroService(microService) {
                 break;
             case 'security':
                 cat = this.Config.securityConfig;
-                break;
-            case 'dynamic':
-                cat = this.Config.dynamicConfig;
                 break;
             default:
                 throw 'Unsuported category';
