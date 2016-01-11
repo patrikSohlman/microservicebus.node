@@ -431,6 +431,7 @@ function MicroServiceBusHost(settings) {
             
             // Track incoming message
             trackMessage(message, destination, "Started");
+            
             var buf = new Buffer(message._messageBuffer, 'base64');
             var messageString = buf.toString('utf8');
             
@@ -730,7 +731,7 @@ function MicroServiceBusHost(settings) {
                         newMicroService.OnDebug(function (source, info) {
                             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                                 console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                                log('DEBUG:[' + source.gray + '] => ' + info);
+                                //log('DEBUG:[' + source.gray + '] => ' + info);
                             }
                         });
                         
@@ -1028,16 +1029,18 @@ function MicroServiceBusHost(settings) {
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-        var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
+        //var time = moment();
+        //var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
         
-        console.log(utcNow.yellow + ">: " + message.grey);
-        client.invoke( 
-            'integrationHub',
-		    'logMessage',	
-		    settings.nodeName,
-            message,
-            settings.organizationId);
+        //console.log(utcNow.yellow + ">: " + message.grey);
+        //if (settings.debug != null && settings.debug == true) {// jshint ignore:line  
+        //    client.invoke( 
+        //        'integrationHub',
+		      //  'logMessage',	
+		      //  settings.nodeName,
+        //        message,
+        //        settings.organizationId);
+        //}
     }
     
     // To enforce the signalR client to recognize disconnected state
@@ -1050,6 +1053,20 @@ function MicroServiceBusHost(settings) {
         }, 5000);
     }
     
+    var intercept = require("intercept-stdout"),
+        captured_text = "";
+    
+    var unhook_intercept = intercept(function (message) {
+        if (settings.debug != null && settings.debug == true) {// jshint ignore:line  
+            client.invoke( 
+                'integrationHub',
+		        'logMessage',	
+		        settings.nodeName,
+                message,
+                settings.organizationId);
+        }
+    });
+
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
