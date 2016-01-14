@@ -366,6 +366,11 @@ function MicroServiceBusHost(settings) {
                 console.log(ex.message.red);
             }
         }
+        _downloadedScripts = undefined;
+        delete _downloadedScripts;
+        _inboundServices = undefined;
+        delete _inboundServices;
+
         _downloadedScripts = [];
         _inboundServices = [];
     }
