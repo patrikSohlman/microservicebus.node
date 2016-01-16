@@ -363,7 +363,7 @@ function Com(nodeName, sbSettings) {
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
-                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
+                else if (res.statusCode == 401) {
                     console.log("Invalid token. Recreating token...")
                     restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
                     trackREST(trackingMessage)
