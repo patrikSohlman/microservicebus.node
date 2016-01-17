@@ -364,7 +364,7 @@ function Com(nodeName, sbSettings) {
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
                 else if (res.statusCode == 401) {
-                    console.log("Invalid token. Recreating token...")
+                    console.log("Invalid token. Updating token...")
                     restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
                     trackREST(trackingMessage)
                     return;
@@ -423,9 +423,10 @@ function Com(nodeName, sbSettings) {
                         console.log("Unable to parse incoming message. " + listenerror.code + " - " + listenerror.message);
                     }
                 }
-                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
-                    console.log("Invalid token. Recreating token...")
+                else if (res.statusCode == 401 ) {
+                    console.log("Invalid token. Updating token...")
                     restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
+                    listenMessaging();
                     return;
                 }
                 else {
