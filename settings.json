@@ -2,5 +2,8 @@
     "debug": false,
     "hubUri": "wss://microservicebus.com",
     "port": 80,
-    "trackMemoryUsage": 0
+    "trackMemoryUsage": 0,
+    "nodeName": "nodeJs-00001",
+    "organizationId": "a1cb75b2-0949-4ddf-8c4a-17e84abd2744",
+    "machineName": "MIKAELS-LAPTOP"
 }

@@ -815,23 +815,24 @@ function MicroServiceBusHost(settings) {
             
             app.use('/', express.static(__dirname + '/html'));
             
+            console.log("REST endpoints:".green);
             app._router.stack.forEach(function (endpoint) {
                 if (endpoint.route != undefined) {
                     if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
-                        log("GET:    " + endpoint.route.path);
+                        console.log("GET:    ".yellow + endpoint.route.path);
                     if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
-                        log("DELETE: " + endpoint.route.path);
+                        console.log("DELETE: ".yellow + endpoint.route.path);
                     if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
-                        log("POST:   " + endpoint.route.path);
+                        console.log("POST:   ".yellow + endpoint.route.path);
                     if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
-                        log("PUT:    " + endpoint.route.path);
+                        console.log("PUT:    ".yellow + endpoint.route.path);
                 }
             });
             
             
             server.listen(port, 'localhost', function () {
+                console.log("Server started on port ".green + port);
                 console.log();
-                log("Server started on port " + port);
             });
         }
         catch (e) {
@@ -972,8 +973,7 @@ function MicroServiceBusHost(settings) {
         if (msg.IsFirstAction && status == "Completed")
             msg.IsFirstAction = false;
         
-        var trackingMessage =
- {
+        var trackingMessage = {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,

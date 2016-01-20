@@ -23,22 +23,23 @@ SOFTWARE.
 */
 
 var fs = require('fs');
-var MicroServiceBusHost = require("./microServiceBusHost.js");
 
-// Load settings
+
 try {
-    var data = fs.readFileSync('./settings.json');
-    var settings = JSON.parse(data);
+    var settings = {
+        "debug": process.env['debug'] == "true",
+        "hubUri": process.env['hubUri'],
+        "port": parseInt( process.env['port']),
+        "trackMemoryUsage": process.env['trackMemoryUsage'],
+        "nodeName": process.env['nodeName'],
+        "organizationId": process.env['organizationId'],
+        "machineName": process.env['machineName']
+    }
+    fs.writeFileSync('./settings.json', data);
+    require("./start.js");
+
 }
 catch (err) {
     console.log('Invalid settings file.'.red);
     process.abort();
 }
-
-var microServiceBusHost = new MicroServiceBusHost(settings);
-
-microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-	
-});
-
-microServiceBusHost.Start();
