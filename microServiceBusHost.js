@@ -273,15 +273,21 @@ function MicroServiceBusHost(settings) {
         
         //// listen for the "keypress" event
         //process.stdin.on('keypress', function (ch, key) {
-        //    if (key.name == 'd') {
+        //    if (key.ctrl && key.name == 'c') {
+        //        gracefulShutdown();
+        //    }
+        //    else if (key.name == 'p') {
+        //        OnPing();
+        //    }
+        //    else if (key.name == 'd') {
         //        var heapdump = require('heapdump');
         //        heapdump.writeSnapshot(function (err, filename) {
         //            console.log('Dump written to'.yellow, filename.yellow);
         //        });
         //    }
         //});
-        //process.stdin.setRawMode(true);
-        //process.stdin.resume();
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
     }
     // Called by HUB when node has been successfully created    
     /* istanbul ignore next */
@@ -794,7 +800,7 @@ function MicroServiceBusHost(settings) {
             app.use(bodyParser.json());
             server = http.createServer(app);
             
-            genrateSwagger();
+            generateSwagger();
             
             app.use(swaggerize({
                 api: require('./swagger.json'),
@@ -829,11 +835,15 @@ function MicroServiceBusHost(settings) {
                 }
             });
             
-            
-            server.listen(port, 'localhost', function () {
+            app.listen(port, function () {
                 console.log("Server started on port ".green + port);
                 console.log();
             });
+
+            //server.listen(port, 'localhost', function () {
+            //    console.log("Server started on port ".green + port);
+            //    console.log();
+            //});
         }
         catch (e) {
             console.log('Unable to start listening on port ' + port);
@@ -841,7 +851,7 @@ function MicroServiceBusHost(settings) {
     }
     
     // Create a swagger file
-    function genrateSwagger() {
+    function generateSwagger() {
         // Load template
         try {
             var data = fs.readFileSync(__dirname + '/swaggerTemplate.json');
@@ -1078,7 +1088,7 @@ function MicroServiceBusHost(settings) {
         console.log("bye")
         client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Offline", settings.organizationId);
         console.log("Received kill signal, shutting down gracefully.");
-        log(settings.nodeName + ' signing out...');
+        console.log(settings.nodeName + ' signing out...');
         setTimeout(function () {
             client.end();
             process.exit();
