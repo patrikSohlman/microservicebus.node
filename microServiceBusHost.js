@@ -461,18 +461,18 @@ function MicroServiceBusHost(settings) {
                 //Publish correlation
                 client.invoke(
                     'integrationHub',
-		        'persistCorrelation',	
-		        microService.Name, 
-                settings.nodeName,
-                correlationValue,
-                message
+		            'persistCorrelation',	
+		            microService.Name, 
+                    settings.nodeName,
+                    correlationValue,
+                    message
                 );
             }
         }
         catch (err) {
             console.log("Error at: ".red + destination);
             console.log("Error id: ".red + err.name);
-            console.log("Error desccription: ".red + err.message);
+            console.log("Error description: ".red + err.message);
             trackException(message, destination, "Failed", err.name, err.message);
         }
     }
@@ -733,10 +733,10 @@ function MicroServiceBusHost(settings) {
                         });
                         // [DEPRICATED]Eventhandler for any errors sent back from the service
                         newMicroService.OnError(function (source, errorId, errorDescription) {
-                            console.log("The Error method is depricated. Please use the ThrowError method instead.".red);
+                            console.log("The Error method is deprecated. Please use the ThrowError method instead.".red);
                             console.log("Error at: ".red + source);
                             console.log("Error id: ".red + errorId);
-                            console.log("Error desccription: ".red + errorDescription);
+                            console.log("Error description: ".red + errorDescription);
                         });
                         // Eventhandler for any debug information sent back from the service
                         newMicroService.OnDebug(function (source, info) {
