@@ -78,28 +78,30 @@ function Com(nodeName, sbSettings) {
     
     Com.prototype.Start = function () {
         stop = false;
-        if (sbSettings.protocol == "amqp")
-            startAMQP();
-        else if (sbSettings.protocol == "rest") {
-            startREST();
-        }
+        //if (sbSettings.protocol == "amqp")
+        //    startAMQP();
+        //else if (sbSettings.protocol == "rest") {
+        //    startREST();
+        //}
+        startREST();
     };
     Com.prototype.Stop = function () {
         stop = true;
-        if (sbSettings.protocol == "amqp")
-            stopAMQP();
-        else if (sbSettings.protocol == "rest") {
-            stopREST();
-        }
+        //if (sbSettings.protocol == "amqp")
+        //    stopAMQP();
+        //else if (sbSettings.protocol == "rest") {
+        //    stopREST();
+        //}
+        stopREST();
     };
     /* istanbul ignore next */
     Com.prototype.Submit = function (message, node, service) {
-        if (sbSettings.protocol == "amqp")
-            submitAMQP(message, node, service);
-        else if (sbSettings.protocol == "rest") {
-            submitREST(message, node, service);
-        }
-
+        //if (sbSettings.protocol == "amqp")
+        //    submitAMQP(message, node, service);
+        //else if (sbSettings.protocol == "rest") {
+        //    submitREST(message, node, service);
+        //}
+        submitREST(message, node, service);
     };
     /* istanbul ignore next */
     Com.prototype.SubmitCorrelation = function (message, correlationValue, lastActivity) {
@@ -129,12 +131,13 @@ function Com(nodeName, sbSettings) {
         }
     };
     Com.prototype.Track = function (trackingMessage) {
-        /* istanbul ignore if */
-        if (sbSettings.protocol == "amqp")
-            trackAMQP(trackingMessage);
-        else if (sbSettings.protocol == "rest") {
-            trackREST(trackingMessage);
-        }
+        ///* istanbul ignore if */
+        //if (sbSettings.protocol == "amqp")
+        //    trackAMQP(trackingMessage);
+        //else if (sbSettings.protocol == "rest") {
+        //    trackREST(trackingMessage);
+        //}
+        trackREST(trackingMessage);
     };
     
     Com.prototype.OnQueueMessageReceived = function (callback) {
@@ -150,89 +153,6 @@ function Com(nodeName, sbSettings) {
         onQueueDebugCallback = callback;
     };
     
-    // AMQP
-    /* istanbul ignore next */
-    function startAMQP() {
-        messageClient.connect(messageClientUri)
-        .then(function () {
-            return Promise.all([
-                messageClient.createSender(sbSettings.topic),
-                messageClient.createReceiver(sbSettings.topic + '/Subscriptions/' + nodeName.toLowerCase())
-            ]);
-        })
-        .spread(function (sender, receiver) {
-            messageSender = sender;
-            sender.on('errorReceived', function (tx_err) {
-                onQueueErrorSubmitCallback(tx_err)
-            });
-            receiver.on('errorReceived', function (rx_err) {
-                onQueueErrorReceiveCallback(rx_err);
-            });
-            
-            // message event handler
-            receiver.on('message', function (message) {
-                onQueueMessageReceivedCallback(message);
-            });
-        })
-        .catch(function (e) {
-            console.warn('Error send/receive: ', e);
-        });
-        
-        trackingClient.connect(trackingClientUri)
-          .then(function () { return trackingClient.createSender(sbSettings.trackingHubName); })
-          .then(function (sender) {
-            trackingSender = sender;
-            sender.on('errorReceived', function (err) { console.warn(err); });
-        })
-          .then(function (state) { })
-          .catch(function (e) {
-            console.warn('Error send/receive: ', e);
-        });
-    }
-    /* istanbul ignore next */
-    function stopAMQP() { }
-    /* istanbul ignore next */
-    function submitAMQP(message, node, service) {
-        while (messageSender === undefined) {
-            try {
-                require('deasync').runLoopOnce();
-            }
-            catch (errr) {
-                console.log("waiting for sender to get ready...");
-            }
-        }
-        var request = {
-            body: message, 
-            applicationProperties: {
-                node: node,
-                service: service
-            }
-        };
-        
-        return messageSender.send(request)
-                    .then(function (err) {
-            
-        });
-    };
-    /* istanbul ignore next */
-    function trackAMQP(trackingMessage) {
-        while (trackingSender === undefined) {
-            try {
-                require('deasync').runLoopOnce();
-            }
-            catch (errr) {
-                console.log("waiting for trackingSender to get ready...");
-            }
-        }
-        var request = {
-            body: trackingMessage, 
-            applicationProperties: {}
-        };
-        return trackingSender.send(request)
-                    .then(function (err) {
-            
-        });
-    };
     
     // REST
     function startREST() {
@@ -467,5 +387,88 @@ function Com(nodeName, sbSettings) {
             });
         }
     }
+
+
+    // AMQP
+    /* 
+    function startAMQP() {
+        messageClient.connect(messageClientUri)
+        .then(function () {
+            return Promise.all([
+                messageClient.createSender(sbSettings.topic),
+                messageClient.createReceiver(sbSettings.topic + '/Subscriptions/' + nodeName.toLowerCase())
+            ]);
+        })
+        .spread(function (sender, receiver) {
+            messageSender = sender;
+            sender.on('errorReceived', function (tx_err) {
+                onQueueErrorSubmitCallback(tx_err)
+            });
+            receiver.on('errorReceived', function (rx_err) {
+                onQueueErrorReceiveCallback(rx_err);
+            });
+            
+            // message event handler
+            receiver.on('message', function (message) {
+                onQueueMessageReceivedCallback(message);
+            });
+        })
+        .catch(function (e) {
+            console.warn('Error send/receive: ', e);
+        });
+        
+        trackingClient.connect(trackingClientUri)
+          .then(function () { return trackingClient.createSender(sbSettings.trackingHubName); })
+          .then(function (sender) {
+            trackingSender = sender;
+            sender.on('errorReceived', function (err) { console.warn(err); });
+        })
+          .then(function (state) { })
+          .catch(function (e) {
+            console.warn('Error send/receive: ', e);
+        });
+    }
+    function stopAMQP() { }
+    function submitAMQP(message, node, service) {
+        while (messageSender === undefined) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) {
+                console.log("waiting for sender to get ready...");
+            }
+        }
+        var request = {
+            body: message, 
+            applicationProperties: {
+                node: node,
+                service: service
+            }
+        };
+        
+        return messageSender.send(request)
+                    .then(function (err) {
+            
+        });
+    };
+    function trackAMQP(trackingMessage) {
+        while (trackingSender === undefined) {
+            try {
+                require('deasync').runLoopOnce();
+            }
+            catch (errr) {
+                console.log("waiting for trackingSender to get ready...");
+            }
+        }
+        var request = {
+            body: trackingMessage, 
+            applicationProperties: {}
+        };
+        return trackingSender.send(request)
+                    .then(function (err) {
+            
+        });
+    };
+    */
 }
 module.exports = Com;

@@ -47,7 +47,6 @@ console.log("Deleted".green);
 settings = {
     "debug": false,
     "hubUri": "wss://microservicebus.com",
-    "port" : 80,
     "trackMemoryUsage": 0
 }
 util.saveSettings(settings);

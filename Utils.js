@@ -120,22 +120,13 @@ exports.addNpmPackage = function (npmPackage, callback) {
         fs.stat(packageFolder, function (er, s) {
             if (er || !s.isDirectory()) {
                 npm.commands.install([npmPackage], function (er, data) {
-                    ret = er;
+                    callback(er);
                 });
             }
             else {
-                ret = null;
+                callback(null);
             }
         });
     });
-    while (ret === undefined) {
-        try {
-            require('deasync').runLoopOnce();
-        }
-            catch (errr) {
-            console.log("Unable to install anpm package");
-        }
-    }
-    callback(ret);
 };
 

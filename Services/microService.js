@@ -223,26 +223,16 @@ function MicroService(microService) {
             }
             
             if (newPackages.length == 0)
-                ret = null;
+                callback(null);
             else {
                 npm.commands.install(newPackages, function (er, data) {
-                    ret = er;
+                    callback(er);
                 });
                 npm.on("log", function (message) {
                     ret = null;
                 });
             }
-            
         });
-        while (ret === undefined) {
-            try {
-                require('deasync').runLoopOnce();
-            }
-            catch (errr) { 
-                console.log();
-            }
-        }
-        callback(ret);
     };
     
     MicroService.prototype.ParseString = function (str, payload, context) {

@@ -33,8 +33,9 @@ var maxWidth = 75;
 console.log();
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
 console.log(util.padRight(" microServicebus.com", maxWidth, ' ').bgBlue.white.bold);
+console.log(util.padRight(" Node.js version    : " + process.version, maxWidth, ' ').bgBlue.white);
 console.log(util.padRight(" NPM package version: " + pjson.version, maxWidth, ' ').bgBlue.white);
-console.log(util.padRight(" Architecture:        " + process.arch, maxWidth, ' ').bgBlue.white);
+console.log(util.padRight(" Architecture       : " + process.arch, maxWidth, ' ').bgBlue.white);
 console.log(util.padRight(" For more information visit: http://microservicebus.com", maxWidth, ' ').bgBlue.white);
 console.log(util.padRight(" GIT repository: https://github.com/microServiceBus/microservicebus.node", maxWidth, ' ').bgBlue.white);
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
@@ -61,8 +62,7 @@ checkVersion("microservicebus.node")
 try {
     var settings = {
         "debug": false,
-        "hubUri": "wss://microservicebus.com",
-        "port": 80
+        "hubUri": "wss://microservicebus.com"
     }
     if (fs.existsSync('./settings.json')) {
         var data = fs.readFileSync('./settings.json');

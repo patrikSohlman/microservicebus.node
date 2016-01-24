@@ -225,12 +225,12 @@ function MicroServiceBusHost(settings) {
         signInResponse = response;
         settings.state = response.state;
         settings.debug = response.debug;
-        
+        settings.port = response.port == null ? 80 : response.port;
+
         if (settings.state == "Active")
             console.log("State: " + settings.state.green);
         else
             console.log("State: " + settings.state.yellow);
-        
         
         var sbSettings = {
             sbNamespace : response.sbNamespace,
@@ -269,23 +269,28 @@ function MicroServiceBusHost(settings) {
             restorePersistedMessages();
         }, 3000);
         
-        //keypress(process.stdin);
+        keypress(process.stdin);
         
-        //// listen for the "keypress" event
-        //process.stdin.on('keypress', function (ch, key) {
-        //    if (key.ctrl && key.name == 'c') {
-        //        gracefulShutdown();
-        //    }
-        //    else if (key.name == 'p') {
-        //        OnPing();
-        //    }
-        //    else if (key.name == 'd') {
-        //        var heapdump = require('heapdump');
-        //        heapdump.writeSnapshot(function (err, filename) {
-        //            console.log('Dump written to'.yellow, filename.yellow);
-        //        });
-        //    }
-        //});
+        // listen for the "keypress" event
+        process.stdin.on('keypress', function (ch, key) {
+            if (key.ctrl && key.name == 'c') {
+                gracefulShutdown();
+            }
+            else if (key.name == 'p') {
+                OnPing();
+            }
+            else if (key.name == 'd') {
+                try {
+                    var heapdump = require('heapdump');
+                    heapdump.writeSnapshot(function (err, filename) {
+                        console.log('Dump written to'.yellow, filename.yellow);
+                    });
+                }
+                catch (e) { 
+                    console.log(e);
+                }
+            }
+        });
         process.stdin.setRawMode(true);
         process.stdin.resume();
     }
@@ -372,6 +377,11 @@ function MicroServiceBusHost(settings) {
                 console.log(ex.message.red);
             }
         }
+        
+        if (server != undefined && server != null)
+            server.close();
+        
+        _startWebServer = false;
         _downloadedScripts = undefined;
         delete _downloadedScripts;
         _inboundServices = undefined;
@@ -835,15 +845,15 @@ function MicroServiceBusHost(settings) {
                 }
             });
             
-            app.listen(port, function () {
-                console.log("Server started on port ".green + port);
-                console.log();
-            });
-
-            //server.listen(port, 'localhost', function () {
+            //app.listen(port, function () {
             //    console.log("Server started on port ".green + port);
             //    console.log();
             //});
+
+            server.listen(port, 'localhost', function () {
+                console.log("Server started on port ".green + port);
+                console.log();
+            });
         }
         catch (e) {
             console.log('Unable to start listening on port ' + port);
