@@ -611,7 +611,7 @@ function MicroServiceBusHost(settings) {
                         var localFilePath;
                         
                         var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
-                        
+                       
                         callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                     }
                     catch (error1) {
@@ -621,7 +621,8 @@ function MicroServiceBusHost(settings) {
                 },
                 Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
                     try {
-                        if (exist != null) {
+                        //if (exist != null) {
+                        if (false) {
                             callback(null, localFilePath, integrationId, scriptfileName);
                             return;
                         }
