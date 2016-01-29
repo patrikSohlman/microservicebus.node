@@ -1,5 +1,8 @@
 {
     "debug": false,
-    "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0
+    "hubUri": "wss://localhost:44302",
+    "trackMemoryUsage": 0,
+    "nodeName": "pi",
+    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
+    "machineName": "MIKAELS-LAPTOP"
 }

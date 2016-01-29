@@ -588,7 +588,10 @@ function MicroServiceBusHost(settings) {
                         var isEnabled = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'enabled'; }).value;
                         
-                        if (host != settings.nodeName && !forceStart) {
+                        var hosts = host.split(',');
+                        var a = hosts.indexOf(settings.nodeName);
+
+                        if (hosts.indexOf(settings.nodeName) < 0 && !forceStart) {
                             done();
                             return;
                         }
@@ -721,14 +724,19 @@ function MicroServiceBusHost(settings) {
                                             }
                                             
                                             var destination = sender.ParseString(successor.userData.host, messageString, integrationMessage);
-                                            
                                             integrationMessage.isDynamicRoute = destination != successor.userData.host;
-                                            if (destination == settings.nodeName)
-                                                receiveMessage(integrationMessage, successor.userData.id);
-                                            else
-                                                com.Submit(integrationMessage, 
-                                                        destination.toLowerCase(),
+                                            destination.split(',').forEach(function (destinationNode) { 
+                                                if (destinationNode == settings.nodeName)
+                                                    receiveMessage(integrationMessage, successor.userData.id);
+                                                else
+                                                    com.Submit(integrationMessage, 
+                                                        destinationNode.toLowerCase(),
                                                         successor.userData.id);
+                                            
+                                            });
+
+                                            
+
                                             
                                             //trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                         }
