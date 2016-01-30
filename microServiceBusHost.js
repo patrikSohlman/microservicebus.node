@@ -61,6 +61,7 @@ function MicroServiceBusHost(settings) {
     var _shoutDown = false;
     var _downloadedScripts = [];
     var _firstStart = true;
+    var _loadingState = "none"; // node -> loading -> done -> stopped
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -71,11 +72,11 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-
+    
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
-        10, //optional: retry timeout in seconds (default: 10)
+        0, //optional: retry timeout in seconds (default: 10)
         true
     );
     
@@ -88,17 +89,29 @@ function MicroServiceBusHost(settings) {
         },
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
-            signIn();
-            checkConnection();
-    },
-        disconnected: function () {
-            console.log("Connection: " + "Disconnected".yellow);
-            if (com != null) {
-                com.Stop();
-                com = undefined;
-            }
             
-            stopAllServices();
+            if (client.connectionState != "connected") {
+                client.connectionState = "connected";
+                signIn();
+                checkConnection();
+            }
+        },
+        disconnected: function () {
+            
+            console.log("Connection: " + "Disconnected".yellow);
+            
+            if (client.connectionState != "disconnected") {
+                client.connectionState = "disconnected";
+                if (com != null) {
+                    com.Stop();
+                    // com = undefined;
+                }
+                client.end();
+                stopAllServices(function () {
+                    console.log("All services stopped".yellow);
+                    client.start();
+                });
+            }
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
@@ -156,7 +169,7 @@ function MicroServiceBusHost(settings) {
     });
     
     var tempHasLoogedIn = false;
-
+    
     // Called by HUB if it was ot able to process the request
     function OnErrorMessage(message) {
         console.log("errorMessage => " + message);
@@ -179,7 +192,9 @@ function MicroServiceBusHost(settings) {
         console.log("updateItinerary => ");
         
         // Stop all services
-        stopAllServices();
+        stopAllServices(function () {
+            console.log("All services stopped".yellow);
+        });
         
         var itinerary = new linq(_itineraries).First(function (i) { return i.itineraryId === updatedItinerary.itineraryId; });
         
@@ -204,7 +219,9 @@ function MicroServiceBusHost(settings) {
         
         if (state != "Active") {
             
-            stopAllServices();
+            stopAllServices(function () {
+                console.log("All services stopped".yellow);
+            });
         }
         else {
             _downloadedScripts = [];
@@ -230,7 +247,7 @@ function MicroServiceBusHost(settings) {
         settings.state = response.state;
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
-
+        
         if (settings.state == "Active")
             console.log("State: " + settings.state.green);
         else
@@ -273,10 +290,10 @@ function MicroServiceBusHost(settings) {
             restorePersistedMessages();
         }, 3000);
         
-
+        
         if (_firstStart) {
             _firstStart = false;
-           
+            
             keypress(process.stdin);
             
             // listen for the "keypress" event
@@ -356,7 +373,7 @@ function MicroServiceBusHost(settings) {
     }
     
     // Stopping all services
-    function stopAllServices() {
+    function stopAllServices(callback) {
         if (com != null) {
             com.Stop();
         }
@@ -394,9 +411,10 @@ function MicroServiceBusHost(settings) {
         delete _downloadedScripts;
         _inboundServices = undefined;
         delete _inboundServices;
-
+        
         _downloadedScripts = [];
         _inboundServices = [];
+        callback();
     }
     
     // Incoming messages
@@ -422,7 +440,7 @@ function MicroServiceBusHost(settings) {
                     // Create a startServiceAsync request
                     var intineratyActivity = {
                         activity : activity,
-                        itinerary : message.Itinerary 
+                        itinerary : message.Itinerary
                     };
                     
                     // Call startServiceAsync to initilized and start the service.
@@ -431,7 +449,7 @@ function MicroServiceBusHost(settings) {
                         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
                         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
                         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-
+                        
                         microService = _inboundServices[_inboundServices.length - 1];
                         var lineStatus = "|" + util.padRight(microService.Name, 20, ' ') + "| " + "Started".green + "   |" + util.padRight(microService.IntegrationName, 40, ' ') + "|";
                         console.log(lineStatus);
@@ -518,6 +536,12 @@ function MicroServiceBusHost(settings) {
     // Called after successfull signin.
     // Iterates through all itineries and download the scripts, afterwhich the services is started
     function loadItineraries(organizationId, itineraries) {
+        
+        // Prevent double loading
+        if (_loadingState == "loading") {
+            return;
+        }
+
         console.log("");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
@@ -544,6 +568,16 @@ function MicroServiceBusHost(settings) {
             });
 
         }, function (err, results) {
+            // Dissconnected while loading
+            if (client.connectionState == "disconnected") {
+                stopAllServices(function () {
+                    console.log("All services stopped".yellow);
+                    _loadingState = "done";
+                });
+               
+                return;
+            }
+
             for (i = 0; i < _inboundServices.length; i++) {
                 var newMicroService = _inboundServices[i];
                 
@@ -562,13 +596,14 @@ function MicroServiceBusHost(settings) {
             
             
             // Start com to receive messages
-            if (settings.state === 'Active')
+            if (settings.state === 'Active' && client.connectionState == "connected")
                 com.Start();
             
             if (onUpdatedItineraryComplete != null)
                 onUpdatedItineraryComplete();
             
             startListen();
+            _loadingState = "done";
         });
     
     }
@@ -598,7 +633,7 @@ function MicroServiceBusHost(settings) {
                         
                         var hosts = host.split(',');
                         var a = hosts.indexOf(settings.nodeName);
-
+                        
                         if (hosts.indexOf(settings.nodeName) < 0 && !forceStart) {
                             done();
                             return;
@@ -622,7 +657,7 @@ function MicroServiceBusHost(settings) {
                         var localFilePath;
                         
                         var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
-                       
+                        
                         callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                     }
                     catch (error1) {
@@ -733,7 +768,7 @@ function MicroServiceBusHost(settings) {
                                             
                                             var destination = sender.ParseString(successor.userData.host, messageString, integrationMessage);
                                             integrationMessage.isDynamicRoute = destination != successor.userData.host;
-                                            destination.split(',').forEach(function (destinationNode) { 
+                                            destination.split(',').forEach(function (destinationNode) {
                                                 if (destinationNode == settings.nodeName)
                                                     receiveMessage(integrationMessage, successor.userData.id);
                                                 else
@@ -862,7 +897,7 @@ function MicroServiceBusHost(settings) {
             //    console.log("Server started on port ".green + port);
             //    console.log();
             //});
-
+            
             server.listen(port, 'localhost', function () {
                 console.log("Server started on port ".green + port);
                 console.log();
@@ -1087,7 +1122,7 @@ function MicroServiceBusHost(settings) {
         if (checkConnectionInterval != undefined) {
             clearInterval(checkConnectionInterval);
         }
-
+        
         checkConnectionInterval = setInterval(function () {
             client.invoke( 
                 'integrationHub',
@@ -1109,7 +1144,7 @@ function MicroServiceBusHost(settings) {
                 settings.organizationId);
         }
     });
-
+    
     // this function is called when you want the server to die gracefully
     // i.e. wait for existing connections
     var gracefulShutdown = function () {
