@@ -183,7 +183,6 @@ function Com(nodeName, sbSettings) {
             function (err, res, body) {
                 if (err != null) {
                     onQueueErrorSubmitCallback("Unable to send message")
-                    console.log("Unable to send message. ");
                     var persistMessage = {
                         node: node,
                         service: service,

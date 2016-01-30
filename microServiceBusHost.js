@@ -60,6 +60,7 @@ function MicroServiceBusHost(settings) {
     var _hasDisconnected = false;
     var _shoutDown = false;
     var _downloadedScripts = [];
+    var _firstStart = true;
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -70,7 +71,7 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-    
+
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
@@ -83,17 +84,18 @@ function MicroServiceBusHost(settings) {
     client.serviceHandlers = {
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
-            console.log("Connection: " + "Connect Failed".red);
+            //console.log("Connection: " + "Connect Failed".red);
         },
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
             signIn();
             checkConnection();
-        },
+    },
         disconnected: function () {
             console.log("Connection: " + "Disconnected".yellow);
             if (com != null) {
                 com.Stop();
+                com = undefined;
             }
             
             stopAllServices();
@@ -113,7 +115,7 @@ function MicroServiceBusHost(settings) {
             console.log("Connection: " + "Binding Error: ".red, error);
         },
         connectionLost: function (error) {
-            console.log("Connection: " + "Connection Lost: ".red);
+            console.log("Connection: " + "Connection Lost".red);
         },
         reconnected: void function (connection) {
             console.log("Connection: " + "Reconnected ".green);
@@ -153,6 +155,8 @@ function MicroServiceBusHost(settings) {
         OnNodeCreated(nodeData);
     });
     
+    var tempHasLoogedIn = false;
+
     // Called by HUB if it was ot able to process the request
     function OnErrorMessage(message) {
         console.log("errorMessage => " + message);
@@ -269,30 +273,35 @@ function MicroServiceBusHost(settings) {
             restorePersistedMessages();
         }, 3000);
         
-        keypress(process.stdin);
-        
-        // listen for the "keypress" event
-        process.stdin.on('keypress', function (ch, key) {
-            if (key.ctrl && key.name == 'c') {
-                gracefulShutdown();
-            }
-            else if (key.name == 'p') {
-                OnPing();
-            }
-            else if (key.name == 'd') {
-                try {
-                    var heapdump = require('heapdump');
-                    heapdump.writeSnapshot(function (err, filename) {
-                        console.log('Dump written to'.yellow, filename.yellow);
-                    });
+
+        if (_firstStart) {
+            _firstStart = false;
+           
+            keypress(process.stdin);
+            
+            // listen for the "keypress" event
+            process.stdin.on('keypress', function (ch, key) {
+                if (key.ctrl && key.name == 'c') {
+                    gracefulShutdown();
                 }
-                catch (e) { 
-                    console.log(e);
+                else if (key.name == 'p') {
+                    OnPing();
                 }
-            }
-        });
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
+                else if (key.name == 'd') {
+                    try {
+                        var heapdump = require('heapdump');
+                        heapdump.writeSnapshot(function (err, filename) {
+                            console.log('Dump written to'.yellow, filename.yellow);
+                        });
+                    }
+                catch (e) {
+                        console.log(e);
+                    }
+                }
+            });
+            process.stdin.setRawMode(true);
+            process.stdin.resume();
+        }
     }
     // Called by HUB when node has been successfully created    
     /* istanbul ignore next */
@@ -329,7 +338,6 @@ function MicroServiceBusHost(settings) {
                 );
             }
         }
-
         // Logging in using settings
         else {
             
@@ -735,10 +743,6 @@ function MicroServiceBusHost(settings) {
                                             
                                             });
 
-                                            
-
-                                            
-                                            //trackMessage(integrationMessage, integrationMessage.LastActivity, "Completed");
                                         }
                                     catch (err) {
                                             console.log(err);
@@ -1079,6 +1083,11 @@ function MicroServiceBusHost(settings) {
     
     // To enforce the signalR client to recognize disconnected state
     function checkConnection() {
+        
+        if (checkConnectionInterval != undefined) {
+            clearInterval(checkConnectionInterval);
+        }
+
         checkConnectionInterval = setInterval(function () {
             client.invoke( 
                 'integrationHub',
@@ -1128,12 +1137,14 @@ function MicroServiceBusHost(settings) {
             });
         }
         var args = process.argv.slice(2);
+        
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
                 settings.nodeName = args[1];
             }
             console.log('Logging in using settings'.grey);
         }
+
         /* istanbul ignore if */
         else if (args.length > 0) { // Starting using code
             switch (args[0]) {

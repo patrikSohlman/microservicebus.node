@@ -27,7 +27,7 @@ var pjson = require('./package.json');
 var checkVersion = require('package-json');
 var fs = require('fs');
 var compareVersion = require('compare-version');
-
+var started = false;
 var maxWidth = 75;
 
 console.log();
@@ -88,13 +88,16 @@ microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
         console.log("|          rss           |        heapTotal       |        heapUsed       |".bgBlue.white.bold)
         console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
         
-        setInterval(function () {
-            memUsage = process.memoryUsage();
-            
-            var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
-            console.log(str.bgBlue.white.bold);
+        if (!started) {
+            started = true;   
+            setInterval(function () {
+                memUsage = process.memoryUsage();
+                
+                var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
+                console.log(str.bgBlue.white.bold);
         
-        }, settings.trackMemoryUsage);
+            }, settings.trackMemoryUsage);
+        }
     }
 });
 microServiceBusHost.OnStopped(function () {
