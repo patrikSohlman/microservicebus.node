@@ -72,11 +72,11 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app = express();
     var server;
-    
+
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
-        0, //optional: retry timeout in seconds (default: 10)
+        10, //optional: retry timeout in seconds (default: 10)
         true
     );
     
@@ -89,29 +89,19 @@ function MicroServiceBusHost(settings) {
         },
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
-            
-            if (client.connectionState != "connected") {
-                client.connectionState = "connected";
-                signIn();
-                checkConnection();
-            }
+            signIn();
+            checkConnection();
         },
         disconnected: function () {
             
             console.log("Connection: " + "Disconnected".yellow);
-            
-            if (client.connectionState != "disconnected") {
-                client.connectionState = "disconnected";
-                if (com != null) {
-                    com.Stop();
-                    // com = undefined;
-                }
-                client.end();
-                stopAllServices(function () {
-                    console.log("All services stopped".yellow);
-                    client.start();
-                });
+            if (com != null) {
+                com.Stop();
             }
+            
+            stopAllServices(function () {
+                console.log("All services stopped".yellow);
+            });
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
@@ -204,7 +194,6 @@ function MicroServiceBusHost(settings) {
             }
         }
         _itineraries.push(updatedItinerary);
-        
         
         loadItineraries(settings.organizationId, _itineraries);
     }
@@ -520,7 +509,13 @@ function MicroServiceBusHost(settings) {
             for (var i = 0; i < files.length; i++) {
                 var file = './persist/' + files[i];
                 var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
-                com.Submit(persistMessage.message, persistMessage.node, persistMessage.service);
+                
+                if (files[i].startsWith("_tracking_")) {
+                    com.Track(persistMessage);
+                }
+                else {
+                    com.Submit(persistMessage.message, persistMessage.node, persistMessage.service);
+                }
                 try {
                     fs.unlinkSync(file);
                 }
@@ -568,16 +563,7 @@ function MicroServiceBusHost(settings) {
             });
 
         }, function (err, results) {
-            // Dissconnected while loading
-            if (client.connectionState == "disconnected") {
-                stopAllServices(function () {
-                    console.log("All services stopped".yellow);
-                    _loadingState = "done";
-                });
-               
-                return;
-            }
-
+           
             for (i = 0; i < _inboundServices.length; i++) {
                 var newMicroService = _inboundServices[i];
                 
@@ -603,6 +589,7 @@ function MicroServiceBusHost(settings) {
                 onUpdatedItineraryComplete();
             
             startListen();
+            
             _loadingState = "done";
         });
     
@@ -800,7 +787,6 @@ function MicroServiceBusHost(settings) {
                         newMicroService.OnDebug(function (source, info) {
                             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                                 console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                                //log('DEBUG:[' + source.gray + '] => ' + info);
                             }
                         });
                         
@@ -892,11 +878,6 @@ function MicroServiceBusHost(settings) {
                         console.log("PUT:    ".yellow + endpoint.route.path);
                 }
             });
-            
-            //app.listen(port, function () {
-            //    console.log("Server started on port ".green + port);
-            //    console.log();
-            //});
             
             server.listen(port, 'localhost', function () {
                 console.log("Server started on port ".green + port);
@@ -1102,18 +1083,6 @@ function MicroServiceBusHost(settings) {
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-        //var time = moment();
-        //var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss');
-        
-        //console.log(utcNow.yellow + ">: " + message.grey);
-        //if (settings.debug != null && settings.debug == true) {// jshint ignore:line  
-        //    client.invoke( 
-        //        'integrationHub',
-		      //  'logMessage',	
-		      //  settings.nodeName,
-        //        message,
-        //        settings.organizationId);
-        //}
     }
     
     // To enforce the signalR client to recognize disconnected state
@@ -1168,7 +1137,15 @@ function MicroServiceBusHost(settings) {
             process.on('SIGINT', gracefulShutdown);
             
             process.on('uncaughtException', function (err) {
-                console.log('Uncaught exception: '.red + err);
+                if (err && err.code == "ECONNRESET") {
+                    client.end();
+
+                    setTimeout(function () { 
+                        client.start();
+                    }, 1000);
+                }
+                else
+                    console.log('Uncaught exception: '.red + err);
             });
         }
         var args = process.argv.slice(2);

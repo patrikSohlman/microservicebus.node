@@ -194,9 +194,9 @@ function Com(nodeName, sbSettings) {
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
                     onQueueDebugCallback("Submitted message to " + node.toLowerCase() + ". status code:" + res.statusCode);
-                    //process.exit();
                 }
-                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
+                else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
+                    // Outdated token
                     console.log("Invalid token. Recreating token...")
                     restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
                     submitREST(message, node, service)
@@ -219,47 +219,6 @@ function Com(nodeName, sbSettings) {
             console.log("from submitREST");
         }
     };
-    /* istanbul ignore next */
-    function trackREST_(trackingMessage) {
-        try {
-            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
-            
-            httpRequest({
-                headers: {
-                    "Authorization": restTrackingToken, 
-                    "Content-Type" : "application/json",
-                },
-                uri: trackUri,
-                json: trackingMessage,
-                method: 'POST'
-            }, 
-            function (err, res, body) {
-                if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
-                    console.log("Unable to send message. " + err.code + " - " + err.message);
-                    if (storageIsEnabled)
-                        storage.setItem(message.InterchangeId, message);
-                }
-                else if (res.statusCode >= 200 && res.statusCode < 300) {
-                }
-                else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
-                    console.log("Invalid token. Recreating token...")
-                    restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-                    trackREST(trackingMessage)
-                    return;
-                }
-                else {
-                    console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
-                    if (storageIsEnabled)
-                        storage.setItem(message.instanceId, message);
-                }
-            });
-
-        }
-        catch (err) {
-            console.log();
-        }
-    };
     function trackREST(trackingMessage) {
         try {
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
@@ -278,7 +237,7 @@ function Com(nodeName, sbSettings) {
                     onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
-                        storage.setItem(message.InterchangeId, message);
+                        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
