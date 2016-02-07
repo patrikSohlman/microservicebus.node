@@ -582,7 +582,7 @@ function MicroServiceBusHost(settings) {
             
             
             // Start com to receive messages
-            if (settings.state === 'Active' && client.connectionState == "connected")
+            if (settings.state === 'Active')
                 com.Start();
             
             if (onUpdatedItineraryComplete != null)
