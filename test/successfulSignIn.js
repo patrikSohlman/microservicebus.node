@@ -17,6 +17,8 @@ var microServiceBusHost2;
 
 process.env.organizationid = "65b22e1f-a17e-432f-b9f2-b7057423a786";
 
+
+
 describe('SignIn', function () {
     
     var check = function (done) {
@@ -24,6 +26,13 @@ describe('SignIn', function () {
         else setTimeout(function () { check(done) }, 1000);
     }
     
+    it('Installing deasync', function (done) {
+        util.addNpmPackage('deasync', function () { 
+            done();
+        });
+        
+    });
+
     it('ENV organizationId should be set', function (done) {
         var orgId = process.env.organizationId;
         if (orgId == undefined)
@@ -183,13 +192,13 @@ describe('SignIn', function () {
             });
         });
         microServiceBusHost.Start(true);
-        //while (loggedInComplete1 == false) {
-        //    try {
-        //        require('deasync').runLoopOnce();
+        while (loggedInComplete1 == false) {
+            try {
+                require('deasync').runLoopOnce();
                 
-        //    }
-        //    catch (errr) { console.log(); }
-        //}
+            }
+            catch (errr) { console.log(); }
+        }
         
     });
 
