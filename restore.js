@@ -45,7 +45,6 @@ console.log("Deleted".green);
 //    fs.unlinkSync('./settings.json');
 // Update settings
 settings = {
-    "debug": false,
     "hubUri": "wss://microservicebus.com",
     "trackMemoryUsage": 0
 }

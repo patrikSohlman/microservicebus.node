@@ -34,7 +34,6 @@ describe('SignIn', function () {
     it('Save settings should work', function (done) {
         
         settings = {
-            "debug": false,
             "hubUri": "wss://microservicebus.com",
             "nodeName": "TestNode1",
             "organizationId" : process.env.organizationid,
@@ -171,7 +170,6 @@ describe('SignIn', function () {
             describe('Post stopped', function () {
                 it('Save settings should work', function (done) {
                     settings = {
-                        "debug": false,
                         "hubUri": "wss://microservicebus.com",
                         "nodeName": "WRONGHOST",
                         "organizationId" : process.env.organizationid,

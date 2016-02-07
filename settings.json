@@ -1,5 +1,4 @@
 {
-    "debug": false,
     "hubUri": "wss://microservicebus.com",
     "trackMemoryUsage": 0
 }
