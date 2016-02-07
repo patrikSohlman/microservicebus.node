@@ -52,7 +52,7 @@ describe('SignIn', function () {
             if (_started)
                 return;
             _started = true;
-            
+            console.log('** STARTED **');   
             describe('PostLogin', function () {
                 
                 it('Should start without errors', function (done) {
