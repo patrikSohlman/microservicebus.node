@@ -111,7 +111,7 @@ exports.decrypt = function (encryptedPayload, certificate) {
     payload = key.decrypt(encryptedPayload, 'base64', 'utf8');
     return payload;
 };
-/* istanbul ignore next */
+
 exports.addNpmPackage = function (npmPackage, callback) {
     var ret;
     var me = this;

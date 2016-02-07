@@ -3,4 +3,4 @@ node_js:
   - "0.12"
 
 script:
-  - npm install && npm test
+  - npm install --dev && npm test

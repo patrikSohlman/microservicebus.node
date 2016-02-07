@@ -26,12 +26,12 @@ describe('SignIn', function () {
         else setTimeout(function () { check(done) }, 1000);
     }
     
-    it('Installing deasync', function (done) {
-        util.addNpmPackage('deasync', function () { 
-            done();
-        });
+    //it('Installing deasync', function (done) {
+    //    util.addNpmPackage('deasync', function () { 
+    //        done();
+    //    });
         
-    });
+    //});
 
     it('ENV organizationId should be set', function (done) {
         var orgId = process.env.organizationId;
