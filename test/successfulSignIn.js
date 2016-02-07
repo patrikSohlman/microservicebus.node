@@ -49,8 +49,10 @@ describe('SignIn', function () {
         microServiceBusHost = new MicroServiceBusHost(settings);
         microServiceBusHost.OnUpdatedItineraryComplete(function () { });
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-            if (_started)
+            if (_started) {
+                console.log("Started is true")
                 return;
+            }
             _started = true;
             console.log('** STARTED **');   
             describe('PostLogin', function () {
@@ -181,13 +183,13 @@ describe('SignIn', function () {
             });
         });
         microServiceBusHost.Start(true);
-        while (loggedInComplete1 == false) {
-            try {
-                require('deasync').runLoopOnce();
+        //while (loggedInComplete1 == false) {
+        //    try {
+        //        require('deasync').runLoopOnce();
                 
-            }
-            catch (errr) { console.log(); }
-        }
+        //    }
+        //    catch (errr) { console.log(); }
+        //}
         
     });
 
