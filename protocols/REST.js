@@ -21,160 +21,38 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-var AMQPClient = require('amqp10').Client;
-var Policy = require('amqp10').Policy;
+
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
-var util = require('./Utils.js');
+var util = require('../Utils.js');
 var storageIsEnabled = true;
 
-function Com(nodeName, sbSettings) {
-    var sbSettings = sbSettings;
-    var stop = false;
-    try {
-        storage.initSync(); // Used for persistent storage if off-line
+function REST(nodeName, sbSettings) {
+    
+    var baseAddress = "https://" + sbSettings.sbNamespace;
+    if (!baseAddress.match(/\/$/)) {
+        baseAddress += '/';
     }
-    catch (storageEx) {
-        console.log("Local persistance is not allowed");
-        storageIsEnabled = false;
-    }
-    sbSettings.sbNamespace = sbSettings.sbNamespace + '.servicebus.windows.net';
+    var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
+    var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
     
-    /* istanbul ignore if */
-    if (sbSettings.protocol == "amqp") {
-        var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
-        var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
-        
-        var trackingClientPolicy = Policy.ServiceBusQueue;
-        trackingClientPolicy.reconnect.forever = false;
-        trackingClientPolicy.reconnect.retries = 2;
-        
-        var messageClientPolicy = Policy.ServiceBusTopic;
-        messageClientPolicy.reconnect.forever = false;
-        messageClientPolicy.reconnect.retries = 2;
-        
-        var trackingClient = new AMQPClient(trackingClientPolicy);
-        var messageClient = new AMQPClient(messageClientPolicy);
-        
-        var messageSender;
-        var trackingSender;
-    }
-    else if (sbSettings.protocol == "rest") {
-        var listenReq;
-        var listenReqInit = false;
-        
-        var baseAddress = "https://" + sbSettings.sbNamespace;
-        if (!baseAddress.match(/\/$/)) {
-            baseAddress += '/';
-        }
-        var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-        var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-    }
-    this.onQueueMessageReceivedCallback = null;
-    this.onQueueErrorReceiveCallback = null;
-    this.onQueueErrorSubmitCallback = null;
-    this.onQueueDebugCallback = null;
-    
-    Com.prototype.Start = function () {
-        stop = false;
-        //if (sbSettings.protocol == "amqp")
-        //    startAMQP();
-        //else if (sbSettings.protocol == "rest") {
-        //    startREST();
-        //}
-        startREST();
-    };
-    Com.prototype.Stop = function () {
-        stop = true;
-        //if (sbSettings.protocol == "amqp")
-        //    stopAMQP();
-        //else if (sbSettings.protocol == "rest") {
-        //    stopREST();
-        //}
-        stopREST();
-    };
-    /* istanbul ignore next */
-    Com.prototype.Submit = function (message, node, service) {
-        //if (sbSettings.protocol == "amqp")
-        //    submitAMQP(message, node, service);
-        //else if (sbSettings.protocol == "rest") {
-        //    submitREST(message, node, service);
-        //}
-        submitREST(message, node, service);
-    };
-    /* istanbul ignore next */
-    Com.prototype.SubmitCorrelation = function (message, correlationValue, lastActivity) {
-        var request = {
-            body: message, 
-            applicationProperties: {
-                node: "correlation",
-                lastActivity: lastActivity,
-                correlationValue: correlationValue,
-                fromNode: nodeName
-            }
-        };
-        
-        if (sender == null) {
-            return messageClient.connect(uri)
-              .then(function () { return messageClient.createSender(sbSettings.topic); })
-              .then(function (s) { sender = s; return sender.send(request); })
-              .then(function (err) {
-                onSubmitErrorCallback(err)
-            });
-        }
-        else {
-            return sender.send(request)
-                    .then(function (err) {
-                onSubmitErrorCallback(err)
-            });
-        }
-    };
-    Com.prototype.Track = function (trackingMessage) {
-        ///* istanbul ignore if */
-        //if (sbSettings.protocol == "amqp")
-        //    trackAMQP(trackingMessage);
-        //else if (sbSettings.protocol == "rest") {
-        //    trackREST(trackingMessage);
-        //}
-        trackREST(trackingMessage);
-    };
-    
-    Com.prototype.OnQueueMessageReceived = function (callback) {
-        onQueueMessageReceivedCallback = callback;
-    };
-    Com.prototype.OnReceivedQueueError = function (callback) {
-        onQueueErrorReceiveCallback = callback;
-    };
-    Com.prototype.OnSubmitQueueError = function (callback) {
-        onQueueErrorSubmitCallback = callback;
-    };
-    Com.prototype.OnQueueDebugCallback = function (callback) {
-        onQueueDebugCallback = callback;
-    };
-    
-    
-    // REST
-    function startREST() {
+    REST.prototype.Start = function () {
+        console.log('*** STARTED ***');
         // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
-        submitREST("{}", nodeName, "--dummy--");
+        this.Submit("{}", nodeName, "--dummy--");
         
         stop = false;
         listenMessaging();
-    }
-    function stopREST() {
+    };
+    REST.prototype.Stop = function () {
         stop = true;
-    }
-    function submitREST(message, node, service) {
+    };
+    REST.prototype.Submit = function (message, node, service) {
+        console.log('*** SUBMIT ***');
         try {
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
             
-            var contentLength = JSON.stringify(message).length;
-            if (contentLength > 256000) {
-                onQueueErrorSubmitCallback("Message is to big (" + Math.round(contentLength / 1000) + "Kb). This subscription is limited to 256Kb messages");
-                return;
-            }
-
             httpRequest({
                 headers: {
                     "Authorization": restMessagingToken, 
@@ -205,7 +83,7 @@ function Com(nodeName, sbSettings) {
                     // Outdated token
                     console.log("Invalid token. Recreating token...")
                     restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    submitREST(message, node, service)
+                    this.Submit(message, node, service)
                     return;
                 }
                 else {
@@ -222,10 +100,10 @@ function Com(nodeName, sbSettings) {
 
         }
         catch (err) {
-            console.log("from submitREST");
+            console.log("from this.Submit");
         }
     };
-    function trackREST(trackingMessage) {
+    REST.prototype.Track = function (trackingMessage) {
         try {
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
@@ -250,7 +128,7 @@ function Com(nodeName, sbSettings) {
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
                     restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-                    trackREST(trackingMessage)
+                    this.Track(trackingMessage)
                     return;
                 }
                 else {
@@ -264,6 +142,7 @@ function Com(nodeName, sbSettings) {
             console.log();
         }
     };
+
     function listenMessaging() {
         try {
             if (stop) {
@@ -324,7 +203,6 @@ function Com(nodeName, sbSettings) {
             console.log(err);
         }
     }
-    
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
@@ -335,21 +213,5 @@ function Com(nodeName, sbSettings) {
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
         return token;
     }
-    /* istanbul ignore next */
-    function initListenRequest() {
-        if (!listenReqInit) {
-            listenReqInit = true;
-            listenReq.on('requestTimeout', function (req) {
-                console.log('request has expired');
-                //listenReq.abort();
-                listenMessaging();
-            });
-            
-            listenReq.on('responseTimeout', function (res) {
-                console.log('response has expired');
-    
-            });
-        }
-    }
 }
-module.exports = Com;
+module.exports = REST;

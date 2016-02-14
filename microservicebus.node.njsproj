@@ -33,11 +33,13 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Com.js" />
     <Compile Include="Gruntfile.js" />
     <Compile Include="gulpfile.js" />
-    <Compile Include="Com.js" />
+    <Compile Include="protocols\Com.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
+    <Compile Include="protocols\REST.js" />
     <Compile Include="restore.js" />
     <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
@@ -62,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
+    <Folder Include="protocols\" />
     <Folder Include="test\" />
     <Folder Include="Services\" />
   </ItemGroup>

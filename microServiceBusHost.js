@@ -23,24 +23,24 @@ SOFTWARE.
 */
 var color = require('colors');
 var signalR = require('signalr-client');
-var npm = require('npm');
+//var npm = require('npm');
 var linq = require('node-linq').LINQ;
 var moment = require('moment');
 var extend = require('extend');
 var async = require('async');
-var request = require("request");
+//var request = require("request");
 var reload = require('require-reload')(require);
 var os = require("os");
-var https = require('https');
+//var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
-var http = require('http');
-var express = require('express');
-var swaggerize = require('swaggerize-express');
-var bodyParser = require('body-parser')
+var http;// = require('http');
+var express;// = require('express');
+var swaggerize;// = require('swaggerize-express');
+var bodyParser;// = require('body-parser')
 var guid = require('uuid');
 var pjson = require('./package.json');
 var keypress = require('keypress');
@@ -70,7 +70,7 @@ function MicroServiceBusHost(settings) {
     var _startWebServer = false;
     var port = process.env.PORT || 1337;
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
-    var app = express();
+    var app;// = express();
     var server;
 
     var client = new signalR.client(
@@ -446,6 +446,7 @@ function MicroServiceBusHost(settings) {
                         console.log();
                         
                         // Set the isDynamicRoute to false and call this method again.
+                        microService.Start();
                         message.isDynamicRoute = false;
                         receiveMessage(message, destination)
                     });
@@ -536,7 +537,7 @@ function MicroServiceBusHost(settings) {
         if (_loadingState == "loading") {
             return;
         }
-
+        
         console.log("");
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
@@ -660,7 +661,7 @@ function MicroServiceBusHost(settings) {
                             return;
                         }
                         else {
-                            request(scriptFileUri, function (err, response, scriptContent) {
+                            require("request")(scriptFileUri, function (err, response, scriptContent) {
                                 if (response.statusCode != 200 || err != null) {
                                     console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
                                     var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(scriptfileName, 40, ' ') + "|";
@@ -699,7 +700,6 @@ function MicroServiceBusHost(settings) {
                         newMicroService.IntegrationName = itinerary.integrationName;
                         newMicroService.Environment = itinerary.environment;
                         newMicroService.TrackingLevel = itinerary.trackingLevel;
-                        newMicroService.App = app;
                         
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
@@ -748,7 +748,7 @@ function MicroServiceBusHost(settings) {
                                         // No correlation
                                         try {
                                             var messageString = '';
-                                            if (message.ContentType != 'application/json') {
+                                            if (integrationMessage.ContentType != 'application/json') {
                                                 var buf = new Buffer(integrationMessage._messageBuffer, 'base64');
                                                 messageString = buf.toString('utf8');
                                             }
@@ -805,9 +805,18 @@ function MicroServiceBusHost(settings) {
                     // Start the service
                     try {
                         _inboundServices.push(newMicroService);
-                        if (activity.userData.type == "azureApiAppInboundService")
-                            _startWebServer = true;
-                        
+                        if (activity.userData.type == "azureApiAppInboundService") {
+                            
+                            if (!_startWebServer) {
+                                http = require('http');
+                                express = require('express');
+                                swaggerize = require('swaggerize-express');
+                                bodyParser = require('body-parser');
+                                app = express();
+                                _startWebServer = true;
+                            }
+                            newMicroService.App = app;
+                        }
                         callback(null, 'done');
                     }
                     catch (ex) {
