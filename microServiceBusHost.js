@@ -689,18 +689,21 @@ function MicroServiceBusHost(settings) {
                         }
                         // Load an instance of the base class
                         // Extend the base class with the new class
-                        var newMicroService = extend(new MicroService(), reload(localFilePath));
+                        //var newMicroService = extend(new MicroService(), reload(localFilePath));
                         
+                        var newMicroService = new MicroService(reload(localFilePath));
+
                         newMicroService.OrganizationId = organizationId;
                         newMicroService.ItineraryId = itinerary.itineraryId;
                         newMicroService.Name = activity.userData.id;
                         newMicroService.Itinerary = itinerary;
                         newMicroService.IntegrationId = activity.userData.integrationId;
-                        newMicroService.Config = activity.userData.config;
+                       // newMicroService.Config = activity.userData.config;
                         newMicroService.IntegrationName = itinerary.integrationName;
                         newMicroService.Environment = itinerary.environment;
                         newMicroService.TrackingLevel = itinerary.trackingLevel;
-                        
+                        newMicroService.Init(activity.userData.config);
+
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {

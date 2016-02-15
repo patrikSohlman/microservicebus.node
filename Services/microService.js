@@ -30,7 +30,8 @@ var path = require("path");
 
 function MicroService(microService) {
     // Initialize all instance properties
-    this.microService = microService;
+   // extend(this, microService);
+//    this.microService = microService;
     
     this.Name = "Not set";
     this.OrganizationId = "Not set";
@@ -39,7 +40,7 @@ function MicroService(microService) {
     this.Environment = "Not set";
     this.ItineraryId = "Not set";
     this.Itinerary = "Not set";
-    this.Config = "Not set";
+    this.Config = { "general": {}, "static": {}, "security": {} };
     this.IsEnabled = "Not set";
     this.App = null; // Used for Azure API Apps
     
@@ -155,7 +156,7 @@ function MicroService(microService) {
     };
     /* istanbul ignore next */
     MicroService.prototype.CorrelationValue = function (messageString, message) {
-        var correlationNode = new linq(this.Config.generalConfig).First(function (c) { return c.id === 'correlationId'; });
+        var correlationNode = this.Config.general.correlationId;// new linq(this.Config.generalConfig).First(function (c) { return c.id === 'correlationId'; });
         if (correlationNode != null && 
             correlationNode.value != null && 
             correlationNode.value != '' && message.ContentType == 'application/json') {
@@ -308,7 +309,7 @@ function MicroService(microService) {
         return integrationMessage;
     };
     
-    MicroService.prototype.GetPropertyValue = function (category, prop) {
+    MicroService.prototype.GetPropertyValue_OLD = function (category, prop) {
         var cat;
         switch (category) {
             case 'general':
@@ -334,6 +335,66 @@ function MicroService(microService) {
 
         return property.value;
     }
+    
+    MicroService.prototype.GetPropertyValue = function (category, prop) {
+        try {
+            switch (category) {
+                case 'general':
+                    return this.Config.general[prop];
+                case 'static':
+                    return this.Config.static[prop];
+                case 'security':
+                    return this.Config.security[prop];
+                default:
+                    throw 'Unsuported category';
+            }
+        }
+        catch (e) {
+            throw "Property " + prop + " of category " + category + " not found in service setup configuration.";
+        }
+    }
+    // Build up the configuration object
+    MicroService.prototype.Init = function (config) {
+        
+        // General
+        for (var i = 0; i < config.generalConfig.length; i++) {
+            var name = config.generalConfig[i].id;
+            var val = config.generalConfig[i].value;
+            if (typeof val == "string" && val.startsWith("env:")) {
+                this.Config.general[name] = process.env[val.substring(4)];
+            }
+            else {
+                this.Config.general[name] = val;
+            }
+        };
+        
+        // Static
+        for (var i = 0; i < config.staticConfig.length; i++) {
+            var name = config.staticConfig[i].id;
+            var val = config.staticConfig[i].value;
+            if (typeof val == "string" && val.startsWith("env:")) {
+                this.Config.static[name] = process.env[val.substring(4)];
+            }
+            else {
+                this.Config.static[name] = val;
+            }
+        };
+
+        // Security
+        for (var i = 0; i < config.securityConfig.length; i++) {
+            var name = config.securityConfig[i].id;
+            var val = config.securityConfig[i].value;
+            if (typeof val == "string" && val.startsWith("env:")) {
+                this.Config.security[name] = process.env[val.substring(4)];
+            }
+            else {
+                this.Config.security[name] = val;
+            }
+        };
+        
+    }
+
+    extend(this, microService);
 }
 
 module.exports = MicroService;

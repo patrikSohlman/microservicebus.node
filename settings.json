@@ -1,4 +1,7 @@
 {
     "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0
+    "trackMemoryUsage": 0,
+    "nodeName": "farhan",
+    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
+    "machineName": "MIKAELS-LAPTOP"
 }
