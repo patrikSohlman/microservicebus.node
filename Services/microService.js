@@ -308,7 +308,7 @@ function MicroService(microService) {
         
         return integrationMessage;
     };
-    
+    /* istanbul ignore next */
     MicroService.prototype.GetPropertyValue_OLD = function (category, prop) {
         var cat;
         switch (category) {
