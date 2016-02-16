@@ -38,7 +38,6 @@ function REST(nodeName, sbSettings) {
     var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
     
     REST.prototype.Start = function () {
-        console.log('*** STARTED ***');
         // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
         this.Submit("{}", nodeName, "--dummy--");
         
@@ -49,7 +48,6 @@ function REST(nodeName, sbSettings) {
         stop = true;
     };
     REST.prototype.Submit = function (message, node, service) {
-        console.log('*** SUBMIT ***');
         try {
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
             
@@ -162,7 +160,7 @@ function REST(nodeName, sbSettings) {
             function (err, res, body) {
                 
                 if (err != null) {
-                    onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message)
+                    onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message);
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {

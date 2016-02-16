@@ -21,8 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//var AMQPClient = require('amqp10').Client;
-//var Policy = require('amqp10').Policy;
+
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -70,6 +69,7 @@ function Com(nodeName, sbSettings) {
     };
     
     var Protocol = require('./protocols/REST.js');
+    //var Protocol = require('./protocols/AMQP.js');
     var protocol = new Protocol(nodeName, sbSettings);
 
     extend(this, protocol);
