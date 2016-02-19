@@ -690,7 +690,7 @@ function MicroServiceBusHost(settings) {
                         // Load an instance of the base class
                         // Extend the base class with the new class
                         //var newMicroService = extend(new MicroService(), reload(localFilePath));
-                        
+                                
                         var newMicroService = new MicroService(reload(localFilePath));
 
                         newMicroService.OrganizationId = organizationId;
@@ -797,7 +797,6 @@ function MicroServiceBusHost(settings) {
                     }
                     catch (error3) {
                         console.log('Unable to start service '.red + newMicroService.Name.red);
-                        log(erro3.message);
                         done();
                     }
                 },
@@ -891,8 +890,8 @@ function MicroServiceBusHost(settings) {
                 }
             });
             
-            server.listen(port, 'localhost', function () {
-                console.log("Server started on port ".green + port);
+            server.listen(port, function () {
+                console.log("Server started on port: ".green + port);
                 console.log();
             });
         }
