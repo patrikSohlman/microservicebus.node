@@ -26,10 +26,10 @@ var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
-var storageIsEnabled = true;
+var guid = require('uuid');
 
 function REST(nodeName, sbSettings) {
-    
+    var storageIsEnabled = true;
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
@@ -49,6 +49,17 @@ function REST(nodeName, sbSettings) {
     };
     REST.prototype.Submit = function (message, node, service) {
         try {
+            if (stop) {
+                var persistMessage = {
+                    node: node,
+                    service: service,
+                    message: message
+                };
+                if (storageIsEnabled)
+                    storage.setItem(guid.v1(), persistMessage);
+                
+                return;
+            }
             var submitUri = baseAddress + sbSettings.topic + "/messages" + "?timeout=60"
             
             httpRequest({
@@ -103,6 +114,14 @@ function REST(nodeName, sbSettings) {
     };
     REST.prototype.Track = function (trackingMessage) {
         try {
+            if (stop) {
+
+                if (storageIsEnabled)
+                    storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                
+                return;
+            }
+
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
             httpRequest({

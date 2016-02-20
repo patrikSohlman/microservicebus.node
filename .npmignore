@@ -13,6 +13,7 @@ BEFORE PUBLISH.md
 *.vs
 *.Tests
 *.suo
+*.heapsnapshot
 microServiceBus.BizTalk
 persist
 Services

@@ -192,7 +192,10 @@ function MicroServiceBusHost(settings) {
         }
         _itineraries.push(updatedItinerary);
         
-        loadItineraries(settings.organizationId, _itineraries);
+        //loadItineraries(settings.organizationId, _itineraries);
+        startAllServices(_itineraries, function () { 
+        
+        });
     }
     // Called by HUB when itineraries has been updated
     function OnChangeState(state) {
@@ -212,7 +215,10 @@ function MicroServiceBusHost(settings) {
         else {
             _downloadedScripts = [];
             _inboundServices = [];
-            loadItineraries(settings.organizationId, _itineraries);
+            //loadItineraries(settings.organizationId, _itineraries);
+            startAllServices(_itineraries, function () { 
+        
+            });
         }
     }
     // Update debug mode
@@ -269,8 +275,13 @@ function MicroServiceBusHost(settings) {
         });
         
         _itineraries = signInResponse.itineraries;
-        loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
-        client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
+        //loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
+        startAllServices(_itineraries, function () { 
+            client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
+            setTimeout(function () {
+                restorePersistedMessages();
+            }, 3000);
+        });
         
         setTimeout(function () {
             restorePersistedMessages();
@@ -289,6 +300,9 @@ function MicroServiceBusHost(settings) {
                 }
                 else if (key.name == 'p') {
                     OnPing();
+                }
+                else if (key.name == 'i') {
+                    console.log("Active services: ".green + _inboundServices.length);
                 }
                 else if (key.name == 'd') {
                     try {
@@ -358,6 +372,15 @@ function MicroServiceBusHost(settings) {
         }
     }
     
+    // Starting up all services
+    function startAllServices(itineraries, callback) {
+        stopAllServices(function () {
+            loadItineraries(settings.organizationId, itineraries, function () { 
+                callback();
+            });
+        });
+    }
+
     // Stopping all services
     function stopAllServices(callback) {
         if (com != null) {
@@ -370,36 +393,38 @@ function MicroServiceBusHost(settings) {
             app = express();
         }
         
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        
-        for (var i = 0; i < _inboundServices.length; i++) {
-            var service = _inboundServices[i];
-            try {
-                service.Stop();
-                var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
-                console.log(lineStatus);
-                service = undefined;
-                delete service;
-            }
+        if (_inboundServices.length > 0) {
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+            console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+            
+            for (var i = 0; i < _inboundServices.length; i++) {
+                var service = _inboundServices[i];
+                try {
+                    service.Stop();
+                    var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
+                    console.log(lineStatus);
+                    service = undefined;
+                    delete service;
+                }
                 catch (ex) {
-                console.log('Unable to stop '.red + service.Name.red);
-                console.log(ex.message.red);
+                    console.log('Unable to stop '.red + service.Name.red);
+                    console.log(ex.message.red);
+                }
             }
+            
+            if (server != undefined && server != null)
+                server.close();
+            
+            _startWebServer = false;
+            _downloadedScripts = undefined;
+            delete _downloadedScripts;
+            _inboundServices = undefined;
+            delete _inboundServices;
+            
+            _downloadedScripts = [];
+            _inboundServices = [];
         }
-        
-        if (server != undefined && server != null)
-            server.close();
-        
-        _startWebServer = false;
-        _downloadedScripts = undefined;
-        delete _downloadedScripts;
-        _inboundServices = undefined;
-        delete _inboundServices;
-        
-        _downloadedScripts = [];
-        _inboundServices = [];
         callback();
     }
     
@@ -528,7 +553,7 @@ function MicroServiceBusHost(settings) {
     
     // Called after successfull signin.
     // Iterates through all itineries and download the scripts, afterwhich the services is started
-    function loadItineraries(organizationId, itineraries) {
+    function loadItineraries(organizationId, itineraries, callback) {
         
         // Prevent double loading
         if (_loadingState == "loading") {
@@ -589,6 +614,7 @@ function MicroServiceBusHost(settings) {
             startListen();
             
             _loadingState = "done";
+            callback();
         });
     
     }
@@ -708,10 +734,10 @@ function MicroServiceBusHost(settings) {
                                 
                                 if (integrationMessage.FaultCode != null) {
                                     trackException(integrationMessage, 
-                                    integrationMessage.LastActivity, 
-                                    "Failed", 
-                                    integrationMessage.FaultCode, 
-                                    integrationMessage.FaultDescripton);
+                                        integrationMessage.LastActivity, 
+                                        "Failed", 
+                                        integrationMessage.FaultCode, 
+                                        integrationMessage.FaultDescripton);
                                     
                                     console.log('Exception: '.red + integrationMessage.FaultDescripton);
                                     return;

@@ -37,7 +37,6 @@
     <Compile Include="Gruntfile.js" />
     <Compile Include="gulpfile.js" />
     <Compile Include="protocols\AMQP.js" />
-    <Compile Include="protocols\Com.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
     <Compile Include="protocols\REST.js" />
