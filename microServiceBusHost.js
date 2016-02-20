@@ -23,28 +23,25 @@ SOFTWARE.
 */
 var color = require('colors');
 var signalR = require('signalr-client');
-//var npm = require('npm');
 var linq = require('node-linq').LINQ;
 var moment = require('moment');
 var extend = require('extend');
 var async = require('async');
-//var request = require("request");
 var reload = require('require-reload')(require);
 var os = require("os");
-//var https = require('https');
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
 var MicroService = require('./Services/microService.js');
 var Com = require("./Com.js");
-var http;// = require('http');
-var express;// = require('express');
-var swaggerize;// = require('swaggerize-express');
-var bodyParser;// = require('body-parser')
+var http;
+var express;
+var swaggerize;
+var bodyParser;
 var guid = require('uuid');
 var pjson = require('./package.json');
 var keypress = require('keypress');
-var memwatch; // used for debug profiler
+var memwatch; 
 
 function MicroServiceBusHost(settings) {
     // Callbacks
@@ -99,9 +96,9 @@ function MicroServiceBusHost(settings) {
                 com.Stop();
             }
             
-            stopAllServices(function () {
-                console.log("All services stopped".yellow);
-            });
+            //stopAllServices(function () {
+            //    console.log("All services stopped".yellow);
+            //});
         },
         onerror: function (error) {
             console.log("Connection: " + "Error: ".red, error);
