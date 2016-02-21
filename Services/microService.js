@@ -29,10 +29,7 @@ var fs = require('graceful-fs');
 var path = require("path");
 
 function MicroService(microService) {
-    // Initialize all instance properties
-   // extend(this, microService);
-//    this.microService = microService;
-    
+
     this.Name = "Not set";
     this.OrganizationId = "Not set";
     this.IntegrationId = "Not set";
@@ -239,14 +236,14 @@ function MicroService(microService) {
     MicroService.prototype.ParseString = function (str, payload, context) {
         // Parse with context '{}'
         var match;
-        
+        var regstr = str;
         var pattern = /\{(.*?)\}/g;
         
         while ((match = pattern.exec(str)) != null) {
             var variable = new linq(context.Variables).First(function (v) { return v.Variable === match[1]; });
             if (variable != null) {
-                str = str.replace('{' + match[1] + '}', variable.Value);
-                return str;
+                regstr = regstr.replace('{' + match[1] + '}', variable.Value);
+               // return str;
             }
         }
         
@@ -261,16 +258,15 @@ function MicroService(microService) {
         // Parse with payload '[]'
         pattern = /\[(.*?)\]/g;
         
-        var regstr = str;
         while ((match = pattern.exec(regstr)) != null) {
             
             var expression = "message = " + payload + ";\nvar str = message." + match[1] + ";";
             eval(expression);
-            str = regstr.replace('['+ match[1]+']', str);
+            regstr = regstr.replace('['+ match[1]+']', str);
 
-            return str;
+            //return str;
         }
-        return str;
+        return regstr;
     };
 
     // Internal

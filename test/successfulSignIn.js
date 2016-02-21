@@ -17,21 +17,46 @@ var microServiceBusHost2;
 
 process.env.organizationid = "65b22e1f-a17e-432f-b9f2-b7057423a786";
 
-
-
 describe('SignIn', function () {
     
     var check = function (done) {
         if (loggedInComplete1) done();
         else setTimeout(function () { check(done) }, 1000);
     }
-    
-    //it('Installing deasync', function (done) {
-    //    util.addNpmPackage('deasync', function () { 
-    //        done();
-    //    });
+
+    it('Parse string should work', function (done) {
+        var MicroService = require('../Services/microService.js');
+        var microService = new MicroService();
+
+        var varaiables = [
+            { Variable: 'kid1', Type: 'String', Value: "Linus" },
+            { Variable: 'kid2', Type: 'String', Value: "Ponus" },
+            { Variable: 'kid3', Type: 'String', Value: "Matilda" }
+        ];
         
-    //});
+        var context = {
+            "ContentType" : 'application/json',
+            "Variables" : varaiables
+        }
+        var payload = {
+            "place": "okq8",
+            "date": "21-02-2016",
+            "time": "17.43",
+            "filename": "okq8_21-02-2016_17.43"
+        };
+        var str = "okq8_[date]_[time]_{kid1}_{kid2}_{kid3}.json";
+        
+        try {
+            str = microService.ParseString(str, payload, context);
+        }
+        catch (e){ 
+            throw "ParseString failed";
+        }
+        if (str != "okq8_21-02-2016_17.43_Linus_Ponus_Matilda.json")
+            throw "ParseString is not valid";
+
+        done();
+    });
 
     it('ENV organizationId should be set', function (done) {
         var orgId = process.env.organizationId;
@@ -192,6 +217,7 @@ describe('SignIn', function () {
             });
         });
         microServiceBusHost.Start(true);
+
         while (loggedInComplete1 == false) {
             try {
                 require('deasync').runLoopOnce();
@@ -201,8 +227,6 @@ describe('SignIn', function () {
         }
         
     });
-
-
 });
 
 
