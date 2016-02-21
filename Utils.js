@@ -73,8 +73,8 @@ exports.mkdir = function (dir, callback) {
     fs.mkdirParent(dir, null, callback);
 };
 
-exports.encrypt = function (buffer) {
-    var password = process.env["NODESECRET"];
+exports.encrypt = function (buffer, password) {
+    password = password == undefined ? process.env["NODESECRET"] : password;
     if (password == undefined) {
         throw "Node is configured to use encryption, but no secret has been configured. Add an environment variable called 'NODESECRET and set the value to your secret.".bgRed;
     }
@@ -84,8 +84,8 @@ exports.encrypt = function (buffer) {
     return crypted;
 }
 
-exports.decrypt = function (buffer) {
-    var password = process.env["NODESECRET"];
+exports.decrypt = function (buffer, password) {
+    password = password == undefined ? process.env["NODESECRET"] : password;
     if (password == undefined) {
         throw "Node is configured to use encryption, but no secret has been configured. Add an environment variable called 'NODESECRET and set the value to your secret.".bgRed;
     }

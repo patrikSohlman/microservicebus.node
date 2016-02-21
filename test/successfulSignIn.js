@@ -57,6 +57,19 @@ describe('SignIn', function () {
 
         done();
     });
+    
+    it('Encryption/Decryption should work', function (done) {
+        
+        var dataToEncrypt = "Some data";
+        var encryptedBuffer = util.encrypt(new Buffer(dataToEncrypt), "secret");
+        var decryptedBuffer = util.decrypt(encryptedBuffer, "secret");
+        var str = decryptedBuffer.toString('utf8');
+        
+        if (str != dataToEncrypt)
+            throw "Encryption/Decryption failed";
+
+        done();
+    });
 
     it('ENV organizationId should be set', function (done) {
         var orgId = process.env.organizationId;
