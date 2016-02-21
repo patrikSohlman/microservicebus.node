@@ -113,11 +113,6 @@ describe('SignIn', function () {
                     ret.should.be.type('object');
                     done();
                 });
-                it('javascriptaction.js should exist after login', function (done) {
-                    var ret = fs.statSync(__dirname + "/../Services/javascriptaction.js");
-                    ret.should.be.type('object');
-                    done();
-                });
                 it('calling test should work', function (done) {
                     this.timeout(5000);
                     var url = 'http://localhost:9090';
@@ -174,6 +169,11 @@ describe('SignIn', function () {
                             });
                         });
                     });
+                });
+                it('javascriptaction.js should exist after calling service', function (done) {
+                    var ret = fs.statSync(__dirname + "/../Services/javascriptaction.js");
+                    ret.should.be.type('object');
+                    done();
                 });
                 it('ping should work', function (done) {
                     var pingResponse = microServiceBusHost.TestOnPing("");
