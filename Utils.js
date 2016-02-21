@@ -26,6 +26,8 @@ var exports = module.exports = {};
 var fs = require('fs');
 var npm = require('npm');
 var path = require("path");
+var crypto = require('crypto');
+var algorithm = 'aes-256-ctr';
 require('colors');
 
 exports.padLeft = function (nr, n, str) {
@@ -71,46 +73,27 @@ exports.mkdir = function (dir, callback) {
     fs.mkdirParent(dir, null, callback);
 };
 
-/* istanbul ignore next */
-exports.encrypt = function (payload, certificate) {
-    var ursa;
-    this.addNpmPackage('ursa', function (err) {
-        if (err == null || err == "") {
-            ursa = require('ursa');
-        }
-        else {
-            console.log('Unable to install ursa npm package'.red);
-            console.log('Make sure OpenSSL (normal, not light) in the same bitness as your Node.js installation'.red);
-            console.log('You can download OpenSSL from http://slproweb.com/products/Win32OpenSSL.html');
-
-            throw 'Unable to install ursa npm package';
-        }
-    });
-
-    var crt = ursa.createPublicKey(fs.readFileSync(certificate));
-    encryptedPayload = crt.encrypt(payload, 'utf8', 'base64');
-    return encryptedPayload;
-};
-/* istanbul ignore next */
-exports.decrypt = function (encryptedPayload, certificate) {
-    var ursa;
-    this.addNpmPackage('ursa', function (err) {
-        if (err == null || err == "") {
-            ursa = require('ursa');
-        }
-        else {
-            console.log('Unable to install ursa npm package'.red);
-            console.log('Make sure OpenSSL (normal, not light) in the same bitness as your Node.js installation'.red);
-            console.log('You can download OpenSSL from http://slproweb.com/products/Win32OpenSSL.html');
-            
-            throw 'Unable to install ursa npm package';
-        }
-    });
+exports.encrypt = function (buffer) {
+    var password = process.env["NODESECRET"];
+    if (password == undefined) {
+        throw "Node is configured to use encryption, but no secret has been configured. Add an environment variable called 'NODESECRET and set the value to your secret.".bgRed;
+    }
     
-    var key = ursa.createPrivateKey(fs.readFileSync(certificate));
-    payload = key.decrypt(encryptedPayload, 'base64', 'utf8');
-    return payload;
-};
+    var cipher = crypto.createCipher(algorithm, password)
+    var crypted = Buffer.concat([cipher.update(buffer), cipher.final()]);
+    return crypted;
+}
+
+exports.decrypt = function (buffer) {
+    var password = process.env["NODESECRET"];
+    if (password == undefined) {
+        throw "Node is configured to use encryption, but no secret has been configured. Add an environment variable called 'NODESECRET and set the value to your secret.".bgRed;
+    }
+    var algorithm = 'aes-256-ctr';
+    var decipher = crypto.createDecipher(algorithm, password)
+    var dec = Buffer.concat([decipher.update(buffer) , decipher.final()]);
+    return dec;
+}
 
 exports.addNpmPackage = function (npmPackage, callback) {
     var ret;

@@ -492,6 +492,12 @@ function MicroServiceBusHost(settings) {
             trackMessage(message, destination, "Started");
             
             var buf = new Buffer(message._messageBuffer, 'base64');
+            
+            // Encrypted?
+            if (message.Encrypted) { 
+                buf = util.decrypt(buf);
+            }
+
             var messageString = buf.toString('utf8');
             
             // Submit message to service
@@ -530,21 +536,28 @@ function MicroServiceBusHost(settings) {
         fs.readdir('./persist/', function (err, files) {
             if (err) throw err;
             for (var i = 0; i < files.length; i++) {
-                var file = './persist/' + files[i];
-                var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
+                try {
+                    var file = './persist/' + files[i];
+                    var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
+                    
+                    if (files[i].startsWith("_tracking_")) {
+                        com.Track(persistMessage);
+                    }
+                    else {
+                        com.Submit(persistMessage.message, persistMessage.node, persistMessage.service);
+                    }
+                }
+                catch (se) {
+                    var msg = "Unable to read persisted message: " + files[i];
+                    console.log("Error: ".red + msg.grey)
                 
-                if (files[i].startsWith("_tracking_")) {
-                    com.Track(persistMessage);
                 }
-                else {
-                    com.Submit(persistMessage.message, persistMessage.node, persistMessage.service);
-                }
+
                 try {
                     fs.unlinkSync(file);
                 }
                 catch (fe) {
                     var msg = "Unable to delete file from persistent store. The message was successfully submitted, but will be submitted again after the node restarts.";
-                    log(msg);
                     console.log("Error: ".red + msg.grey)
                 }
             }
@@ -726,7 +739,7 @@ function MicroServiceBusHost(settings) {
                         newMicroService.Environment = itinerary.environment;
                         newMicroService.TrackingLevel = itinerary.trackingLevel;
                         newMicroService.Init(activity.userData.config);
-
+                        newMicroService.UseEncryption = settings.useEncryption;
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {
@@ -782,6 +795,16 @@ function MicroServiceBusHost(settings) {
                                             var destination = sender.ParseString(successor.userData.host, messageString, integrationMessage);
                                             integrationMessage.isDynamicRoute = destination != successor.userData.host;
                                             destination.split(',').forEach(function (destinationNode) {
+                                                
+                                                // Encrypt?
+                                                if (settings.useEncryption == true) {
+                                                    var messageBuffer = new Buffer(integrationMessage._messageBuffer, 'base64');
+                                                    messageBuffer = util.encrypt(messageBuffer);
+                                                    integrationMessage.Encrypted = true;
+                                                    integrationMessage._messageBuffer = messageBuffer;
+                                                    integrationMessage.MessageBuffer = messageBuffer;
+                                                }
+
                                                 if (destinationNode == settings.nodeName)
                                                     receiveMessage(integrationMessage, successor.userData.id);
                                                 else
@@ -1056,12 +1079,17 @@ function MicroServiceBusHost(settings) {
         if (msg.IsFirstAction && status == "Completed")
             msg.IsFirstAction = false;
         
+        // Remove message if encryption is enabled?
+        if (settings.useEncryption == true) {
+            msg.MessageBuffer = new Buffer("[ENCRYPTED]").toString('base64');
+        }
+
         var trackingMessage = {
             _message : msg.MessageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,
-            Node : settings.nodeName ,
+            Node : settings.nodeName,
             MessageId: messageId,
             OrganizationId : settings.organizationId,
             InterchangeId : msg.InterchangeId,
@@ -1071,6 +1099,7 @@ function MicroServiceBusHost(settings) {
             TrackingLevel : msg.TrackingLevel,
             IntegrationId : msg.IntegrationId,
             IsFault : false,
+            IsEncrypted : settings.useEncryption == true,
             FaultCode : msg.FaultCode,
             FaultDescription : msg.FaultDescripton,
             IsFirstAction : msg.IsFirstAction,

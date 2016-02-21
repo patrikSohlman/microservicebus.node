@@ -27,6 +27,7 @@ var npm = require('npm');
 var linq = require('node-linq').LINQ;
 var fs = require('graceful-fs');
 var path = require("path");
+var util = require('../Utils.js')
 
 function MicroService(microService) {
 
@@ -39,6 +40,7 @@ function MicroService(microService) {
     this.Itinerary = "Not set";
     this.Config = { "general": {}, "static": {}, "security": {} };
     this.IsEnabled = "Not set";
+    this.UseEncryption = false;
     this.App = null; // Used for Azure API Apps
     
     this.RunInboundScript = "Not set";
@@ -91,19 +93,20 @@ function MicroService(microService) {
                 if (typeof payload == 'object')
                     payload = JSON.stringify(payload);
                 
-                messageBuffer = new Buffer(payload).toString('base64');
+                messageBuffer = new Buffer(payload);//.toString('base64');
                 break;
             case 'application/xml':
             case 'text/plain':
-                messageBuffer = new Buffer(payload).toString('base64');
+                messageBuffer = new Buffer(payload);//.toString('base64');
             default:
                 isBinary = true;
                 var base64string = payload.toString('base64');
-                messageBuffer = new Buffer(base64string).toString('base64');
+                messageBuffer = new Buffer(base64string);//.toString('base64');
                 break;
         }
         
         var integrationMessage = this.CreateMessage(messageBuffer, contentType, varaiables, isBinary);
+
         onMessageReceivedCallback(integrationMessage, this);
     };
     
@@ -115,11 +118,11 @@ function MicroService(microService) {
         switch (contentType) {
             case 'application/json':
                 payload = JSON.stringify(payload);
-                messageBuffer = new Buffer(payload).toString('base64');
+                messageBuffer = new Buffer(payload);//.toString('base64');
                 break;
             case 'application/xml':
             case 'text/plain':
-                messageBuffer = new Buffer(payload).toString('base64');
+                messageBuffer = new Buffer(payload);//.toString('base64');
                 break;
             default:
                 messageBuffer = payload;
@@ -275,8 +278,7 @@ function MicroService(microService) {
         // clone itinerary
         var json = JSON.stringify(this.Itinerary);
         var itinerary = JSON.parse(json);
-        
-        
+                
         if (variables != null && itinerary.variables != null)
             variables = itinerary.variables.concat(variables);
         
@@ -293,8 +295,8 @@ function MicroService(microService) {
             LastActivity : this.Name,
             ContentType : contentType,
             Itinerary : itinerary,
-            MessageBuffer : messageBuffer,
-            _messageBuffer : messageBuffer,
+            MessageBuffer : messageBuffer.toString('base64'),
+            _messageBuffer : messageBuffer.toString('base64'),
             IsBinary : isBinary,
             IsLargeMessage : false,
             IsCorrelation : false,
@@ -389,7 +391,7 @@ function MicroService(microService) {
         };
         
     }
-
+    
     extend(this, microService);
 }
 
