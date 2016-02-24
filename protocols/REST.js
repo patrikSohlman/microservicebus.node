@@ -38,10 +38,11 @@ function REST(nodeName, sbSettings) {
     var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
     
     REST.prototype.Start = function () {
+        stop = false;
+        
         // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
         this.Submit("{}", nodeName, "--dummy--");
         
-        stop = false;
         listenMessaging();
     };
     REST.prototype.Stop = function () {
@@ -86,7 +87,7 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
-                    onQueueDebugCallback("Submitted message to " + node.toLowerCase() + ". status code:" + res.statusCode);
+                    //onQueueDebugCallback("Submitted message to " + node.toLowerCase() + ". status code:" + res.statusCode);
                 }
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token

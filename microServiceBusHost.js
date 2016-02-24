@@ -59,6 +59,7 @@ function MicroServiceBusHost(settings) {
     var _downloadedScripts = [];
     var _firstStart = true;
     var _loadingState = "none"; // node -> loading -> done -> stopped
+    var _restoreTimeout;
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -95,6 +96,8 @@ function MicroServiceBusHost(settings) {
             if (com != null) {
                 com.Stop();
             }
+
+            clearTimeout(_restoreTimeout);
             
             //stopAllServices(function () {
             //    console.log("All services stopped".yellow);
@@ -194,7 +197,9 @@ function MicroServiceBusHost(settings) {
         
         //loadItineraries(settings.organizationId, _itineraries);
         startAllServices(_itineraries, function () { 
-        
+            _restoreTimeout = setTimeout(function () {
+                restorePersistedMessages();
+            }, 3000);
         });
     }
     // Called by HUB when itineraries has been updated
@@ -255,41 +260,30 @@ function MicroServiceBusHost(settings) {
             trackingKeyName: response.trackingKeyName,
             protocol : response.protocol.toLowerCase()
         };
-        com = new Com(settings.nodeName, sbSettings);
-        
-        com.OnQueueMessageReceived(function (sbMessage) {
-            var message = sbMessage.body;
-            var service = sbMessage.applicationProperties.value.service;
-            receiveMessage(message, service);
-        });
-        com.OnReceivedQueueError(function (message) {
-            console.log("OnReceivedError: ".red + message);
-        });
-        com.OnSubmitQueueError(function (message) {
-            console.log("OnSubmitError: ".red + message);
-        });
-        com.OnQueueDebugCallback(function (message) {
-            if (settings.debug != null && settings.debug == true) {// jshint ignore:line
-                console.log("COM: ".green + message);
-            }
-        });
-        
+
         _itineraries = signInResponse.itineraries;
-        //loadItineraries(signInResponse.organizationId, signInResponse.itineraries);
-        startAllServices(_itineraries, function () { 
-            client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
-            setTimeout(function () {
-                restorePersistedMessages();
-            }, 3000);
-        });
-        
-        setTimeout(function () {
-            restorePersistedMessages();
-        }, 3000);
-        
         
         if (_firstStart) {
             _firstStart = false;
+            
+            com = new Com(settings.nodeName, sbSettings);
+            
+            com.OnQueueMessageReceived(function (sbMessage) {
+                var message = sbMessage.body;
+                var service = sbMessage.applicationProperties.value.service;
+                receiveMessage(message, service);
+            });
+            com.OnReceivedQueueError(function (message) {
+                console.log("OnReceivedError: ".red + message);
+            });
+            com.OnSubmitQueueError(function (message) {
+                console.log("OnSubmitError: ".red + message);
+            });
+            com.OnQueueDebugCallback(function (message) {
+                if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+                    console.log("COM: ".green + message);
+                }
+            });
             
             keypress(process.stdin);
             
@@ -319,6 +313,16 @@ function MicroServiceBusHost(settings) {
             process.stdin.setRawMode(true);
             process.stdin.resume();
         }
+
+        startAllServices(_itineraries, function () {
+            client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
+
+            _restoreTimeout = setTimeout(function () {
+                restorePersistedMessages();
+            }, 3000);
+        });
+        
+        
     }
     // Called by HUB when node has been successfully created    
     /* istanbul ignore next */
@@ -599,7 +603,12 @@ function MicroServiceBusHost(settings) {
             });
 
         }, function (err, results) {
-           
+            
+            // Start com to receive messages
+            if (settings.state === 'Active') {
+                com.Start();
+            }
+
             for (i = 0; i < _inboundServices.length; i++) {
                 var newMicroService = _inboundServices[i];
                 
@@ -613,13 +622,8 @@ function MicroServiceBusHost(settings) {
                 var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
                 console.log(lineStatus);
             }
-            
+            console.log();
             onStarted(itineraries.length, exceptionsLoadingItineraries);
-            
-            
-            // Start com to receive messages
-            if (settings.state === 'Active')
-                com.Start();
             
             if (onUpdatedItineraryComplete != null)
                 onUpdatedItineraryComplete();
