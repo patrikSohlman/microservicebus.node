@@ -39,6 +39,7 @@
     <Compile Include="protocols\AMQP.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
+    <Compile Include="protocols\AZUREIOT.js" />
     <Compile Include="protocols\REST.js" />
     <Compile Include="restore.js" />
     <Compile Include="server.js" />

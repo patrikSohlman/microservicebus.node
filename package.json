@@ -9,6 +9,7 @@
     "adm-zip": "0.4.7",
     "amqp10": "2.0.3",
     "async": "1.4.2",
+    "azure-iothub": "^1.0.1",
     "body-parser": "1.14.1",
     "chokidar": "1.0.5",
     "colors": "1.1.2",

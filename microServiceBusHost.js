@@ -250,23 +250,13 @@ function MicroServiceBusHost(settings) {
         else
             console.log("State: " + settings.state.yellow);
         
-        var sbSettings = {
-            sbNamespace : response.sbNamespace,
-            topic : response.topic,
-            sasKey : response.sasKey,
-            sasKeyName : response.sasKeyName,
-            trackingKey : response.trackingKey,
-            trackingHubName : response.trackingHubName,
-            trackingKeyName: response.trackingKeyName,
-            protocol : response.protocol.toLowerCase()
-        };
 
         _itineraries = signInResponse.itineraries;
         
         if (_firstStart) {
             _firstStart = false;
             
-            com = new Com(settings.nodeName, sbSettings);
+            com = new Com(settings.nodeName, response);
             
             com.OnQueueMessageReceived(function (sbMessage) {
                 var message = sbMessage.body;

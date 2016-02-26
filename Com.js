@@ -30,7 +30,7 @@ var extend = require('extend');
 var storageIsEnabled = true;
 
 function Com(nodeName, sbSettings) {
-    var sbSettings = sbSettings;
+
     var stop = false;
     try {
         storage.initSync(); // Used for persistent storage if off-line
@@ -68,7 +68,7 @@ function Com(nodeName, sbSettings) {
     Com.prototype.Track = function (trackingMessage) {
     };
     
-    var Protocol = require('./protocols/REST.js');
+    var Protocol = require('./protocols/' + sbSettings.protocol + '.js');
     //var Protocol = require('./protocols/AMQP.js');
     var protocol = new Protocol(nodeName, sbSettings);
 
