@@ -22,7 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */ 
 
+var Amqp = require('azure-iot-device-amqp').Amqp;
+var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs;
+var Client = require('azure-iot-device').Client;
+var Message = require('azure-iot-device').Message;
 var iothub = require('azure-iothub');
+
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -31,11 +36,13 @@ var guid = require('uuid');
 
 function AZUREIOT(nodeName, sbSettings) {
     var storageIsEnabled = true;
-    
-    // Setup hub
-    //var registry = iothub.Registry.fromConnectionString(sbSettings.connectionString);
-    var receiverToken = decodeURIComponent(sbSettings.receiverToken);
+    var sender;
+    var receiver;
 
+    console.log("Created");
+    // Setup hub
+    
+    
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
@@ -44,15 +51,42 @@ function AZUREIOT(nodeName, sbSettings) {
     var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
 
     AZUREIOT.prototype.Start = function () {
+        console.log("Start Called");
         stop = false;
+        sender = iothub.Client.fromSharedAccessSignature(sbSettings.senderToken);
+        receiver = Client.fromSharedAccessSignature(sbSettings.receiverToken, AmqpWs);
+
+        sender.open(function (err) {
+            onQueueDebugCallback("Ready to submit messages to Azure IoT Hub");
+            receiver.open(connectCallback);
+        });
+        
     };
     AZUREIOT.prototype.Stop = function () {
         stop = true;
+        sender = undefined;
+        receiver = undefined;
+
     };
     AZUREIOT.prototype.Submit = function (message, node, service) {
-       
+        if (stop) {
+            var persistMessage = {
+                node: node,
+                service: service,
+                message: message
+            };
+            if (storageIsEnabled)
+                storage.setItem(guid.v1(), persistMessage);
+            
+            return;
+        }
+        message.service = service;
+        sender.send(node, message, function (err) {
+            console.log("sent to " + service + " at " + node); 
+        });
     };
     AZUREIOT.prototype.Track = function (trackingMessage) {
+        return;
         try {
             if (stop) {         
                 if (storageIsEnabled)
@@ -109,5 +143,32 @@ function AZUREIOT(nodeName, sbSettings) {
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
         return token;
     }
+
+    var connectCallback = function (err) {
+        if (err) {
+            onQueueErrorReceiveCallback('Could not connect: ' + err.message);
+        } else {
+            onQueueDebugCallback("Ready to receive messages to Azure IoT Hub");
+            receiver.on('message', function (msg) {
+                try {
+                    console.log("receive message...");
+                    var message = msg.data;
+                    
+                    var responseData = {
+                        body : message,
+                        applicationProperties: { value: { service: message.service } }
+                    }
+                    onQueueMessageReceivedCallback(responseData);
+                    
+                    receiver.complete(msg, function () {
+                        
+                    });
+                }
+                catch (e) { 
+                    onQueueErrorReceiveCallback('Could not connect: ' + e.message);
+                }
+            });
+        }
+    };
 }
 module.exports = AZUREIOT;
