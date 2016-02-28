@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
+ 
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -30,6 +30,7 @@ var guid = require('uuid');
 
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
+    var me = this;
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
@@ -93,7 +94,7 @@ function REST(nodeName, sbSettings) {
                     // Outdated token
                     console.log("Invalid token. Recreating token...")
                     restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    this.Submit(message, node, service)
+                    me.Submit(message, node, service)
                     return;
                 }
                 else {
@@ -146,7 +147,7 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
                     restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-                    this.Track(trackingMessage)
+                    me.Track(trackingMessage)
                     return;
                 }
                 else {

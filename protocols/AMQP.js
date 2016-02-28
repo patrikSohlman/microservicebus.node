@@ -28,7 +28,7 @@ var crypto = require('crypto');
 var storage = require('node-persist');
 var util = require('../Utils.js');
 var storageIsEnabled = true;
-
+ 
 function AMQP(nodeName, sbSettings) {
     var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
     var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;

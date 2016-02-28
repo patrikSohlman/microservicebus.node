@@ -20,7 +20,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
+*/ 
 
 var iothub = require('azure-iothub');
 var crypto = require('crypto');
@@ -33,8 +33,8 @@ function AZUREIOT(nodeName, sbSettings) {
     var storageIsEnabled = true;
     
     // Setup hub
-    var registry = iothub.Registry.fromConnectionString(sbSettings.connectionString);
-    
+    //var registry = iothub.Registry.fromConnectionString(sbSettings.connectionString);
+    var receiverToken = decodeURIComponent(sbSettings.receiverToken);
 
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;

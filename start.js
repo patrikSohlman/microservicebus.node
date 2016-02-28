@@ -107,5 +107,5 @@ microServiceBusHost.OnUpdatedItineraryComplete(function () {
     
 });
 
-microServiceBusHost.Start(true);
+microServiceBusHost.Start();
 

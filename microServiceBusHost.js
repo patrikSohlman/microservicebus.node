@@ -225,7 +225,7 @@ function MicroServiceBusHost(settings) {
         
             });
         }
-    }
+    } 
     // Update debug mode
     function OnChangeDebug(debug) {
         console.log("Debug state changed to ".grey + debug);
@@ -693,7 +693,7 @@ function MicroServiceBusHost(settings) {
                         else {
                             require("request")(scriptFileUri, function (err, response, scriptContent) {
                                 if (response.statusCode != 200 || err != null) {
-                                    console.log("Unable to get file:" + fileName + ". Exception:" + error.message);
+                                    console.log("Unable to get file:" + fileName);
                                     var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(scriptfileName, 40, ' ') + "|";
                                     console.log(lineStatus);
                                     done();
