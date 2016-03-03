@@ -69,7 +69,6 @@ function Com(nodeName, sbSettings) {
     };
     
     var Protocol = require('./protocols/' + sbSettings.protocol + '.js');
-    //var Protocol = require('./protocols/AMQP.js');
     var protocol = new Protocol(nodeName, sbSettings);
 
     extend(this, protocol);

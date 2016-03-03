@@ -9,15 +9,15 @@
     "adm-zip": "0.4.7",
     "amqp10": "2.0.3",
     "async": "1.4.2",
-    "azure-iot-device": "^1.0.1",
-    "azure-iot-device-amqp": "^1.0.1",
-    "azure-iot-device-amqp-ws": "^1.0.1",
-    "azure-iot-device-http": "^1.0.1",
-    "azure-iothub": "^1.0.1",
+    "azure-iot-device": "1.0.1",
+    "azure-iot-device-amqp": "1.0.1",
+    "azure-iot-device-amqp-ws": "1.0.1",
+    "azure-iot-device-http": "1.0.1",
+    "azure-iothub": "1.0.1",
     "body-parser": "1.14.1",
     "chokidar": "1.0.5",
     "colors": "1.1.2",
-    "compare-version": "^0.1.2",
+    "compare-version": "0.1.2",
     "crypto": "0.0.3",
     "exists-sync": "0.0.3",
     "express": "4.13.3",
@@ -32,7 +32,7 @@
     "node-persist": "0.0.6",
     "node-rest-client": "1.5.1",
     "npm": "2.13.2",
-    "package-json": "^2.2.1",
+    "package-json": "2.2.1",
     "request": "2.65.0",
     "require-reload": "0.2.2",
     "scp": "0.0.3",
@@ -79,5 +79,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "1.1.6"
+  "version": "1.1.7"
 }

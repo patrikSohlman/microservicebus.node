@@ -38,10 +38,6 @@ function AZUREIOT(nodeName, sbSettings) {
     var storageIsEnabled = true;
     var sender;
     var receiver;
-
-    console.log("Created");
-    // Setup hub
-    
     
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;
@@ -82,11 +78,11 @@ function AZUREIOT(nodeName, sbSettings) {
         }
         message.service = service;
         sender.send(node, message, function (err) {
-            console.log("sent to " + service + " at " + node); 
+           // console.log("sent to " + service + " at " + node); 
         });
     };
     AZUREIOT.prototype.Track = function (trackingMessage) {
-        return;
+        
         try {
             if (stop) {         
                 if (storageIsEnabled)
@@ -151,7 +147,7 @@ function AZUREIOT(nodeName, sbSettings) {
             onQueueDebugCallback("Ready to receive messages to Azure IoT Hub");
             receiver.on('message', function (msg) {
                 try {
-                    console.log("receive message...");
+                    //console.log("receive message...");
                     var message = msg.data;
                     
                     var responseData = {

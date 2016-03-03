@@ -256,6 +256,7 @@ function MicroServiceBusHost(settings) {
         if (_firstStart) {
             _firstStart = false;
             
+            console.log("Protocol: " + response.protocol.green)
             com = new Com(settings.nodeName, response);
             
             com.OnQueueMessageReceived(function (sbMessage) {
