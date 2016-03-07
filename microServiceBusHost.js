@@ -531,8 +531,9 @@ function MicroServiceBusHost(settings) {
         fs.readdir('./persist/', function (err, files) {
             if (err) throw err;
             for (var i = 0; i < files.length; i++) {
+                var file = './persist/' + files[i];
                 try {
-                    var file = './persist/' + files[i];
+                    
                     var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
                     
                     if (files[i].startsWith("_tracking_")) {
@@ -545,7 +546,10 @@ function MicroServiceBusHost(settings) {
                 catch (se) {
                     var msg = "Unable to read persisted message: " + files[i];
                     console.log("Error: ".red + msg.grey)
-                
+                    try {
+                        fs.unlinkSync(file);
+                    }
+                    catch (fex) { }
                 }
 
                 try {
