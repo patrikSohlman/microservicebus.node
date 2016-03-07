@@ -27,16 +27,15 @@ var fs = require('fs');
 
 try {
     var settings = {
-        "debug": process.env['debug'] == "true",
-        "hubUri": process.env['hubUri'],
-        "port": parseInt( process.env['port']),
-        "trackMemoryUsage": process.env['trackMemoryUsage'],
+        "debug": "true",
+        "hubUri": process.env['hubUri'] ,
+        "port": 80,
+        "trackMemoryUsage":  0,
         "nodeName": process.env['nodeName'],
-        "organizationId": process.env['organizationId'],
-        "machineName": process.env['machineName']
+        "organizationId": process.env['organizationId']
     }
-    fs.writeFileSync('./settings.json', data);
-    require("./start.js");
+    fs.writeFileSync('./settings.json', JSON.stringify(settings));
+    var hub = require("./start.js");
 
 }
 catch (err) {
