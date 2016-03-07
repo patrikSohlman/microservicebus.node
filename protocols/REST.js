@@ -35,9 +35,12 @@ function REST(nodeName, sbSettings) {
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-    var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-    
+    //var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
+    //var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+    var ttt =this.hubUri
+    var restMessagingToken = sbSettings.messagingToken;
+    var restTrackingToken = sbSettings.trackingToken;
+
     REST.prototype.Start = function () {
         stop = false;
         
@@ -88,13 +91,14 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
-                    //onQueueDebugCallback("Submitted message to " + node.toLowerCase() + ". status code:" + res.statusCode);
                 }
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
-                    console.log("Invalid token. Recreating token...")
-                    restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    me.Submit(message, node, service)
+                    onQueueDebugCallback("Expired token. Updating token...")
+                    me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                        restMessagingToken = token;
+                        me.Submit(message, node, service);
+                    })
                     return;
                 }
                 else {
@@ -145,9 +149,11 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
                 else if (res.statusCode == 401) {
-                    console.log("Invalid token. Updating token...")
-                    restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-                    me.Track(trackingMessage)
+                    onQueueDebugCallback("Expired tracking token. Updating token...");
+                    me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                        restTrackingToken = token;
+                        me.Track(trackingMessage)                    
+                    })
                     return;
                 }
                 else {
@@ -206,9 +212,13 @@ function REST(nodeName, sbSettings) {
                     }
                 }
                 else if (res.statusCode == 401) {
-                    console.log("Invalid token. Updating token...")
-                    restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-                    listenMessaging();
+                    // Outdated token
+                    onQueueDebugCallback("Expired token. Updating token...")
+                    me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                        restMessagingToken = token;
+                        listenMessaging();
+                    })
+                    
                     return;
                 }
                 else {
@@ -221,16 +231,6 @@ function REST(nodeName, sbSettings) {
         catch (err) {
             console.log(err);
         }
-    }
-    function create_sas_token(uri, key_name, key) {
-        // Token expires in 24 hours
-        var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
-        var string_to_sign = encodeURIComponent(uri) + '\n' + expiry;
-        var hmac = crypto.createHmac('sha256', key);
-        hmac.update(string_to_sign);
-        var signature = hmac.digest('base64');
-        var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
-        return token;
     }
 }
 module.exports = REST;

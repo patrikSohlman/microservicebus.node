@@ -22,9 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */ 
 
-var Amqp = require('azure-iot-device-amqp').Amqp;
+//var Amqp = require('azure-iot-device-amqp').Amqp;
 var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs;
 var Client = require('azure-iot-device').Client;
+var Amqp = require('azure-iot-device-amqp').Amqp;
+var SharedAccessSignature = require('azure-iot-device').SharedAccessSignature;
+var url = require("url");
+
 var Message = require('azure-iot-device').Message;
 var iothub = require('azure-iothub');
 
@@ -35,27 +39,51 @@ var util = require('../Utils.js');
 var guid = require('uuid');
 
 function AZUREIOT(nodeName, sbSettings) {
+    var me = this;
     var storageIsEnabled = true;
     var sender;
     var receiver;
+    var tracker;
     
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+    var restTrackingToken2 = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
+    var restTrackingToken = sbSettings.trackingToken;
+    
+    var a = decodeURIComponent(restTrackingToken2);
+    var b = decodeURIComponent(restTrackingToken);
 
     AZUREIOT.prototype.Start = function () {
         console.log("Start Called");
         stop = false;
-        sender = iothub.Client.fromSharedAccessSignature(sbSettings.senderToken);
-        receiver = Client.fromSharedAccessSignature(sbSettings.receiverToken, AmqpWs);
-
+        
+        sender = createSenderFromClientSharedAccessSignature(sbSettings.senderToken);
+        receiver = createReceiverFromClientSharedAccessSignature(sbSettings.receiverToken);
+        
+        //tracker.open(function (err) {
+        //    if (err) {
+        //        onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+        //    }
+        //    else {
+        //        onQueueDebugCallback("Tracking is ready");
+        //        tracker.on('error', function (msg) {
+        //            console.log("receive error message...");
+        //        });
+        //    }
+        //});
         sender.open(function (err) {
-            onQueueDebugCallback("Ready to submit messages to Azure IoT Hub");
-            receiver.open(connectCallback);
+            if (err) {
+                onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+            }
+            else {
+                onQueueDebugCallback("Sender is ready");
+                receiver.open(connectCallback);
+            }
         });
+
         
     };
     AZUREIOT.prototype.Stop = function () {
@@ -78,19 +106,31 @@ function AZUREIOT(nodeName, sbSettings) {
         }
         message.service = service;
         sender.send(node, message, function (err) {
-           // console.log("sent to " + service + " at " + node); 
+            if (err)
+                onQueueErrorReceiveCallback(err);
         });
     };
     AZUREIOT.prototype.Track = function (trackingMessage) {
         
         try {
-            if (stop) {         
+            if (stop) {
                 if (storageIsEnabled)
                     storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                 
                 return;
             }
-            
+            //try {
+            //    var message = new Message(trackingMessage);
+            //    tracker.sendEvent(message, function (err) {
+            //        console.log("sendEvent callback!")
+            //        if (err)
+            //            onQueueErrorReceiveCallback(err);
+            //    });
+            //}
+            //catch (e) { 
+            //    console.log('')
+            //}
+            //return;
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
             httpRequest({
@@ -113,8 +153,8 @@ function AZUREIOT(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
-                    restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-                    this.Track(trackingMessage)
+                    ///
+                    me.Track(trackingMessage)
                     return;
                 }
                 else {
@@ -128,7 +168,7 @@ function AZUREIOT(nodeName, sbSettings) {
             console.log();
         }
     };
-
+    
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
@@ -139,12 +179,66 @@ function AZUREIOT(nodeName, sbSettings) {
         var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
         return token;
     }
+    
+    function createSenderFromClientSharedAccessSignature(sharedAccessSignature) {
+        var sas = SharedAccessSignature.parse(sharedAccessSignature);
+        var uri = decodeURIComponent(sas.sr);
+        var parsedUri = url.parse(uri);
+        uri = parsedUri.host == null?uri:parsedUri.host;
+        
+        var uriSegments = uri.split('/');
+        var host = uriSegments[0];
+        var config = {
+            hubName: uri.split('.', 1)[0],
+            host: uri,
+            keyName: sas.skn,
+            sharedAccessSignature: sas.toString()
+        };
+        
+        var DefaultTransport = require('../node_modules/azure-iothub/lib/amqp.js');
+        /*Codes_SRS_NODE_DEVICE_CLIENT_16_030: [The fromSharedAccessSignature method shall return a new instance of the Client object] */
+        return new iothub.Client(new DefaultTransport(config));
+    }
+    function createReceiverFromClientSharedAccessSignature(sharedAccessSignature) {
+        var sas = SharedAccessSignature.parse(sharedAccessSignature);
+        var uri = decodeURIComponent(sas.sr);
+        var parsedUri = url.parse(uri);
+        uri = parsedUri.host == null?uri:parsedUri.host;
+
+        var uriSegments = uri.split('/');
+        
+        var config = {
+            host: uriSegments[0],
+            deviceId: uriSegments[uriSegments.length - 1],
+            hubName: uriSegments[0].split('.')[0],
+            sharedAccessSignature: sharedAccessSignature
+        };
+        
+        return new Client(new AmqpWs(config));
+    }
+    function createTrackingFromClientSharedAccessSignature(sharedAccessSignature) {
+        var sas = SharedAccessSignature.parse(sharedAccessSignature);
+        var uri = decodeURIComponent(sas.sr);
+        var parsedUri = url.parse(uri);
+        uri = parsedUri.host == null?uri:parsedUri.host;
+        
+        var uriSegments = uri.split('/');
+        var host = uriSegments[0];
+        var config = {
+            hubName: uri.split('.', 1)[0],
+            host: uri,
+            keyName: sas.skn,
+            sharedAccessSignature: sas.toString()
+        };
+        
+        return new Client(new Amqp(config));
+    }
 
     var connectCallback = function (err) {
         if (err) {
             onQueueErrorReceiveCallback('Could not connect: ' + err.message);
         } else {
-            onQueueDebugCallback("Ready to receive messages to Azure IoT Hub");
+            onQueueDebugCallback("Receiver is ready");
             receiver.on('message', function (msg) {
                 try {
                     //console.log("receive message...");
@@ -160,11 +254,12 @@ function AZUREIOT(nodeName, sbSettings) {
                         
                     });
                 }
-                catch (e) { 
+                catch (e) {
                     onQueueErrorReceiveCallback('Could not connect: ' + e.message);
                 }
             });
         }
     };
+
 }
 module.exports = AZUREIOT;

@@ -29,8 +29,7 @@ var util = require('./Utils.js');
 var extend = require('extend');
 var storageIsEnabled = true;
 
-function Com(nodeName, sbSettings) {
-
+function Com(nodeName, sbSettings, hubUri) {
     var stop = false;
     try {
         storage.initSync(); // Used for persistent storage if off-line
@@ -67,10 +66,44 @@ function Com(nodeName, sbSettings) {
     };
     Com.prototype.Track = function (trackingMessage) {
     };
-    
+   
     var Protocol = require('./protocols/' + sbSettings.protocol + '.js');
     var protocol = new Protocol(nodeName, sbSettings);
+    
+    protocol.acquireTokenUri = hubUri.replace("wss:", "https:") + "/api/Token";
+    protocol.AcquireToken = function (provider, keyType, oldKey, callback) {
+        var request = {
+            "provider": provider,
+            "keyType": keyType,
+            "oldKey": oldKey
+        }
+        httpRequest({
+            headers: {
+                "Content-Type" : "application/json",
+            },
+            uri: this.acquireTokenUri,
+            json: request,
+            method: 'POST'
+        }, 
+        function (err, res, body) {
+            if (err != null) {
+                onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                console.log("Unable to acquire new token. " + err.message);
+                callback(null);
+            }
+            else if (res.statusCode >= 200 && res.statusCode < 300) {
+                callback(body.token);
+            }
+            else {
+                onQueueErrorSubmitCallback("Unable to acquire new token. ");
+                console.log("Unable to acquire new token. ");
+                callback(null);
+            }
+        });
+    };
 
     extend(this, protocol);
+
+
 }
 module.exports = Com;
