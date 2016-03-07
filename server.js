@@ -23,10 +23,10 @@ var fs = require('fs');
 try {
     var port = process.env.PORT || 1337;
     var settings = {
-        "debug": "true",
-        "hubUri": process.env['hubUri'] ,
-        "port": port,
-        "trackMemoryUsage": 0,
+        "debug": process.env['debug'] == "true",
+        "hubUri": process.env['hubUri'],
+        "port": parseInt( process.env['port']),
+        "trackMemoryUsage": process.env['trackMemoryUsage'],
         "nodeName": process.env['nodeName'],
         "organizationId": process.env['organizationId']
     }
