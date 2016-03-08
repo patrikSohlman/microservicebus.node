@@ -26,7 +26,7 @@ try {
         "debug": process.env['debug'] == "true",
         "hubUri": process.env['hubUri'],
         "port": parseInt( process.env['port']),
-        "trackMemoryUsage": process.env['trackMemoryUsage'],
+        "trackMemoryUsage": 0,
         "nodeName": process.env['nodeName'],
         "organizationId": process.env['organizationId']
     }
