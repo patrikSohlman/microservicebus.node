@@ -1,8 +1,15 @@
 ﻿![alt](https://blogical.blob.core.windows.net/microservicebus/Logosmall.png)
 
 [![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
- 
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-github-deploy%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-web-app-github-deploy%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
+
 # microservicebus.host
 microServiceBus.com is an integration platform for IoT and enterprise applications. This platform lets you expose microservices from small devices and large systems using a hosting infrastructure. These host can run on both Linux and Windows using components built either natively or using node.js.
 
