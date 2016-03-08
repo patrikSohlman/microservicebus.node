@@ -55,7 +55,9 @@
     <Content Include=".npmignore" />
     <Content Include=".travis.yml" />
     <Content Include="azuredeploy.json" />
+    <Content Include="azuredeploy.parameters.json" />
     <Content Include="BEFORE PUBLISH.md" />
+    <Content Include="metadata.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="settings.json" />
