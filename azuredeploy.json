@@ -58,25 +58,6 @@
       "metadata": {
         "description": "The branch of the GitHub repository to use."
       }
-    },
-    "node": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the node."
-      }
-    },
-    "OrganizationKey": {
-      "type": "string",
-      "metadata": {
-        "description": "The unique key of your organization."
-      }
-    },
-    "microServiceBusHub": {
-      "type": "string",
-      "defaultValue": "wss://microservicebus.com",
-      "metadata": {
-        "description": "The uri of the microServiceBus hub "
-      }
     }
   },
   "resources": [
