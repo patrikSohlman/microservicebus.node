@@ -1,5 +1,6 @@
-﻿[![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
-![alt](https://blogical.blob.core.windows.net/microservicebus/Logosmall.png)
+﻿![alt](https://blogical.blob.core.windows.net/microservicebus/Logosmall.png)
+
+[![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
 # microservicebus.host
