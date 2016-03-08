@@ -75,7 +75,7 @@
       "type": "string",
       "defaultValue": "wss://microservicebus.com",
       "metadata": {
-        "description": "The uri of the microServiceBus hub"
+        "description": "The uri of the microServiceBus hub "
       }
     }
   },
