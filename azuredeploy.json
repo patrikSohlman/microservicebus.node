@@ -95,12 +95,22 @@
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', parameters('nodeName'))]"
       ],
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [ ],
+          "properties": {
+            "repoUrl": "[parameters('repoURL')]",
+            "branch": "[parameters('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ],
       "properties": {
         "name": "[parameters('nodeName')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('nodeName'))]",
-        "repoUrl": "[parameters('repoURL')]",
-        "branch": "[parameters('branch')]",
-        "IsManualIntegration": true,
         "siteConfig": {
           "appSettings": [
             {
