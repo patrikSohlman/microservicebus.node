@@ -104,8 +104,8 @@
             "[resourceId('Microsoft.Web/Sites', concat(parameters('nodeName')))]"
           ],
           "properties": {
-            "repoUrl": "[parameters('repoURL')]",
-            "branch": "[parameters('branch')]",
+            "repoUrl": "https://github.com/microServiceBus/microservicebus.node.git",
+            "branch": "master",
             "IsManualIntegration": true
           }
         }
