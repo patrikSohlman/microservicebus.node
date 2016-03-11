@@ -914,10 +914,27 @@ function MicroServiceBusHost(settings) {
             app.use(bodyParser.json())
             
             app.use(function (req, res) {
-                res.setHeader('Content-Type', 'text/plain')
-                res.write('you posted:\n')
-                res.end(JSON.stringify(req.body, null, 2))
+                res.header('Content-Type', 'text/html');
+                var response = '<h1>Welcome to the ' + settings.nodeName + ' node</h1>';
+                response += '<h2>API List</h2>';
+                var localUri = "http://localhost:" + port;
+                
+                app._router.stack.forEach(function (endpoint) {
+                    if (endpoint.route != undefined) {
+                        if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
+                            response += "<div><b>GET</b> " + localUri + endpoint.route.path + "</div>";
+                        if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
+                            response += "<div><b>DELETE</b> " + localUri + endpoint.route.path + "</div>";
+                        if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
+                            response += "<div><b>POST</b> " + localUri + endpoint.route.path + "</div>";
+                        if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
+                            response += "<div><b>PUT</b> " + localUri + endpoint.route.path + "</div>";
+                    }
+                });
+
+                res.send(response);
             })
+
             
             app.use('/', express.static(__dirname + '/html'));
             
