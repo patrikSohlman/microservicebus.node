@@ -8,17 +8,33 @@
         "description": "The name of the web app that you wish to create."
       }
     },
-    "sku": {
+    "skuName": {
       "type": "string",
+      "defaultValue": "F1",
       "allowedValues": [
-        "Free",
-        "Shared",
-        "Basic",
-        "Standard"
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
       ],
-      "defaultValue": "Free",
       "metadata": {
-        "description": "The pricing tier for the hosting plan."
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes plan's instance count"
       }
     },
     "workerSize": {
@@ -72,8 +88,8 @@
         "displayName": "HostingPlan"
       },
       "sku": {
-        "name": "[parameters('sku')]",
-        "capacity": 1
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
       },
       "properties": {
         "name": "[parameters('nodeName')]"
