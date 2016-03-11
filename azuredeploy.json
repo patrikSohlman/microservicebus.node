@@ -37,7 +37,7 @@
     },
     "repoURL": {
       "type": "string",
-      "defaultValue": "https://github.com/microServiceBus/microservicebus.node",
+      "defaultValue": "https://github.com/microServiceBus/microservicebus.node.git",
       "metadata": {
         "description": "The URL for the GitHub repository that contains the project to deploy."
       }
@@ -108,10 +108,23 @@
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
         "RepoUrl": "[parameters('repoURL')]",
         "branch": "[parameters('branch')]",
-        "hubUri": "[parameters('hubUri')]",
-        "nodeName": "[parameters('nodeName')]",
-        "organizationaId": "[parameters('organizationaId')]",
-        "IsManualIntegration": true
+        "IsManualIntegration": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "Name": "hubUri",
+              "Value": "[parameters('hubUri')]"
+            },
+            {
+              "Name": "nodeName",
+              "Value": "[parameters('nodeName')]"
+            },
+            {
+              "Name": "organizationaId",
+              "Value": "[parameters('organizationaId')]"
+            }
+          ]
+        }
       }
     },
     {
