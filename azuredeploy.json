@@ -100,7 +100,9 @@
           "apiVersion": "2015-08-01",
           "name": "web",
           "type": "sourcecontrols",
-          "dependsOn": [ ],
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', concat(parameters('nodeName')))]"
+          ],
           "properties": {
             "repoUrl": "[parameters('repoURL')]",
             "branch": "[parameters('branch')]",
