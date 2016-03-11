@@ -104,7 +104,7 @@
             "[resourceId('Microsoft.Web/Sites', concat(parameters('nodeName')))]"
           ],
           "properties": {
-            "repoUrl": "https://github.com/davidebbo-test/Mvc52Application.git",
+            "repoUrl": "https://github.com/microServiceBus/microservicebus.node.git",
             "branch": "master",
             "IsManualIntegration": true
           }
