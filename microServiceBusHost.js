@@ -1216,14 +1216,14 @@ function MicroServiceBusHost(settings) {
             process.on('SIGINT', gracefulShutdown);
             
             process.on('uncaughtException', function (err) {
-                if (err && err.code == "ECONNRESET") {
-                    client.end();
+                //if (err && err.code == "ECONNRESET") {
+                //    client.end();
 
-                    setTimeout(function () { 
-                        client.start();
-                    }, 1000);
-                }
-                else
+                //    setTimeout(function () { 
+                //        client.start();
+                //    }, 1000);
+                //}
+                //else
                     console.log('Uncaught exception: '.red + err);
             });
         }
