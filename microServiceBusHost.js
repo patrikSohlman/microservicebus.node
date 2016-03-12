@@ -307,6 +307,9 @@ function MicroServiceBusHost(settings) {
                 process.stdin.resume();
                 console.log("after keypress");
             }
+            else { 
+                port = process.env.PORT || 1337;
+            }
         }
 
         startAllServices(_itineraries, function () {
@@ -903,6 +906,7 @@ function MicroServiceBusHost(settings) {
             if (settings.port != undefined)
                 port = settings.port;
             
+            console.log("Listening to port: " + settings.port);            
             console.log();
             
             app.use(bodyParser.json());
