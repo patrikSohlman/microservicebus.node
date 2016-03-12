@@ -1,1 +1,4 @@
-{"hubUri":"wss://microservicebus.com","trackMemoryUsage":0,"port":"1337"}
+{
+    "hubUri": "wss://microservicebus.com",
+    "trackMemoryUsage": 0
+}

@@ -275,36 +275,38 @@ function MicroServiceBusHost(settings) {
                     console.log("COM: ".green + message);
                 }
             });
-             
-            console.log("before keypress");
-            keypress(process.stdin);
             
-            // listen for the "keypress" event
-            process.stdin.on('keypress', function (ch, key) {
-                if (key.ctrl && key.name == 'c') {
-                    gracefulShutdown();
-                }
-                else if (key.name == 'p') {
-                    OnPing();
-                }
-                else if (key.name == 'i') {
-                    console.log("Active services: ".green + _inboundServices.length);
-                }
-                else if (key.name == 'd') {
-                    try {
-                        var heapdump = require('heapdump');
-                        heapdump.writeSnapshot(function (err, filename) {
-                            console.log('Dump written to'.yellow, filename.yellow);
-                        });
+            if (settings.enableKeyPress != false) {
+                console.log("before keypress");
+                keypress(process.stdin);
+                
+                // listen for the "keypress" event
+                process.stdin.on('keypress', function (ch, key) {
+                    if (key.ctrl && key.name == 'c') {
+                        gracefulShutdown();
                     }
+                    else if (key.name == 'p') {
+                        OnPing();
+                    }
+                    else if (key.name == 'i') {
+                        console.log("Active services: ".green + _inboundServices.length);
+                    }
+                    else if (key.name == 'd') {
+                        try {
+                            var heapdump = require('heapdump');
+                            heapdump.writeSnapshot(function (err, filename) {
+                                console.log('Dump written to'.yellow, filename.yellow);
+                            });
+                        }
                 catch (e) {
-                        console.log(e);
+                            console.log(e);
+                        }
                     }
-                }
-            });
-            process.stdin.setRawMode(true);
-            process.stdin.resume();
-            console.log("after keypress");
+                });
+                process.stdin.setRawMode(true);
+                process.stdin.resume();
+                console.log("after keypress");
+            }
         }
 
         startAllServices(_itineraries, function () {
