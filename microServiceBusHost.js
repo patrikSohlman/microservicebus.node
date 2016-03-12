@@ -341,6 +341,10 @@ function MicroServiceBusHost(settings) {
                 console.log('No hostname or temporary verification code has been provided.');
             }
             else {
+                console.log("CODE: " + temporaryVerificationCode);
+                console.log("PREFIX: " + hostPrefix);
+                console.log("NODE: " + existingHostName);
+
                 client.invoke(
                     'integrationHub', 
     		        'createHost',	
