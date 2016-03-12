@@ -276,6 +276,7 @@ function MicroServiceBusHost(settings) {
                 }
             });
             
+            console.log("before keypress");
             keypress(process.stdin);
             
             // listen for the "keypress" event
@@ -303,6 +304,7 @@ function MicroServiceBusHost(settings) {
             });
             process.stdin.setRawMode(true);
             process.stdin.resume();
+            console.log("after keypress");
         }
 
         startAllServices(_itineraries, function () {
