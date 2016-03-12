@@ -310,7 +310,6 @@ function MicroServiceBusHost(settings) {
             else { 
                 port = process.env.PORT || 1337;
             }
-
         }
 
         startAllServices(_itineraries, function () {
