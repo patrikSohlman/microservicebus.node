@@ -275,7 +275,7 @@ function MicroServiceBusHost(settings) {
                     console.log("COM: ".green + message);
                 }
             });
-            
+             
             console.log("before keypress");
             keypress(process.stdin);
             
