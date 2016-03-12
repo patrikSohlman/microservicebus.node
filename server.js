@@ -29,7 +29,7 @@ try {
     var settings = {
         "hubUri": "wss://microservicebus.com",
         "trackMemoryUsage": 0,
-        "port": port,
+        "port": 1337,
         "enableKeyPress":false
     }
     
