@@ -29,7 +29,8 @@ try {
     var settings = {
         "hubUri": "wss://microservicebus.com",
         "trackMemoryUsage": 0,
-        "port": port
+        "port": port,
+        "enableKeyPress":false
     }
     
     fs.writeFileSync('./settings.json', JSON.stringify(settings));
