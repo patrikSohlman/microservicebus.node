@@ -22,14 +22,16 @@ var fs = require('fs');
 
 try {
     var port = process.env.PORT || 1337;
+    
+    var args = ["-c", process.env['CODE'], "-n", process.env['NODE']];
+    process.argv = process.argv.concat(args);
+    
     var settings = {
-        "debug": process.env['debug'] == "true",
-        "hubUri": process.env['hubUri'],
-        "port": parseInt( process.env['port']),
+        "hubUri": "wss://microservicebus.com",
         "trackMemoryUsage": 0,
-        "nodeName": process.env['nodeName'],
-        "organizationId": process.env['organizationId']
+        "port": port
     }
+    
     fs.writeFileSync('./settings.json', JSON.stringify(settings));
     var hub = require("./start.js");
 
