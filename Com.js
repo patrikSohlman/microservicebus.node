@@ -72,6 +72,7 @@ function Com(nodeName, sbSettings, hubUri) {
     
     protocol.acquireTokenUri = hubUri.replace("wss:", "https:") + "/api/Token";
     protocol.AcquireToken = function (provider, keyType, oldKey, callback) {
+	try{
         var request = {
             "provider": provider,
             "keyType": keyType,
@@ -100,6 +101,10 @@ function Com(nodeName, sbSettings, hubUri) {
                 callback(null);
             }
         });
+	}
+	catch(err){
+		process.exit(1);
+	}
     };
 
     extend(this, protocol);

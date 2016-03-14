@@ -912,13 +912,15 @@ function MicroServiceBusHost(settings) {
             app.use(bodyParser.json());
             server = http.createServer(app);
             
+            /*
             generateSwagger();
             
             app.use(swaggerize({
                 api: require('./swagger.json'),
                 docspath: '/swagger/docs/v1'
             }));
-            
+            */
+
             // parse application/x-www-form-urlencoded
             app.use(bodyParser.urlencoded({ extended: false }))
             
@@ -927,20 +929,19 @@ function MicroServiceBusHost(settings) {
             
             app.use(function (req, res) {
                 res.header('Content-Type', 'text/html');
-                var response = '<h1>Welcome to the ' + settings.nodeName + ' node</h1>';
-                response += '<h2>API List</h2>';
-                var localUri = "http://localhost:" + port;
+                var response = '<style>body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}</style>';
+                response += '<h1><img src="https://microservicebus.com/Images/Logotypes/Logo6.svg" style="height:75px"/> Welcome to the laptop002 node</h1><h2>API List</h2>';
                 
                 app._router.stack.forEach(function (endpoint) {
                     if (endpoint.route != undefined) {
                         if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
-                            response += "<div><b>GET</b> " + localUri + endpoint.route.path + "</div>";
+                            response += "<div><b>GET</b> " + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
-                            response += "<div><b>DELETE</b> " + localUri + endpoint.route.path + "</div>";
+                            response += "<div><b>DELETE</b> " + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
-                            response += "<div><b>POST</b> " + localUri + endpoint.route.path + "</div>";
+                            response += "<div><b>POST</b> " + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
-                            response += "<div><b>PUT</b> " + localUri + endpoint.route.path + "</div>";
+                            response += "<div><b>PUT</b> " + endpoint.route.path + "</div>";
                     }
                 });
 
@@ -964,7 +965,10 @@ function MicroServiceBusHost(settings) {
                 }
             });
             
-            server.listen(port, function () {
+            if(settings.enableKeyPress == false)
+                var port = process.env.PORT || 1337;
+            
+            server = http.createServer(app).listen(port, function () {
                 console.log("Server started on port: ".green + port);
                 console.log();
             });

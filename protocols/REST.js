@@ -31,16 +31,29 @@ var guid = require('uuid');
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
     var me = this;
+    var restMessagingToken = sbSettings.messagingToken;
+    var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
+    
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    //var restMessagingToken = create_sas_token(baseAddress, sbSettings.sasKeyName, sbSettings.sasKey);
-    //var restTrackingToken = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
-    var ttt =this.hubUri
-    var restMessagingToken = sbSettings.messagingToken;
-    var restTrackingToken = sbSettings.trackingToken;
+    
+    setInterval(function () {
+        
+        me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+            restMessagingToken = token;
+            onQueueDebugCallback("Messaging token updated...")
+        });
 
+        me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+            restTrackingToken = token;
+            onQueueDebugCallback("Tracking token updated...")
+
+        });
+
+    }, 15 * 60 * 1000);
+     
     REST.prototype.Start = function () {
         stop = false;
         
@@ -80,7 +93,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message")
+                    onQueueErrorSubmitCallback("Unable to send message");
                     var persistMessage = {
                         node: node,
                         service: service,
@@ -94,8 +107,13 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
-                    onQueueDebugCallback("Expired token. Updating token...")
+                    onQueueDebugCallback("Expired token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                        if (token == null && storageIsEnabled) {
+                            onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            storage.setItem(message.instanceId, persistMessage);
+                            return;
+                        }
                         restMessagingToken = token;
                         me.Submit(message, node, service);
                     })
@@ -141,7 +159,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
                         storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
@@ -151,8 +169,14 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode == 401) {
                     onQueueDebugCallback("Expired tracking token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                        if (token == null && storageIsEnabled) {
+                            onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                            return;
+                        }
+                        
                         restTrackingToken = token;
-                        me.Track(trackingMessage)                    
+                        me.Track(trackingMessage);               
                     })
                     return;
                 }
@@ -161,7 +185,6 @@ function REST(nodeName, sbSettings) {
 
                 }
             });
-
         }
         catch (err) {
             console.log();
@@ -213,8 +236,12 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     // Outdated token
-                    onQueueDebugCallback("Expired token. Updating token...")
+                    onQueueDebugCallback("Expired token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                        if (token == null && storageIsEnabled) {
+                            onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            return;
+                        }
                         restMessagingToken = token;
                         listenMessaging();
                     })
