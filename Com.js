@@ -27,6 +27,7 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('./Utils.js');
 var extend = require('extend');
+var moment = require('moment');
 var storageIsEnabled = true;
 
 function Com(nodeName, sbSettings, hubUri) {
@@ -66,47 +67,50 @@ function Com(nodeName, sbSettings, hubUri) {
     };
     Com.prototype.Track = function (trackingMessage) {
     };
-   
+    
     var Protocol = require('./protocols/' + sbSettings.protocol + '.js');
     var protocol = new Protocol(nodeName, sbSettings);
     
     protocol.acquireTokenUri = hubUri.replace("wss:", "https:") + "/api/Token";
     protocol.AcquireToken = function (provider, keyType, oldKey, callback) {
-	try{
-        var request = {
-            "provider": provider,
-            "keyType": keyType,
-            "oldKey": oldKey
+        try {
+            var request = {
+                "provider": provider,
+                "keyType": keyType,
+                "oldKey": oldKey
+            }
+            httpRequest({
+                headers: {
+                    "Content-Type" : "application/json",
+                },
+                uri: this.acquireTokenUri,
+                json: request,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                    console.log("Unable to acquire new token. " + err.message);
+                    callback(null);
+                }
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    var time = moment();
+                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
+                    console.log(time);
+                    callback(body.token);
+                }
+                else {
+                    onQueueErrorSubmitCallback("Unable to acquire new token. ");
+                    console.log("Unable to acquire new token. Status code: " + res.statusCode);
+                    callback(null);
+                }
+            });
         }
-        httpRequest({
-            headers: {
-                "Content-Type" : "application/json",
-            },
-            uri: this.acquireTokenUri,
-            json: request,
-            method: 'POST'
-        }, 
-        function (err, res, body) {
-            if (err != null) {
-                onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
-                console.log("Unable to acquire new token. " + err.message);
-                callback(null);
+	    catch (err) {
+                process.exit(1);
             }
-            else if (res.statusCode >= 200 && res.statusCode < 300) {
-                callback(body.token);
-            }
-            else {
-                onQueueErrorSubmitCallback("Unable to acquire new token. ");
-                console.log("Unable to acquire new token. ");
-                callback(null);
-            }
-        });
-	}
-	catch(err){
-		process.exit(1);
-	}
     };
-
+    
     extend(this, protocol);
 
 

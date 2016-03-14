@@ -35,25 +35,28 @@ function REST(nodeName, sbSettings) {
     var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
     
+    setInterval(function () {
+        onQueueDebugCallback("Updating tokens...");
+        me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+            if (token == null) {
+                onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                return;
+            }
+            restMessagingToken = token;
+        });
+        me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+            if (token == null) {
+                onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                return;
+            }
+            restTrackingToken = token;
+        });
+    }, 1000 * 60 * 15);
+    
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    
-    setInterval(function () {
-        
-        me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
-            restMessagingToken = token;
-            onQueueDebugCallback("Messaging token updated...")
-        });
-
-        me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
-            restTrackingToken = token;
-            onQueueDebugCallback("Tracking token updated...")
-
-        });
-
-    }, 15 * 60 * 1000);
-     
+         
     REST.prototype.Start = function () {
         stop = false;
         
@@ -176,8 +179,8 @@ function REST(nodeName, sbSettings) {
                         }
                         
                         restTrackingToken = token;
-                        me.Track(trackingMessage);               
-                    })
+                        me.Track(trackingMessage);
+                    });
                     return;
                 }
                 else {
