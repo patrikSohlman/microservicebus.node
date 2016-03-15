@@ -56,8 +56,9 @@ function AZUREIOT(nodeName, sbSettings) {
     
     var a = decodeURIComponent(restTrackingToken2);
     var b = decodeURIComponent(restTrackingToken);
-
+    
     AZUREIOT.prototype.Start = function () {
+        var me = this;
         console.log("Start Called");
         stop = false;
         
@@ -66,22 +67,45 @@ function AZUREIOT(nodeName, sbSettings) {
         
         //tracker.open(function (err) {
         //    if (err) {
-        //        onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+        //        me.onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
         //    }
         //    else {
-        //        onQueueDebugCallback("Tracking is ready");
+        //        me.onQueueDebugCallback("Tracking is ready");
         //        tracker.on('error', function (msg) {
         //            console.log("receive error message...");
         //        });
         //    }
         //});
         sender.open(function (err) {
+            var self = me;
             if (err) {
-                onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+                me.onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
             }
             else {
-                onQueueDebugCallback("Sender is ready");
-                receiver.open(connectCallback);
+                me.onQueueDebugCallback("Sender is ready");
+                receiver.open(function (err, transport) {
+                    if (err) {
+                        me.onQueueErrorReceiveCallback('Could not connect: ' + err.message);
+                    } else {
+                        me.onQueueDebugCallback("Receiver is ready");
+                        receiver.on('message', function (msg) {
+                            try {
+                                var message = msg.data;
+                                
+                                var responseData = {
+                                    body : message,
+                                    applicationProperties: { value: { service: message.service } }
+                                }
+                                me.onQueueMessageReceivedCallback(responseData);
+                                
+                                receiver.complete(msg, function () {});
+                            }
+                            catch (e) {
+                                me.onQueueErrorReceiveCallback('Could not connect: ' + e.message);
+                            }
+                        });
+                    }
+                });
             }
         });
     };
@@ -92,6 +116,7 @@ function AZUREIOT(nodeName, sbSettings) {
 
     };
     AZUREIOT.prototype.Submit = function (message, node, service) {
+        var me = this;
         if (stop) {
             var persistMessage = {
                 node: node,
@@ -105,16 +130,16 @@ function AZUREIOT(nodeName, sbSettings) {
         }
         message.service = service;
         
-        var msg = new Message(message);
+       // var msg = new Message(message);
         
-        sender.send(node, msg, function (err) {
+        sender.send(node, message, function (err) {
             if (err)
-                onQueueErrorReceiveCallback(err);
+                me.onQueueErrorReceiveCallback(err);
         });
     };
     AZUREIOT.prototype.Track = function (trackingMessage) {
-        
         try {
+            var me = this;
             if (stop) {
                 if (storageIsEnabled)
                     storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
@@ -126,7 +151,7 @@ function AZUREIOT(nodeName, sbSettings) {
             //    tracker.sendEvent(message, function (err) {
             //        console.log("sendEvent callback!")
             //        if (err)
-            //            onQueueErrorReceiveCallback(err);
+            //            me.onQueueErrorReceiveCallback(err);
             //    });
             //}
             //catch (e) { 
@@ -146,7 +171,7 @@ function AZUREIOT(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                    me.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
                         storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
@@ -206,7 +231,7 @@ function AZUREIOT(nodeName, sbSettings) {
         var uri = decodeURIComponent(sas.sr);
         var parsedUri = url.parse(uri);
         uri = parsedUri.host == null?uri:parsedUri.host;
-
+        
         var uriSegments = uri.split('/');
         
         var config = {
@@ -235,33 +260,6 @@ function AZUREIOT(nodeName, sbSettings) {
         
         return new Client(new Amqp(config));
     }
-
-    var connectCallback = function (err) {
-        if (err) {
-            onQueueErrorReceiveCallback('Could not connect: ' + err.message);
-        } else {
-            onQueueDebugCallback("Receiver is ready");
-            receiver.on('message', function (msg) {
-                try {
-                    //console.log("receive message...");
-                    var message = msg.data;
-                    
-                    var responseData = {
-                        body : message,
-                        applicationProperties: { value: { service: message.service } }
-                    }
-                    onQueueMessageReceivedCallback(responseData);
-                    
-                    receiver.complete(msg, function () {
-                        
-                    });
-                }
-                catch (e) {
-                    onQueueErrorReceiveCallback('Could not connect: ' + e.message);
-                }
-            });
-        }
-    };
-
+    
 }
 module.exports = AZUREIOT;

@@ -742,7 +742,6 @@ function MicroServiceBusHost(settings) {
                         newMicroService.Name = activity.userData.id;
                         newMicroService.Itinerary = itinerary;
                         newMicroService.IntegrationId = activity.userData.integrationId;
-                       // newMicroService.Config = activity.userData.config;
                         newMicroService.IntegrationName = itinerary.integrationName;
                         newMicroService.Environment = itinerary.environment;
                         newMicroService.TrackingLevel = itinerary.trackingLevel;
@@ -810,16 +809,20 @@ function MicroServiceBusHost(settings) {
                                                     messageBuffer = util.encrypt(messageBuffer);
                                                     integrationMessage.Encrypted = true;
                                                     integrationMessage._messageBuffer = messageBuffer;
-                                                    integrationMessage.MessageBuffer = messageBuffer;
+                                                   // integrationMessage.MessageBuffer = messageBuffer;
                                                 }
-
+                                                
                                                 if (destinationNode == settings.nodeName)
                                                     receiveMessage(integrationMessage, successor.userData.id);
-                                                else
+                                                else {
+                                                    if (typeof integrationMessage._messageBuffer != "string") {
+                                                        integrationMessage._messageBuffer = integrationMessage._messageBuffer.toString('base64');
+                                                        //integrationMessage.MessageBuffer = integrationMessage._messageBuffer;
+                                                    }
                                                     com.Submit(integrationMessage, 
                                                         destinationNode.toLowerCase(),
                                                         successor.userData.id);
-                                            
+                                                }
                                             });
 
                                         }
@@ -1105,6 +1108,11 @@ function MicroServiceBusHost(settings) {
     // Submits tracking data to host
     function trackMessage(msg, lastActionId, status) {
         
+        if (typeof msg._messageBuffer != "string") {
+            msg._messageBuffer = msg._messageBuffer.toString('base64');
+           // msg.MessageBuffer = msg._messageBuffer;
+        }
+
         var time = moment();
         var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
         var messageId = guid.v1();
@@ -1114,11 +1122,11 @@ function MicroServiceBusHost(settings) {
         
         // Remove message if encryption is enabled?
         if (settings.useEncryption == true) {
-            msg.MessageBuffer = new Buffer("[ENCRYPTED]").toString('base64');
+            msg._messageBuffer = new Buffer("[ENCRYPTED]").toString('base64');
         }
 
         var trackingMessage = {
-            _message : msg.MessageBuffer,
+            _message : msg._messageBuffer,
             ContentType : msg.ContentType,
             LastActivity : lastActionId,
             NextActivity : null,

@@ -265,7 +265,7 @@ function MicroService(microService) {
         
         while ((match = pattern.exec(regstr)) != null) {
             
-            var expression = "message = " + payload + ";\nvar str = message." + match[1] + ";";
+            var expression = "var message = " + payload + ";\nvar str = message." + match[1] + ";";
             eval(expression);
             regstr = regstr.replace('['+ match[1]+']', str);
 
@@ -297,7 +297,7 @@ function MicroService(microService) {
             LastActivity : this.Name,
             ContentType : contentType,
             Itinerary : itinerary,
-            MessageBuffer : messageBuffer.toString('base64'),
+            MessageBuffer : null,//messageBuffer.toString('base64'),
             _messageBuffer : messageBuffer.toString('base64'),
             IsBinary : isBinary,
             IsLargeMessage : false,
