@@ -130,7 +130,7 @@ function AZUREIOT(nodeName, sbSettings) {
         }
         message.service = service;
         
-       // var msg = new Message(message);
+       //var msg = new Message(message);
         
         sender.send(node, message, function (err) {
             if (err)

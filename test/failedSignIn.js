@@ -20,3 +20,4 @@ var payload = {
 var str = "okq8_[date]_[time]_{kid1}_{kid2}_{kid3}.json";
 microService.ParseString(str, payload, context);
 
+

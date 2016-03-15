@@ -239,39 +239,44 @@ function MicroService(microService) {
     };
     
     MicroService.prototype.ParseString = function (str, payload, context) {
-        // Parse with context '{}'
-        var match;
-        var regstr = str;
-        var pattern = /\{(.*?)\}/g;
-        
-        while ((match = pattern.exec(str)) != null) {
-            var variable = new linq(context.Variables).First(function (v) { return v.Variable === match[1]; });
-            if (variable != null) {
-                regstr = regstr.replace('{' + match[1] + '}', variable.Value);
-               // return str;
-            }
-        }
-        
-        if (context.ContentType != 'application/json') {
-            return str;
-        }
-        
-        if (context.ContentType == 'application/json' && typeof payload == "object") {
-            payload = JSON.stringify(payload);
-        }
-
-        // Parse with payload '[]'
-        pattern = /\[(.*?)\]/g;
-        
-        while ((match = pattern.exec(regstr)) != null) {
+        try {
+            // Parse with context '{}'
+            var match;
+            var regstr = str;
+            var pattern = /\{(.*?)\}/g;
             
-            var expression = "var message = " + payload + ";\nvar str = message." + match[1] + ";";
-            eval(expression);
-            regstr = regstr.replace('['+ match[1]+']', str);
+            while ((match = pattern.exec(str)) != null) {
+                var variable = new linq(context.Variables).First(function (v) { return v.Variable === match[1]; });
+                if (variable != null) {
+                    regstr = regstr.replace('{' + match[1] + '}', variable.Value);
+               // return str;
+                }
+            }
+            
+            if (context.ContentType != 'application/json') {
+                return str;
+            }
+            
+            if (context.ContentType == 'application/json' && typeof payload == "object") {
+                payload = JSON.stringify(payload);
+            }
+            
+            // Parse with payload '[]'
+            pattern = /\[(.*?)\]/g;
+            
+            while ((match = pattern.exec(regstr)) != null) {
+                var someStr="";
+                var expression = "var message = " + payload + ";\nsomeStr = message." + match[1] + ";";
+                eval(expression);
+                regstr = regstr.replace('[' + match[1] + ']', someStr);
 
             //return str;
+            }
+            return regstr;
         }
-        return regstr;
+        catch (ex) { 
+            throw ex;
+        }
     };
 
     // Internal
