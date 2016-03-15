@@ -1,7 +1,4 @@
 {
     "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0,
-    "nodeName": "edison",
-    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
-    "machineName": "CND5215QH6"
+    "trackMemoryUsage": 0
 }
