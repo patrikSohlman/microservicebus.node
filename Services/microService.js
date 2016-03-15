@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
+'use strict';
 var extend = require('extend');
 var guid = require('uuid');
 var npm = require('npm');
@@ -69,19 +71,19 @@ function MicroService(microService) {
     
     // Callback for messages going back to the host 
     MicroService.prototype.OnMessageReceived = function (callback) {
-        onMessageReceivedCallback = callback;
+        this.onMessageReceivedCallback = callback;
     };
     // Callback indicating the outbound message has been processed.
     MicroService.prototype.OnCompleted = function (callback) {
-        onCompletedCallback = callback;
+        this.onCompletedCallback = callback;
     };
     // [Depricated] Callback for errors 
     MicroService.prototype.OnError = function (callback) {
-        onErrorCallback = callback;
+        this.onErrorCallback = callback;
     };
     // Callback for debug information
     MicroService.prototype.OnDebug = function (callback) {
-        onDebugCallback = callback;
+        this.onDebugCallback = callback;
     };
     // Submits message back to the host 
     MicroService.prototype.SubmitMessage = function (payload, contentType, varaiables) {
@@ -107,7 +109,7 @@ function MicroService(microService) {
         
         var integrationMessage = this.CreateMessage(messageBuffer, contentType, varaiables, isBinary);
 
-        onMessageReceivedCallback(integrationMessage, this);
+        this.onMessageReceivedCallback(integrationMessage, this);
     };
     
     // Submits reponse message back to host
@@ -147,12 +149,12 @@ function MicroService(microService) {
             Variables : context.Variables
         };
         
-        onMessageReceivedCallback(integrationMessage, this);
+        this.onMessageReceivedCallback(integrationMessage, this);
     };
     
     // Call indicating the outbound message has been processed.
     MicroService.prototype.Done = function (integrationMessage, destination) {
-        onCompletedCallback(integrationMessage, destination);
+        this.onCompletedCallback(integrationMessage, destination);
     };
     /* istanbul ignore next */
     MicroService.prototype.CorrelationValue = function (messageString, message) {
@@ -182,7 +184,7 @@ function MicroService(microService) {
     };
     /* istanbul ignore next */
     MicroService.prototype.Error = function (source, errorId, errorDescription) {
-        onErrorCallback(source, errorId, errorDescription);
+        this.onErrorCallback(source, errorId, errorDescription);
     };
     
     MicroService.prototype.ThrowError = function (originalMessage, errorId, errorDescription) {
@@ -194,11 +196,11 @@ function MicroService(microService) {
         originalMessage.LastActivity = this.Name;
         originalMessage.FaultCode = errorId;
         originalMessage.FaultDescripton = errorDescription;
-        onMessageReceivedCallback(originalMessage, this);
+        this.onMessageReceivedCallback(originalMessage, this);
     };
 
     MicroService.prototype.Debug = function (info) {
-        onDebugCallback(this.Name, info);
+        this.onDebugCallback(this.Name, info);
     };
     
     MicroService.prototype.AddNpmPackage = function (npmPackages, logOutput, callback) {

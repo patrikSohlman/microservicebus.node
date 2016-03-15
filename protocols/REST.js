@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
- 
+'use strict';
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -30,23 +30,23 @@ var guid = require('uuid');
 
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
-    var me = this;
+    var stop = false;
     var restMessagingToken = sbSettings.messagingToken;
     var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
     
     setInterval(function () {
-        onQueueDebugCallback("Updating tokens...");
+        this.onQueueDebugCallback("Updating tokens...");
         me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
             if (token == null) {
-                onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                this.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                 return;
             }
             restMessagingToken = token;
         });
         me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
             if (token == null) {
-                onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                this.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
                 return;
             }
             restTrackingToken = token;
@@ -59,11 +59,10 @@ function REST(nodeName, sbSettings) {
          
     REST.prototype.Start = function () {
         stop = false;
-        
-        // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
+         // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
         this.Submit("{}", nodeName, "--dummy--");
         
-        listenMessaging();
+        this.Listen();
     };
     REST.prototype.Stop = function () {
         stop = true;
@@ -96,7 +95,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message");
+                    this.onQueueErrorSubmitCallback("Unable to send message");
                     var persistMessage = {
                         node: node,
                         service: service,
@@ -110,10 +109,10 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
-                    onQueueDebugCallback("Expired token. Updating token...");
+                    this.onQueueDebugCallback("Expired token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                         if (token == null && storageIsEnabled) {
-                            onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            this.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                             storage.setItem(message.instanceId, persistMessage);
                             return;
                         }
@@ -162,7 +161,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
+                    this.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
                         storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
@@ -170,10 +169,10 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
                 else if (res.statusCode == 401) {
-                    onQueueDebugCallback("Expired tracking token. Updating token...");
+                    this.onQueueDebugCallback("Expired tracking token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
                         if (token == null && storageIsEnabled) {
-                            onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                            this.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
                             storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                             return;
                         }
@@ -193,11 +192,11 @@ function REST(nodeName, sbSettings) {
             console.log();
         }
     };
-
-    function listenMessaging() {
+    REST.prototype.Listen = function () {
         try {
+            var me = this;
             if (stop) {
-                onQueueDebugCallback("Queue listener is stopped");
+                me.onQueueDebugCallback("Queue listener is stopped");
                 
                 return;
             }
@@ -213,13 +212,13 @@ function REST(nodeName, sbSettings) {
             function (err, res, body) {
                 
                 if (err != null) {
-                    onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message);
+                    me.onQueueErrorReceiveCallback("Unable to receive message. " + err.code + " - " + err.message);
                     console.log("Unable to receive message. " + err.code + " - " + err.message);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     try {
                         if (res.statusCode == 204) {
-                            listenMessaging();
+                            me.Listen();
                             return;
                         }
                         var service = res.headers.service.replace(/"/g, '');
@@ -230,7 +229,7 @@ function REST(nodeName, sbSettings) {
                                 body : message,
                                 applicationProperties: { value: { service: service } }
                             }
-                            onQueueMessageReceivedCallback(responseData);
+                            me.onQueueMessageReceivedCallback(responseData);
                         }
                     }
                     catch (listenerror) {
@@ -239,14 +238,14 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     // Outdated token
-                    onQueueDebugCallback("Expired token. Updating token...");
+                    me.onQueueDebugCallback("Expired token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                         if (token == null && storageIsEnabled) {
-                            onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                             return;
                         }
                         restMessagingToken = token;
-                        listenMessaging();
+                        me.Listen();
                     })
                     
                     return;
@@ -254,7 +253,7 @@ function REST(nodeName, sbSettings) {
                 else {
                     console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
                 }
-                listenMessaging();
+                me.Listen();
             });
 
         }

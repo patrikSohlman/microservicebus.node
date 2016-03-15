@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */ 
 
-//var Amqp = require('azure-iot-device-amqp').Amqp;
+'use strict';
 var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs;
 var Client = require('azure-iot-device').Client;
 var Amqp = require('azure-iot-device-amqp').Amqp;
@@ -40,6 +40,7 @@ var guid = require('uuid');
 
 function AZUREIOT(nodeName, sbSettings) {
     var me = this;
+    var stop = false;
     var storageIsEnabled = true;
     var sender;
     var receiver;
@@ -83,8 +84,6 @@ function AZUREIOT(nodeName, sbSettings) {
                 receiver.open(connectCallback);
             }
         });
-
-        
     };
     AZUREIOT.prototype.Stop = function () {
         stop = true;
@@ -105,7 +104,10 @@ function AZUREIOT(nodeName, sbSettings) {
             return;
         }
         message.service = service;
-        sender.send(node, message, function (err) {
+        
+        var msg = new Message(message);
+        
+        sender.send(node, msg, function (err) {
             if (err)
                 onQueueErrorReceiveCallback(err);
         });

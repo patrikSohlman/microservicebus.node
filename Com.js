@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
+'use strict';
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -31,7 +31,7 @@ var moment = require('moment');
 var storageIsEnabled = true;
 
 function Com(nodeName, sbSettings, hubUri) {
-    var stop = false;
+    var me = this;
     try {
         storage.initSync(); // Used for persistent storage if off-line
     }
@@ -47,16 +47,16 @@ function Com(nodeName, sbSettings, hubUri) {
     this.onQueueDebugCallback = null;
     
     Com.prototype.OnQueueMessageReceived = function (callback) {
-        onQueueMessageReceivedCallback = callback;
+        this.onQueueMessageReceivedCallback = callback;
     };
     Com.prototype.OnReceivedQueueError = function (callback) {
-        onQueueErrorReceiveCallback = callback;
+        this.onQueueErrorReceiveCallback = callback;
     };
     Com.prototype.OnSubmitQueueError = function (callback) {
-        onQueueErrorSubmitCallback = callback;
+        this.onQueueErrorSubmitCallback = callback;
     };
     Com.prototype.OnQueueDebugCallback = function (callback) {
-        onQueueDebugCallback = callback;
+        this.onQueueDebugCallback = callback;
     };
     
     Com.prototype.Start = function () {
@@ -112,7 +112,5 @@ function Com(nodeName, sbSettings, hubUri) {
     };
     
     extend(this, protocol);
-
-
 }
 module.exports = Com;

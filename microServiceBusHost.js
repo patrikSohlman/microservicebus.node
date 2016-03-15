@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+'use strict';
 var color = require('colors');
 var signalR = require('signalr-client');
 var linq = require('node-linq').LINQ;
@@ -44,6 +45,7 @@ var keypress = require('keypress');
 var memwatch; 
 
 function MicroServiceBusHost(settings) {
+    var self = this;
     // Callbacks
     this.onStarted = null;
     this.onStopped = null;
@@ -407,7 +409,7 @@ function MicroServiceBusHost(settings) {
                     var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(service.IntegrationName, 40, ' ') + "|";
                     console.log(lineStatus);
                     service = undefined;
-                    delete service;
+                    //delete service;
                 }
                 catch (ex) {
                     console.log('Unable to stop '.red + service.Name.red);
@@ -420,9 +422,9 @@ function MicroServiceBusHost(settings) {
             
             _startWebServer = false;
             _downloadedScripts = undefined;
-            delete _downloadedScripts;
+            //delete _downloadedScripts;
             _inboundServices = undefined;
-            delete _inboundServices;
+            //delete _inboundServices;
             
             _downloadedScripts = [];
             _inboundServices = [];
@@ -573,7 +575,6 @@ function MicroServiceBusHost(settings) {
     // Called after successfull signin.
     // Iterates through all itineries and download the scripts, afterwhich the services is started
     function loadItineraries(organizationId, itineraries, callback) {
-        
         // Prevent double loading
         if (_loadingState == "loading") {
             return;
@@ -585,7 +586,7 @@ function MicroServiceBusHost(settings) {
         console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
         
         if (itineraries.length == 0)
-            onStarted(0, 0);
+            self.onStarted(0, 0);
         
         async.map(itineraries, function (itinerary, callback) {
             var itineraryId = itinerary.itineraryId;
@@ -611,7 +612,7 @@ function MicroServiceBusHost(settings) {
                 com.Start();
             }
 
-            for (i = 0; i < _inboundServices.length; i++) {
+            for (var i = 0; i < _inboundServices.length; i++) {
                 var newMicroService = _inboundServices[i];
                 
                 var serviceStatus = "Started".green;
@@ -625,10 +626,10 @@ function MicroServiceBusHost(settings) {
                 console.log(lineStatus);
             }
             console.log();
-            onStarted(itineraries.length, exceptionsLoadingItineraries);
+            self.onStarted(itineraries.length, exceptionsLoadingItineraries);
             
-            if (onUpdatedItineraryComplete != null)
-                onUpdatedItineraryComplete();
+            if (self.onUpdatedItineraryComplete != null)
+                self.onUpdatedItineraryComplete();
             
             startListen();
             
@@ -653,7 +654,8 @@ function MicroServiceBusHost(settings) {
             }
             
             async.waterfall([
-                Init = function (callback) {
+                // Init
+                function (callback) {
                     try {
                         var host = new linq(activity.userData.config.generalConfig)
                                 .First(function (c) { return c.id === 'host'; }).value;
@@ -684,8 +686,6 @@ function MicroServiceBusHost(settings) {
                             done();
                             return;
                         }
-                        var localFilePath;
-                        
                         var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
                         
                         callback(null, exist, scriptFileUri, scriptfileName, integrationId);
@@ -695,11 +695,12 @@ function MicroServiceBusHost(settings) {
                         done();
                     }
                 },
-                Download = function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
+                // Download
+                function (exist, scriptFileUri, scriptfileName, integrationId, callback) {
                     try {
                         //if (exist != null) {
                         if (false) {
-                            callback(null, localFilePath, integrationId, scriptfileName);
+                            callback(null, scriptfileName, integrationId, scriptfileName);
                             return;
                         }
                         else {
@@ -711,7 +712,7 @@ function MicroServiceBusHost(settings) {
                                     done();
                                 }
                                 else {
-                                    localFilePath = __dirname + "/Services/" + scriptfileName;
+                                    var localFilePath = __dirname + "/Services/" + scriptfileName;
                                     fs.writeFileSync(localFilePath, scriptContent);
                                     _downloadedScripts.push({ name: scriptfileName });
                                     callback(null, localFilePath, integrationId, scriptfileName);
@@ -724,7 +725,8 @@ function MicroServiceBusHost(settings) {
                         done();
                     }
                 },
-                CreateService = function (localFilePath, integrationId, scriptfileName, callback) {
+                // CreateService
+                function (localFilePath, integrationId, scriptfileName, callback) {
                     try {
                         if (localFilePath == null) {
                             callback(null, null);
@@ -852,7 +854,8 @@ function MicroServiceBusHost(settings) {
                         done();
                     }
                 },
-                StartService = function (newMicroService, scriptfileName, callback) {
+                // StartService
+                function (newMicroService, scriptfileName, callback) {
                     if (newMicroService == null) {
                         callback(null, null);
                     }
@@ -1086,9 +1089,11 @@ function MicroServiceBusHost(settings) {
                     }
                 });
             }
-            expression = 'message =' + messageString + ';\n' + varialbesString + routingExpression.value;
+            routingExpression.value = routingExpression.value.replace("var route =", "route =");
+            expression = '"use strict"; var message =' + messageString + ';\n' + varialbesString + routingExpression.value;
             
-            eval(expression); // jshint ignore:line
+            var route;
+            var o = eval(expression); // jshint ignore:line
             return route;
         }
     catch (ex) {
@@ -1345,13 +1350,14 @@ function MicroServiceBusHost(settings) {
     };
     MicroServiceBusHost.prototype.Stop = function () {
         _shoutDown = true;
-        for (i in _inboundServices) {
+        for (var i in _inboundServices) {
             var service = _inboundServices[i];
             try {
                 service.Stop();
                 var lineStatus = "|" + util.padRight(service.Name, 20, ' ') + "| " + "Stopped".yellow + "   |" + util.padRight(" ", 40, ' ') + "|";
                 console.log(lineStatus);
-                delete service;
+                service = undefined;
+                //delete service;
             }
             catch (ex) {
                 console.log('Unable to stop '.red + service.Name.red);
@@ -1365,19 +1371,20 @@ function MicroServiceBusHost(settings) {
         try {
             client.serviceHandlers = null;
             client.end();
-            delete client;
+            client = undefined;
+            //delete client;
             onStopped();
         } 
         catch (ex) { }
     };
     MicroServiceBusHost.prototype.OnStarted = function (callback) {
-        onStarted = callback;
+        this.onStarted = callback;
     };
     MicroServiceBusHost.prototype.OnStopped = function (callback) {
-        onStopped = callback;
+        this.onStopped = callback;
     };
     MicroServiceBusHost.prototype.OnUpdatedItineraryComplete = function (callback) {
-        onUpdatedItineraryComplete = callback;
+        this.onUpdatedItineraryComplete = callback;
     };
     
     // Test methods
