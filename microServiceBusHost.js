@@ -109,7 +109,7 @@ function MicroServiceBusHost(settings) {
             console.log("Connection: " + "Error: ".red, error);
             try {
                 if (error.endsWith("does not exist for the organization"))
-                    onStarted(0, 1);
+                    self.onStarted(0, 1);
             }
             catch (e) { }
         },
@@ -165,7 +165,7 @@ function MicroServiceBusHost(settings) {
     // Called by HUB if it was ot able to process the request
     function OnErrorMessage(message) {
         console.log("errorMessage => " + message);
-        onStarted(0, 1);
+        self.onStarted(0, 1);
     };
     // Called by HUB when user clicks on the Hosts page
     function OnPing(message) {
@@ -279,7 +279,6 @@ function MicroServiceBusHost(settings) {
             });
             
             if (settings.enableKeyPress != false) {
-                console.log("before keypress");
                 keypress(process.stdin);
                 
                 // listen for the "keypress" event
@@ -307,7 +306,6 @@ function MicroServiceBusHost(settings) {
                 });
                 process.stdin.setRawMode(true);
                 process.stdin.resume();
-                console.log("after keypress");
             }
             else { 
                 port = process.env.PORT || 1337;
@@ -346,8 +344,9 @@ function MicroServiceBusHost(settings) {
         
         // Logging in using code
         if (settings.nodeName == null || settings.nodeName.length == 0) { // jshint ignore:line
-            if (temporaryVerificationCode.length == 0) { // jshint ignore:line
+            if (temporaryVerificationCode != undefined && temporaryVerificationCode.length == 0) { // jshint ignore:line
                 console.log('No hostname or temporary verification code has been provided.');
+
             }
             else {
                 client.invoke(
@@ -1286,10 +1285,10 @@ function MicroServiceBusHost(settings) {
                     console.log('You can also specify the node:'.yellow);
                     console.log('Eg: microServiceBus.js -code ABCD1234 -node nodejs00001'.yellow);
                     console.log('');
-                    onStarted(0, 1);
+                    self.onStarted(0, 1);
                     if (!testFlag)
                         process.abort();
-                    onStarted(0, 1);
+                    self.onStarted(0, 1);
                 }
             }
         }
@@ -1306,10 +1305,10 @@ function MicroServiceBusHost(settings) {
                     console.log(' If you leave out the host name, a new host will be generated for you'.yellow);
                     console.log('node start.js /c <Verification code> [/n <Node name>]'.yellow);
                     console.log('Eg: node start.js /c V5VUYFSY [/n MyHostName]'.yellow);
-                    onStarted(0, 1);
+                    self.onStarted(0, 1);
                     if (!testFlag)
                         process.abort();
-                    onStarted(0, 1);
+                    self.onStarted(0, 1);
                 }
                 
                 settings.nodeName = process.argv[3];
@@ -1325,8 +1324,11 @@ function MicroServiceBusHost(settings) {
                 
                 util.saveSettings(settings);
                 
-                console.log('Node:           ' + settings.nodeName.gray);
-                console.log('Hub:            ' + settings.hubUri.gray);
+                var nodeName = settings.nodeName != undefined? settings.nodeName:"";
+                var hubUri = settings.hubUri != undefined? settings.hubUri:"";
+
+                console.log('Node:           ' + nodeName.grey);
+                console.log('Hub:            ' + hubUri.grey);
                 console.log('');
             }
         }

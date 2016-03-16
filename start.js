@@ -26,7 +26,6 @@ var util = require('./Utils.js');
 var pjson = require('./package.json');
 var checkVersion = require('package-json');
 var fs = require('fs');
-var compareVersion = require('compare-version');
 var started = false;
 var maxWidth = 75;
 
@@ -46,7 +45,7 @@ console.log();
 checkVersion("microservicebus.node")
 			.then(function (rawData) {
     var latest = rawData['dist-tags'].latest;
-    if (compareVersion (pjson.version,latest) < 0) {
+    if (util.compareVersion (pjson.version,latest) < 0) {
         console.log();
         console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
         console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);

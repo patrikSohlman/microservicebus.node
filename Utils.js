@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
+'use strict';
 var exports = module.exports = {};
 var fs = require('fs');
 var npm = require('npm');
@@ -45,7 +45,7 @@ exports.padRight = function (nr, n, str) {
 };
 
 exports.saveSettings = function (settings) {
-    fileName = "./settings.json";
+    var fileName = "./settings.json";
     
     fs.writeFile(fileName, JSON.stringify(settings, null, 4), function (err) {
         if (err) {
@@ -111,5 +111,29 @@ exports.addNpmPackage = function (npmPackage, callback) {
             }
         });
     });
+};
+
+exports.compareVersion = function (a, b) {
+    var i;
+    var len;
+    
+    if (typeof a + typeof b !== 'stringstring') {
+        return false;
+    }
+    
+    a = a.split('.');
+    b = b.split('.');
+    i = 0;
+    len = Math.max(a.length, b.length);
+    
+    for (; i < len; i++) {
+        if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
+            return 1;
+        } else if ((b[i] && !a[i] && parseInt(b[i]) > 0) || (parseInt(a[i]) < parseInt(b[i]))) {
+            return -1;
+        }
+    }
+    
+    return 0;
 };
 

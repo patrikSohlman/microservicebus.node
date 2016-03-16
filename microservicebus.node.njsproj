@@ -35,7 +35,7 @@
   <ItemGroup>
     <Compile Include="Com.js" />
     <Compile Include="Gruntfile.js" />
-    <Compile Include="gulpfile.js" />
+    <Compile Include="mikael.js" />
     <Compile Include="protocols\Amqp.js" />
     <Compile Include="protocols\_AMQP.js" />
     <Compile Include="handlers\dummy.js" />
@@ -46,7 +46,6 @@
     <Compile Include="server.js" />
     <Compile Include="Services\microService.js" />
     <Compile Include="Services\sqlCommand.js" />
-    <Compile Include="simulator.js" />
     <Compile Include="start.js" />
     <Compile Include="test\failedSignIn.js" />
     <Compile Include="test\successfulSignIn.js" />
