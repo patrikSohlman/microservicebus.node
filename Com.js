@@ -89,8 +89,9 @@ function Com(nodeName, sbSettings, hubUri) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
                     console.log("Unable to acquire new token. " + err.message);
+                    console.log("URI:" + this.acquireTokenUri);
+                    console.log("Request:" + JSON.stringify(request));
                     callback(null);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -100,8 +101,9 @@ function Com(nodeName, sbSettings, hubUri) {
                     callback(body.token);
                 }
                 else {
-                    onQueueErrorSubmitCallback("Unable to acquire new token. ");
                     console.log("Unable to acquire new token. Status code: " + res.statusCode);
+                    console.log("URI:" + this.acquireTokenUri);
+                    console.log("Request:" + JSON.stringify(request));
                     callback(null);
                 }
             });

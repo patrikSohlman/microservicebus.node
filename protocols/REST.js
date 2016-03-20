@@ -31,27 +31,27 @@ var guid = require('uuid');
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
     var stop = false;
+    var me = this;
     var restMessagingToken = sbSettings.messagingToken;
     var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
     
     setInterval(function () {
-        this.onQueueDebugCallback("Updating tokens...");
         me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
             if (token == null) {
-                this.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                 return;
             }
             restMessagingToken = token;
         });
         me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
             if (token == null) {
-                this.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
                 return;
             }
             restTrackingToken = token;
         });
-    }, 1000 * 60 * 15);
+    }, 1000 * 60 * 60 );
     
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
@@ -59,6 +59,7 @@ function REST(nodeName, sbSettings) {
          
     REST.prototype.Start = function () {
         stop = false;
+        me = this;
          // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
         this.Submit("{}", nodeName, "--dummy--");
         
@@ -69,6 +70,7 @@ function REST(nodeName, sbSettings) {
     };
     REST.prototype.Submit = function (message, node, service) {
         try {
+            var me = this;
             if (stop) {
                 var persistMessage = {
                     node: node,
@@ -95,7 +97,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    this.onQueueErrorSubmitCallback("Unable to send message");
+                    me.onQueueErrorSubmitCallback("Unable to send message");
                     var persistMessage = {
                         node: node,
                         service: service,
@@ -109,10 +111,10 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
-                    this.onQueueDebugCallback("Expired token. Updating token...");
+                    me.onQueueDebugCallback("Expired token. Updating token...");
                     me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                         if (token == null && storageIsEnabled) {
-                            this.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                             storage.setItem(message.instanceId, persistMessage);
                             return;
                         }
