@@ -37,6 +37,7 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
 var guid = require('uuid');
+var moment = require('moment');
 
 function AZUREIOT(nodeName, sbSettings) {
     var me = this;
@@ -51,31 +52,16 @@ function AZUREIOT(nodeName, sbSettings) {
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    var restTrackingToken2 = create_sas_token(baseAddress, sbSettings.trackingKeyName, sbSettings.trackingKey);
     var restTrackingToken = sbSettings.trackingToken;
     
-    var a = decodeURIComponent(restTrackingToken2);
-    var b = decodeURIComponent(restTrackingToken);
-    
     AZUREIOT.prototype.Start = function () {
-        var me = this;
+        me = this;
         console.log("Start Called");
         stop = false;
         
         sender = createSenderFromClientSharedAccessSignature(sbSettings.senderToken);
         receiver = createReceiverFromClientSharedAccessSignature(sbSettings.receiverToken);
         
-        //tracker.open(function (err) {
-        //    if (err) {
-        //        me.onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
-        //    }
-        //    else {
-        //        me.onQueueDebugCallback("Tracking is ready");
-        //        tracker.on('error', function (msg) {
-        //            console.log("receive error message...");
-        //        });
-        //    }
-        //});
         sender.open(function (err) {
             var self = me;
             if (err) {
@@ -146,18 +132,7 @@ function AZUREIOT(nodeName, sbSettings) {
                 
                 return;
             }
-            //try {
-            //    var message = new Message(trackingMessage);
-            //    tracker.sendEvent(message, function (err) {
-            //        console.log("sendEvent callback!")
-            //        if (err)
-            //            me.onQueueErrorReceiveCallback(err);
-            //    });
-            //}
-            //catch (e) { 
-            //    console.log('')
-            //}
-            //return;
+            
             var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
             
             httpRequest({
@@ -180,8 +155,17 @@ function AZUREIOT(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
-                    ///
-                    me.Track(trackingMessage)
+
+                    acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                        if (token == null && storageIsEnabled) {
+                            me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                            return;
+                        }
+                        
+                        restTrackingToken = token;
+                        me.Track(trackingMessage);
+                    });
                     return;
                 }
                 else {
@@ -195,7 +179,9 @@ function AZUREIOT(nodeName, sbSettings) {
             console.log();
         }
     };
-    
+    AZUREIOT.prototype.Update = function (settings) {
+        restTrackingToken = settings.trackingToken;
+    };
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
         var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
@@ -260,6 +246,42 @@ function AZUREIOT(nodeName, sbSettings) {
         
         return new Client(new Amqp(config));
     }
-    
+    function acquireToken(provider, keyType, oldKey, callback) {
+        try {
+            var acquireTokenUri = me.hubUri.replace("wss:", "https:") + "/api/Token";
+            var request = {
+                "provider": provider,
+                "keyType": keyType,
+                "oldKey": oldKey
+            }
+            httpRequest({
+                headers: {
+                    "Content-Type" : "application/json",
+                },
+                uri: acquireTokenUri,
+                json: request,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    me.onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                    callback(null);
+                }
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    var time = moment();
+                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
+                    console.log(time);
+                    callback(body.token);
+                }
+                else {
+                    me.onQueueErrorSubmitCallback("Unable to acquire new token. Status code: " + res.statusCode);
+                    callback(null);
+                }
+            });
+        }
+	    catch (err) {
+            process.exit(1);
+        }
+    };
 }
 module.exports = AZUREIOT;

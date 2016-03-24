@@ -307,11 +307,13 @@ function MicroServiceBusHost(settings) {
                 process.stdin.setRawMode(true);
                 process.stdin.resume();
             }
-            else { 
+            else {
                 port = process.env.PORT || 1337;
             }
         }
-
+        else { 
+            com.Update(response);
+        }
         startAllServices(_itineraries, function () {
             client.invoke('integrationHub', 'pingResponse', settings.nodeName , os.hostname(), "Online", settings.organizationId);
 

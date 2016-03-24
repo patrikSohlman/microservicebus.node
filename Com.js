@@ -67,51 +67,11 @@ function Com(nodeName, sbSettings, hubUri) {
     };
     Com.prototype.Track = function (trackingMessage) {
     };
-    
+    Com.prototype.Update = function (settings) {
+    };
     var Protocol = require('./protocols/' + sbSettings.protocol + '.js');
     var protocol = new Protocol(nodeName, sbSettings);
-    
-    protocol.acquireTokenUri = hubUri.replace("wss:", "https:") + "/api/Token";
-    protocol.AcquireToken = function (provider, keyType, oldKey, callback) {
-        try {
-            var request = {
-                "provider": provider,
-                "keyType": keyType,
-                "oldKey": oldKey
-            }
-            httpRequest({
-                headers: {
-                    "Content-Type" : "application/json",
-                },
-                uri: this.acquireTokenUri,
-                json: request,
-                method: 'POST'
-            }, 
-            function (err, res, body) {
-                if (err != null) {
-                    console.log("Unable to acquire new token. " + err.message);
-                    console.log("URI:" + this.acquireTokenUri);
-                    console.log("Request:" + JSON.stringify(request));
-                    callback(null);
-                }
-                else if (res.statusCode >= 200 && res.statusCode < 300) {
-                    var time = moment();
-                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
-                    console.log(time);
-                    callback(body.token);
-                }
-                else {
-                    console.log("Unable to acquire new token. Status code: " + res.statusCode);
-                    console.log("URI:" + this.acquireTokenUri);
-                    console.log("Request:" + JSON.stringify(request));
-                    callback(null);
-                }
-            });
-        }
-	    catch (err) {
-                process.exit(1);
-            }
-    };
+    protocol.hubUri = hubUri;
     
     extend(this, protocol);
 }

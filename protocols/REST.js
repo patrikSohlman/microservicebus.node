@@ -27,6 +27,7 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
 var guid = require('uuid');
+var moment = require('moment');
 
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
@@ -35,23 +36,6 @@ function REST(nodeName, sbSettings) {
     var restMessagingToken = sbSettings.messagingToken;
     var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
-    
-    setInterval(function () {
-        me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
-            if (token == null) {
-                me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
-                return;
-            }
-            restMessagingToken = token;
-        });
-        me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
-            if (token == null) {
-                me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
-                return;
-            }
-            restTrackingToken = token;
-        });
-    }, 1000 * 60 * 60 );
     
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
@@ -112,7 +96,7 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
                     me.onQueueDebugCallback("Expired token. Updating token...");
-                    me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                    acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                         if (token == null && storageIsEnabled) {
                             me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
                             storage.setItem(message.instanceId, persistMessage);
@@ -163,7 +147,7 @@ function REST(nodeName, sbSettings) {
             }, 
             function (err, res, body) {
                 if (err != null) {
-                    this.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
+                    me.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
                         storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
@@ -171,10 +155,10 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
                 else if (res.statusCode == 401) {
-                    this.onQueueDebugCallback("Expired tracking token. Updating token...");
-                    me.AcquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                    me.onQueueDebugCallback("Expired tracking token. Updating token...");
+                    acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
                         if (token == null && storageIsEnabled) {
-                            this.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                            me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
                             storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                             return;
                         }
@@ -240,10 +224,11 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     // Outdated token
-                    me.onQueueDebugCallback("Expired token. Updating token...");
-                    me.AcquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                    me.onQueueDebugCallback("Expired messaging token. Updating token...");
+                    acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                         if (token == null && storageIsEnabled) {
                             me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                            me.Listen();
                             return;
                         }
                         restMessagingToken = token;
@@ -263,5 +248,46 @@ function REST(nodeName, sbSettings) {
             console.log(err);
         }
     }
+    REST.prototype.Update = function (settings) {
+        restMessagingToken = settings.messagingToken;
+        restTrackingToken = settings.trackingToken;
+    };
+    function acquireToken(provider, keyType, oldKey, callback) {
+        try {
+            var acquireTokenUri = me.hubUri.replace("wss:", "https:") + "/api/Token";
+            var request = {
+                "provider": provider,
+                "keyType": keyType,
+                "oldKey": oldKey
+            }
+            httpRequest({
+                headers: {
+                    "Content-Type" : "application/json",
+                },
+                uri: acquireTokenUri,
+                json: request,
+                method: 'POST'
+            }, 
+            function (err, res, body) {
+                if (err != null) {
+                    me.onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                    callback(null);
+                }
+                else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    var time = moment();
+                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
+                    console.log(time);
+                    callback(body.token);
+                }
+                else {
+                    me.onQueueErrorSubmitCallback("Unable to acquire new token. Status code: " + res.statusCode);
+                    callback(null);
+                }
+            });
+        }
+	    catch (err) {
+            process.exit(1);
+        }
+    };
 }
 module.exports = REST;
