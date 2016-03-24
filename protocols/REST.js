@@ -27,12 +27,13 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
 var guid = require('uuid');
-var moment = require('moment');
 
 function REST(nodeName, sbSettings) {
     var storageIsEnabled = true;
     var stop = false;
     var me = this;
+    var tokenRefreshTimer;
+    var tokenRefreshInterval = (sbSettings.tokenLifeTime*60*1000) *0.9;
     var restMessagingToken = sbSettings.messagingToken;
     var restTrackingToken = sbSettings.trackingToken;
     var baseAddress = "https://" + sbSettings.sbNamespace;
@@ -40,7 +41,10 @@ function REST(nodeName, sbSettings) {
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-         
+    
+    // Auto refresh token
+
+
     REST.prototype.Start = function () {
         stop = false;
         me = this;
@@ -48,9 +52,30 @@ function REST(nodeName, sbSettings) {
         this.Submit("{}", nodeName, "--dummy--");
         
         this.Listen();
+        
+        tokenRefreshTimer = setInterval(function () {
+            me.onQueueDebugCallback("Update tracking tokens");
+            acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                if (token == null) {
+                    me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                }
+                else { 
+                    restTrackingToken = token;
+                } 
+            });
+            acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                if (token == null) {
+                    me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                }
+                else {
+                    restMessagingToken = token;
+                }
+            });
+        }, tokenRefreshInterval);
     };
     REST.prototype.Stop = function () {
-        stop = true;
+            stop = true;
+            clearTimeout(tokenRefreshTimer);
     };
     REST.prototype.Submit = function (message, node, service) {
         try {
@@ -96,15 +121,15 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode == 401) { //else if (res.statusCode == 401 && res.statusMessage == '40103: Invalid authorization token signature') {
                     // Outdated token
                     me.onQueueDebugCallback("Expired token. Updating token...");
-                    acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
-                        if (token == null && storageIsEnabled) {
-                            me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
-                            storage.setItem(message.instanceId, persistMessage);
-                            return;
-                        }
-                        restMessagingToken = token;
-                        me.Submit(message, node, service);
-                    })
+                    //acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                    //    if (token == null && storageIsEnabled) {
+                    //        me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                    //        storage.setItem(message.instanceId, persistMessage);
+                    //        return;
+                    //    }
+                    //    restMessagingToken = token;
+                    //    me.Submit(message, node, service);
+                    //});
                     return;
                 }
                 else {
@@ -114,7 +139,7 @@ function REST(nodeName, sbSettings) {
                         service: service,
                         message: message
                     };
-                    if (storageIsEnabled)
+                    if (storageIsEnabled && message.instanceId != undefined)
                         storage.setItem(message.instanceId, persistMessage);
                 }
             });
@@ -156,16 +181,16 @@ function REST(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     me.onQueueDebugCallback("Expired tracking token. Updating token...");
-                    acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
-                        if (token == null && storageIsEnabled) {
-                            me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
-                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
-                            return;
-                        }
+                    //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                    //    if (token == null && storageIsEnabled) {
+                    //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                    //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    //        return;
+                    //    }
                         
-                        restTrackingToken = token;
-                        me.Track(trackingMessage);
-                    });
+                    //    restTrackingToken = token;
+                    //    me.Track(trackingMessage);
+                    //});
                     return;
                 }
                 else {
@@ -225,15 +250,15 @@ function REST(nodeName, sbSettings) {
                 else if (res.statusCode == 401) {
                     // Outdated token
                     me.onQueueDebugCallback("Expired messaging token. Updating token...");
-                    acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
-                        if (token == null && storageIsEnabled) {
-                            me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
-                            me.Listen();
-                            return;
-                        }
-                        restMessagingToken = token;
-                        me.Listen();
-                    })
+                    //acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
+                    //    if (token == null && storageIsEnabled) {
+                    //        me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
+                    //        me.Listen();
+                    //        return;
+                    //    }
+                    //    restMessagingToken = token;
+                    //    me.Listen();
+                    //})
                     
                     return;
                 }
@@ -274,9 +299,6 @@ function REST(nodeName, sbSettings) {
                     callback(null);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
-                    var time = moment();
-                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
-                    console.log(time);
                     callback(body.token);
                 }
                 else {

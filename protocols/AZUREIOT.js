@@ -37,7 +37,6 @@ var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
 var guid = require('uuid');
-var moment = require('moment');
 
 function AZUREIOT(nodeName, sbSettings) {
     var me = this;
@@ -46,7 +45,9 @@ function AZUREIOT(nodeName, sbSettings) {
     var sender;
     var receiver;
     var tracker;
-    
+    var tokenRefreshTimer;
+    var tokenRefreshInterval = (sbSettings.tokenLifeTime * 60 * 1000) * 0.9;
+
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
@@ -56,7 +57,6 @@ function AZUREIOT(nodeName, sbSettings) {
     
     AZUREIOT.prototype.Start = function () {
         me = this;
-        console.log("Start Called");
         stop = false;
         
         sender = createSenderFromClientSharedAccessSignature(sbSettings.senderToken);
@@ -94,12 +94,24 @@ function AZUREIOT(nodeName, sbSettings) {
                 });
             }
         });
+
+        tokenRefreshTimer = setInterval(function () {
+            me.onQueueDebugCallback("Update tracking tokens");
+            acquireToken("AZUREIOT", "TRACKING", restTrackingToken, function (token) {
+                if (token == null) {
+                    me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                }
+                else {
+                    restTrackingToken = token;
+                }
+            });
+        }, tokenRefreshInterval);
     };
     AZUREIOT.prototype.Stop = function () {
         stop = true;
         sender = undefined;
         receiver = undefined;
-
+        clearTimeout(tokenRefreshTimer);
     };
     AZUREIOT.prototype.Submit = function (message, node, service) {
         var me = this;
@@ -156,16 +168,16 @@ function AZUREIOT(nodeName, sbSettings) {
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
 
-                    acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
-                        if (token == null && storageIsEnabled) {
-                            me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
-                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
-                            return;
-                        }
+                    //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                    //    if (token == null && storageIsEnabled) {
+                    //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                    //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    //        return;
+                    //    }
                         
-                        restTrackingToken = token;
-                        me.Track(trackingMessage);
-                    });
+                    //    restTrackingToken = token;
+                    //    me.Track(trackingMessage);
+                    //});
                     return;
                 }
                 else {
@@ -268,9 +280,6 @@ function AZUREIOT(nodeName, sbSettings) {
                     callback(null);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
-                    var time = moment();
-                    time = time.format('YYYY-MM-DD HH:mm:ss.SSS');
-                    console.log(time);
                     callback(body.token);
                 }
                 else {
