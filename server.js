@@ -23,11 +23,13 @@ var fs = require('fs');
 try {
     var port = process.env.PORT || 1337;
     
-    var args = ["-c", process.env['CODE'], "-n", process.env['NODE']];
-    process.argv = process.argv.concat(args);
+    //var args = ["-c", process.env['CODE'], "-n", process.env['NODE']];
+    //process.argv = process.argv.concat(args);
     
     var settings = {
-        "hubUri": "wss://microservicebus.com",
+        "hubUri": process.env['HUBURI'],
+        "organizationId" : process.env['ORGANIZATIONID'],
+        "nodeName": process.env['NODENAME'],
         "trackMemoryUsage": 0,
         "port": 1337,
         "enableKeyPress":false
