@@ -932,19 +932,19 @@ function MicroServiceBusHost(settings) {
             
             app.use(function (req, res) {
                 res.header('Content-Type', 'text/html');
-                var response = '<style>body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}</style>';
-                response += '<h1><img src="https://microservicebus.com/Images/Logotypes/Logo6.svg" style="height:75px"/> Welcome to the laptop002 node</h1><h2>API List</h2>';
+                var response = '<style>body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; background: rgb(52, 73, 94); color: white;}</style>';
+                response += '<h1 style="margin-left: 80px"><img src="https://microservicebus.com/Images/Logotypes/Logo6.svg" style="height:75px"/> Welcome to the laptop002 node</h1><h2>API List</h2>';
                 
                 app._router.stack.forEach(function (endpoint) {
                     if (endpoint.route != undefined) {
                         if (endpoint.route.methods["get"] != undefined && endpoint.route.methods["get"] == true)
-                            response += "<div><b>GET</b> " + endpoint.route.path + "</div>";
+                            response += '<div style="margin-left: 80px"><b>GET</b> ' + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["delete"] != undefined && endpoint.route.methods["delete"] == true)
-                            response += "<div><b>DELETE</b> " + endpoint.route.path + "</div>";
+                            response += '<div style="margin-left: 80px"><b>DELETE</b> ' + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["post"] != undefined && endpoint.route.methods["post"] == true)
-                            response += "<div><b>POST</b> " + endpoint.route.path + "</div>";
+                            response += '<div style="margin-left: 80px"><b>POST</b> ' + endpoint.route.path + "</div>";
                         if (endpoint.route.methods["put"] != undefined && endpoint.route.methods["put"] == true)
-                            response += "<div><b>PUT</b> " + endpoint.route.path + "</div>";
+                            response += '<div style="margin-left: 80px"><b>PUT</b> ' + endpoint.route.path + "</div>";
                     }
                 });
 
