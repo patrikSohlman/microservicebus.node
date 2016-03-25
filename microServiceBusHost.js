@@ -929,7 +929,7 @@ function MicroServiceBusHost(settings) {
             
             // parse application/json
             app.use(bodyParser.json())
-            
+             
             app.use(function (req, res) {
                 res.header('Content-Type', 'text/html');
                 var response = '<style>body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; background: rgb(52, 73, 94); color: white;}</style>';
