@@ -303,6 +303,7 @@ function REST(nodeName, sbSettings) {
                 }
                 else {
                     me.onQueueErrorSubmitCallback("Unable to acquire new token. Status code: " + res.statusCode);
+                    me.onQueueErrorSubmitCallback("URL: " + acquireTokenUri);
                     callback(null);
                 }
             });
