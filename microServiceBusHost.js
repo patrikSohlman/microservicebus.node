@@ -595,7 +595,13 @@ function MicroServiceBusHost(settings) {
             // encapsulate each activity to work in async
             var intineratyActivities = [];
             for (var i = 0; i < itinerary.activities.length; i++) {
-                intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+                if (itinerary.activities[i].userData.config != undefined) {
+                    var host = new linq(itinerary.activities[i].userData.config.generalConfig)
+                                .First(function (c) { return c.id === 'host'; }).value;
+                    if (host == settings.nodeName) {
+                        intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+                    }
+                }
             }
             async.map(intineratyActivities, function (intineratyActivity, callback) {
                 startServiceAsync(intineratyActivity, organizationId, false, function () {

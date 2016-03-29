@@ -193,6 +193,7 @@ function AZUREIOT(nodeName, sbSettings) {
     };
     AZUREIOT.prototype.Update = function (settings) {
         restTrackingToken = settings.trackingToken;
+        me.onQueueDebugCallback("Tracking token updated");
     };
     function create_sas_token(uri, key_name, key) {
         // Token expires in 24 hours
