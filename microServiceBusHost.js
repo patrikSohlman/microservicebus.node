@@ -214,7 +214,6 @@ function MicroServiceBusHost(settings) {
             console.log("State changed to " + state.yellow);
         
         if (state != "Active") {
-            
             stopAllServices(function () {
                 console.log("All services stopped".yellow);
             });
@@ -581,11 +580,6 @@ function MicroServiceBusHost(settings) {
             return;
         }
         
-        console.log("");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-        
         if (itineraries.length == 0)
             self.onStarted(0, 0);
         
@@ -616,34 +610,38 @@ function MicroServiceBusHost(settings) {
             
             // Start com to receive messages
             if (settings.state === 'Active') {
-                com.Start();
-            }
+                com.Start(function () {
+                    console.log("");
+                    console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                    console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+                    console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
 
-            for (var i = 0; i < _inboundServices.length; i++) {
-                var newMicroService = _inboundServices[i];
-                
-                var serviceStatus = "Started".green;
-                
-                if (settings.state == "Active")
-                    newMicroService.Start();
-                else
-                    serviceStatus = "Stopped".yellow;
-                
-                var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
-                console.log(lineStatus);
+                    for (var i = 0; i < _inboundServices.length; i++) {
+                        var newMicroService = _inboundServices[i];
+                        
+                        var serviceStatus = "Started".green;
+                        
+                        if (settings.state == "Active")
+                            newMicroService.Start();
+                        else
+                            serviceStatus = "Stopped".yellow;
+                        
+                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
+                        console.log(lineStatus);
+                    }
+                    console.log();
+                    self.onStarted(itineraries.length, exceptionsLoadingItineraries);
+                    
+                    if (self.onUpdatedItineraryComplete != null)
+                        self.onUpdatedItineraryComplete();
+                    
+                    startListen();
+                    
+                    _loadingState = "done";
+                    callback();    
+                });
             }
-            console.log();
-            self.onStarted(itineraries.length, exceptionsLoadingItineraries);
-            
-            if (self.onUpdatedItineraryComplete != null)
-                self.onUpdatedItineraryComplete();
-            
-            startListen();
-            
-            _loadingState = "done";
-            callback();
         });
-    
     }
     
     // Preforms the following tasks

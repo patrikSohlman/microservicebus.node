@@ -23,15 +23,13 @@ SOFTWARE.
 */ 
 
 'use strict';
-var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs;
-var Client = require('azure-iot-device').Client;
-var Amqp = require('azure-iot-device-amqp').Amqp;
+var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs; // Default transport for Receiver
+var ReceiveClient = require('azure-iot-device').Client;
+var SendClient = require('azure-iothub').Client;
 var SharedAccessSignature = require('azure-iot-device').SharedAccessSignature;
+
 var url = require("url");
-
 var Message = require('azure-iot-device').Message;
-var iothub = require('azure-iothub');
-
 var crypto = require('crypto');
 var httpRequest = require('request');
 var storage = require('node-persist');
@@ -47,7 +45,7 @@ function AZUREIOT(nodeName, sbSettings) {
     var tracker;
     var tokenRefreshTimer;
     var tokenRefreshInterval = (sbSettings.tokenLifeTime * 60 * 1000) * 0.9;
-
+    
     // Setup tracking
     var baseAddress = "https://" + sbSettings.sbNamespace;
     if (!baseAddress.match(/\/$/)) {
@@ -55,12 +53,12 @@ function AZUREIOT(nodeName, sbSettings) {
     }
     var restTrackingToken = sbSettings.trackingToken;
     
-    AZUREIOT.prototype.Start = function () {
+    AZUREIOT.prototype.Start = function (callback) {
         me = this;
         stop = false;
         
-        sender = createSenderFromClientSharedAccessSignature(sbSettings.senderToken);
-        receiver = createReceiverFromClientSharedAccessSignature(sbSettings.receiverToken);
+        sender = SendClient.fromSharedAccessSignature(sbSettings.senderToken);
+        receiver = ReceiveClient.fromSharedAccessSignature(sbSettings.receiverToken, AmqpWs);
         
         sender.open(function (err) {
             var self = me;
@@ -84,17 +82,20 @@ function AZUREIOT(nodeName, sbSettings) {
                                 }
                                 me.onQueueMessageReceivedCallback(responseData);
                                 
-                                receiver.complete(msg, function () {});
+                                receiver.complete(msg, function () { });
                             }
                             catch (e) {
                                 me.onQueueErrorReceiveCallback('Could not connect: ' + e.message);
                             }
                         });
+
+                        if (callback != null)
+                            callback();
                     }
                 });
             }
         });
-
+        
         tokenRefreshTimer = setInterval(function () {
             me.onQueueDebugCallback("Update tracking tokens");
             acquireToken("AZUREIOT", "TRACKING", restTrackingToken, function (token) {
@@ -128,8 +129,8 @@ function AZUREIOT(nodeName, sbSettings) {
         }
         message.service = service;
         
-       //var msg = new Message(message);
-        
+        //var msg = new Message(message);
+        //message.properties.add('myproperty', 'myvalue');
         sender.send(node, message, function (err) {
             if (err)
                 me.onQueueErrorReceiveCallback(err);
@@ -167,14 +168,14 @@ function AZUREIOT(nodeName, sbSettings) {
                 }
                 else if (res.statusCode == 401) {
                     console.log("Invalid token. Updating token...")
-
+                    
                     //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
                     //    if (token == null && storageIsEnabled) {
                     //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
                     //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                     //        return;
                     //    }
-                        
+                    
                     //    restTrackingToken = token;
                     //    me.Track(trackingMessage);
                     //});
@@ -195,70 +196,7 @@ function AZUREIOT(nodeName, sbSettings) {
         restTrackingToken = settings.trackingToken;
         me.onQueueDebugCallback("Tracking token updated");
     };
-    function create_sas_token(uri, key_name, key) {
-        // Token expires in 24 hours
-        var expiry = Math.floor(new Date().getTime() / 1000 + 3600 * 24);
-        var string_to_sign = encodeURIComponent(uri) + '\n' + expiry;
-        var hmac = crypto.createHmac('sha256', key);
-        hmac.update(string_to_sign);
-        var signature = hmac.digest('base64');
-        var token = 'SharedAccessSignature sr=' + encodeURIComponent(uri) + '&sig=' + encodeURIComponent(signature) + '&se=' + expiry + '&skn=' + key_name;
-        return token;
-    }
-    
-    function createSenderFromClientSharedAccessSignature(sharedAccessSignature) {
-        var sas = SharedAccessSignature.parse(sharedAccessSignature);
-        var uri = decodeURIComponent(sas.sr);
-        var parsedUri = url.parse(uri);
-        uri = parsedUri.host == null?uri:parsedUri.host;
-        
-        var uriSegments = uri.split('/');
-        var host = uriSegments[0];
-        var config = {
-            hubName: uri.split('.', 1)[0],
-            host: uri,
-            keyName: sas.skn,
-            sharedAccessSignature: sas.toString()
-        };
-        
-        var DefaultTransport = require('../node_modules/azure-iothub/lib/amqp.js');
-        /*Codes_SRS_NODE_DEVICE_CLIENT_16_030: [The fromSharedAccessSignature method shall return a new instance of the Client object] */
-        return new iothub.Client(new DefaultTransport(config));
-    }
-    function createReceiverFromClientSharedAccessSignature(sharedAccessSignature) {
-        var sas = SharedAccessSignature.parse(sharedAccessSignature);
-        var uri = decodeURIComponent(sas.sr);
-        var parsedUri = url.parse(uri);
-        uri = parsedUri.host == null?uri:parsedUri.host;
-        
-        var uriSegments = uri.split('/');
-        
-        var config = {
-            host: uriSegments[0],
-            deviceId: uriSegments[uriSegments.length - 1],
-            hubName: uriSegments[0].split('.')[0],
-            sharedAccessSignature: sharedAccessSignature
-        };
-        
-        return new Client(new AmqpWs(config));
-    }
-    function createTrackingFromClientSharedAccessSignature(sharedAccessSignature) {
-        var sas = SharedAccessSignature.parse(sharedAccessSignature);
-        var uri = decodeURIComponent(sas.sr);
-        var parsedUri = url.parse(uri);
-        uri = parsedUri.host == null?uri:parsedUri.host;
-        
-        var uriSegments = uri.split('/');
-        var host = uriSegments[0];
-        var config = {
-            hubName: uri.split('.', 1)[0],
-            host: uri,
-            keyName: sas.skn,
-            sharedAccessSignature: sas.toString()
-        };
-        
-        return new Client(new Amqp(config));
-    }
+
     function acquireToken(provider, keyType, oldKey, callback) {
         try {
             var acquireTokenUri = me.hubUri.replace("wss:", "https:") + "/api/Token";
@@ -289,9 +227,10 @@ function AZUREIOT(nodeName, sbSettings) {
                 }
             });
         }
-	    catch (err) {
+   catch (err) {
             process.exit(1);
         }
     };
 }
 module.exports = AZUREIOT;
+

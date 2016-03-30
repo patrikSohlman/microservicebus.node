@@ -45,7 +45,7 @@ function REST(nodeName, sbSettings) {
     // Auto refresh token
 
 
-    REST.prototype.Start = function () {
+    REST.prototype.Start = function (callback) {
         stop = false;
         me = this;
          // Weird, but unless I thorow away a dummy message, the first message is not picked up by the subscription
@@ -72,6 +72,9 @@ function REST(nodeName, sbSettings) {
                 }
             });
         }, tokenRefreshInterval);
+
+        if (callback != null)
+            callback();
     };
     REST.prototype.Stop = function () {
             stop = true;
