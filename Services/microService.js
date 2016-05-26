@@ -25,7 +25,7 @@ SOFTWARE.
 var extend = require('extend');
 var guid = require('uuid');
 var npm = require('npm');
-var linq = require('node-linq').LINQ;
+//var linq = require('node-linq').LINQ;
 var fs = require('graceful-fs');
 var path = require("path");
 var util = require('../Utils.js')
@@ -253,7 +253,7 @@ function MicroService(microService) {
             var pattern = /\{(.*?)\}/g;
             
             while ((match = pattern.exec(str)) != null) {
-                var variable = new linq(context.Variables).First(function (v) { return v.Variable === match[1]; });
+                var variable = context.Variables.find(function (v) { return v.Variable === match[1]; });
                 if (variable != null) {
                     regstr = regstr.replace('{' + match[1] + '}', variable.Value);
                // return str;
@@ -337,7 +337,7 @@ function MicroService(microService) {
                 throw 'Unsuported category';
         }
         try {
-            var property = new linq(cat).First(function (c) { return c.id === prop; });
+            var property = cat.find(function (c) { return c.id === prop; });
         }
         catch (e) { 
             throw "Property " + prop + " of category " + category + " not found in service setup configuration.";

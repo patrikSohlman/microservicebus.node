@@ -24,7 +24,7 @@ SOFTWARE.
 'use strict';
 var color = require('colors');
 var signalR = require('signalr-client');
-var linq = require('node-linq').LINQ;
+//var linq = require('node-linq').LINQ;
 var moment = require('moment');
 var extend = require('extend');
 var async = require('async');
@@ -188,7 +188,11 @@ function MicroServiceBusHost(settings) {
             console.log("All services stopped".yellow);
         });
         
-        var itinerary = new linq(_itineraries).First(function (i) { return i.itineraryId === updatedItinerary.itineraryId; });
+        
+        var itinerary = _itineraries.find(function (i) {
+            return i.itineraryId === updatedItinerary.itineraryId;
+        });
+        //var itinerary = new linq(_itineraries).First(function (i) { return i.itineraryId === updatedItinerary.itineraryId; });
         
         for (var i = _itineraries.length; i--;) {
             if (_itineraries[i].itineraryId === updatedItinerary.itineraryId) {
@@ -435,7 +439,7 @@ function MicroServiceBusHost(settings) {
     // Incoming messages
     function receiveMessage(message, destination) {
         try {
-            var microService = new linq(_inboundServices).First(function (i) {
+            var microService = _inboundServices.find(function (i) {
                 return i.Name === destination && 
                         i.ItineraryId == message.ItineraryId;
             });
@@ -449,8 +453,7 @@ function MicroServiceBusHost(settings) {
                 if (message.isDynamicRoute) {
                     
                     // Find the activity
-                    var activity = new linq(message.Itinerary.activities)
-                                .First(function (c) { return c.userData.id === destination; });
+                    var activity = message.Itinerary.activities.find(function (c) { return c.userData.id === destination; });
                     
                     // Create a startServiceAsync request
                     var intineratyActivity = {
@@ -590,8 +593,7 @@ function MicroServiceBusHost(settings) {
             var intineratyActivities = [];
             for (var i = 0; i < itinerary.activities.length; i++) {
                 if (itinerary.activities[i].userData.config != undefined) {
-                    var host = new linq(itinerary.activities[i].userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'host'; }).value;
+                    var host = itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
                     if (host == settings.nodeName) {
                         intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
                     }
@@ -662,11 +664,9 @@ function MicroServiceBusHost(settings) {
                 // Init
                 function (callback) {
                     try {
-                        var host = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'host'; }).value;
+                        var host = activity.userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
                         
-                        var isEnabled = new linq(activity.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'enabled'; }).value;
+                        var isEnabled = activity.userData.config.generalConfig.find(function (c) { return c.id === 'enabled'; }).value;
                         
                         var hosts = host.split(',');
                         var a = hosts.indexOf(settings.nodeName);
@@ -691,7 +691,7 @@ function MicroServiceBusHost(settings) {
                             done();
                             return;
                         }
-                        var exist = new linq(_downloadedScripts).First(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
+                        var exist = _downloadedScripts.find(function (s) { return s.name === scriptfileName; }); // jshint ignore:line    
                         
                         callback(null, exist, scriptFileUri, scriptfileName, integrationId);
                     }
@@ -1033,24 +1033,20 @@ function MicroServiceBusHost(settings) {
         
         var itinerary = integrationMessage.Itinerary;
         var serviceName = integrationMessage.LastActivity;
-        var lastActionId = new linq(itinerary.activities)
-                                .First(function (action) { return action.userData.id === serviceName; }).id;
+        var lastActionId = itinerary.activities.find(function (action) { return action.userData.id === serviceName; }).id;
         
-        var connections = new linq(itinerary.activities)
-                                .Where(function (connection) {
+        var connections = itinerary.activities.filter(function (connection) {
             return connection.type === 'draw2d.Connection' && connection.source.node === lastActionId;
-        }).items;
+        });
         
         var successors = [];
         
         connections.forEach(function (connection) {
             if (connection.source.node == lastActionId) {
-                var successor = new linq(itinerary.activities)
-                                .First(function (action) { return action.id === connection.target.node; });
+                var successor = itinerary.activities.find(function (action) { return action.id === connection.target.node; });
                 
                 if (validateRoutingExpression(successor, integrationMessage)) {
-                    var destination = new linq(successor.userData.config.generalConfig)
-                                .First(function (c) { return c.id === 'host'; }).value;
+                    var destination = successor.userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
                     
                     successor.userData.host = destination;
                     successors.push(successor);
@@ -1065,8 +1061,7 @@ function MicroServiceBusHost(settings) {
     function validateRoutingExpression(actitity, integrationMessage) {
         var expression;
         try {
-            var routingExpression = new linq(actitity.userData.config.staticConfig)
-                                .First(function (c) { return c.id === 'routingExpression'; });
+            var routingExpression = actitity.userData.config.staticConfig.find(function (c) { return c.id === 'routingExpression'; });
             if (routingExpression == null) // jshint ignore:line
                 return true;
             

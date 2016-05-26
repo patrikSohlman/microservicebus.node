@@ -1,4 +1,7 @@
 {
     "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0
+    "nodeName": "TestNode1",
+    "organizationId": "65b22e1f-a17e-432f-b9f2-b7057423a786",
+    "port": 9090,
+    "machineName": "CND5215QH6"
 }
