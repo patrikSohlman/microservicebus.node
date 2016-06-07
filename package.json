@@ -40,6 +40,10 @@
     "uuid": "2.0.1"
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
+  "bin": {
+    "startnode": "global.js"
+  },
+  "main": "global.js",
   "devDependencies": {
     "chai": "^3.3.0",
     "deasync": "^0.1.4",
@@ -49,7 +53,6 @@
     "grunt-contrib-jshint": "^0.11.3",
     "gulp": "^3.9.0",
     "gulp-scp2": "^0.2.0",
-    "heapdump": "^0.3.7",
     "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
     "mocha-jshint": "^2.2.5",
@@ -67,7 +70,6 @@
     "microServiceBus",
     "Cloud"
   ],
-  "main": "start.js",
   "name": "microservicebus.node",
   "repository": {
     "type": "git",
@@ -78,5 +80,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "1.1.14"
+  "version": "1.1.16" 
 }

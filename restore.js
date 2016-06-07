@@ -46,7 +46,8 @@ console.log("Deleted".green);
 // Update settings
 settings = {
     "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0
+    "trackMemoryUsage": 0,
+    "enableKeyPress" : false
 }
 util.saveSettings(settings);
 console.log("Settings updated".green);

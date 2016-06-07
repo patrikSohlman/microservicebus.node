@@ -62,6 +62,7 @@ function MicroServiceBusHost(settings) {
     var _firstStart = true;
     var _loadingState = "none"; // node -> loading -> done -> stopped
     var _restoreTimeout;
+    var _comSettings;
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -72,6 +73,7 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app;// = express();
     var server;
+    var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
 
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -249,7 +251,8 @@ function MicroServiceBusHost(settings) {
         settings.state = response.state;
         settings.debug = response.debug;
         settings.port = response.port == null ? 80 : response.port;
-        
+        _comSettings = response;
+
         if (settings.state == "Active")
             console.log("State: " + settings.state.green);
         else
@@ -339,7 +342,7 @@ function MicroServiceBusHost(settings) {
         
         var data = JSON.stringify(settings);
         
-        fs.writeFileSync('./settings.json', data);
+        fs.writeFileSync(rootFolder + '/settings.json', data);
         
         signIn();
     }
@@ -540,10 +543,10 @@ function MicroServiceBusHost(settings) {
     
     // Restore persisted messages from ./persist folder
     function restorePersistedMessages() {
-        fs.readdir('./persist/', function (err, files) {
+        fs.readdir(rootFolder + '/persist/', function (err, files) {
             if (err) throw err;
             for (var i = 0; i < files.length; i++) {
-                var file = './persist/' + files[i];
+                var file = rootFolder + '/persist/' + files[i];
                 try {
                     
                     var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -752,6 +755,8 @@ function MicroServiceBusHost(settings) {
                         newMicroService.TrackingLevel = itinerary.trackingLevel;
                         newMicroService.Init(activity.userData.config);
                         newMicroService.UseEncryption = settings.useEncryption;
+                        newMicroService.ComSettings = _comSettings;
+                        
                         // Eventhandler for messages sent back from the service
                         newMicroService.OnMessageReceived(function (integrationMessage, sender) {
                             try {
@@ -923,7 +928,7 @@ function MicroServiceBusHost(settings) {
             generateSwagger();
             
             app.use(swaggerize({
-                api: require('./swagger.json'),
+                api: require(rootFolder + '/swagger.json'),
                 docspath: '/swagger/docs/v1'
             }));
             */
@@ -1241,19 +1246,11 @@ function MicroServiceBusHost(settings) {
             process.on('SIGINT', gracefulShutdown);
             
             process.on('uncaughtException', function (err) {
-                //if (err && err.code == "ECONNRESET") {
-                //    client.end();
-
-                //    setTimeout(function () { 
-                //        client.start();
-                //    }, 1000);
-                //}
-                //else
                     console.log('Uncaught exception: '.red + err);
             });
         }
         var args = process.argv.slice(2);
-        
+
         if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
                 settings.nodeName = args[1];
@@ -1281,10 +1278,13 @@ function MicroServiceBusHost(settings) {
                 default: {
                     console.log('Sorry, invalid arguments.'.red);
                     console.log('To start the host using temporary verification code, use the /code paramenter.'.yellow);
-                    console.log('Eg: microServiceBus.js -code ABCD1234'.yellow);
+                    console.log('Eg: node start.js -c ABCD1234'.yellow);
                     console.log('');
                     console.log('You can also specify the node:'.yellow);
-                    console.log('Eg: microServiceBus.js -code ABCD1234 -node nodejs00001'.yellow);
+                    console.log('Eg: node start.js -c ABCD1234 -n nodejs00001'.yellow);
+                    console.log('');
+                    console.log("If you've installed the package globaly you can simplify by typing:".yellow);
+                    console.log('Eg: nodestart -c ABCD1234 -n nodejs00001'.yellow);
                     console.log('');
                     self.onStarted(0, 1);
                     if (!testFlag)

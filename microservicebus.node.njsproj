@@ -34,8 +34,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Com.js" />
+    <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
-    <Compile Include="mikael.js" />
     <Compile Include="protocols\Amqp.js" />
     <Compile Include="protocols\_AMQP.js" />
     <Compile Include="handlers\dummy.js" />

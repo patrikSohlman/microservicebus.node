@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 require('colors');
 var util = require('./Utils.js');
 var pjson = require('./package.json');
@@ -28,6 +29,7 @@ var checkVersion = require('package-json');
 var fs = require('fs');
 var started = false;
 var maxWidth = 75;
+var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
 
 console.log();
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
@@ -57,14 +59,14 @@ checkVersion("microservicebus.node")
     }
 });
 
-// Load settings
+// Load settings 
 try {
     var settings = {
         "debug": false,
         "hubUri": "wss://microservicebus.com"
     }
-    if (fs.existsSync('./settings.json')) {
-        var data = fs.readFileSync('./settings.json');
+    if (fs.existsSync(rootFolder + '/settings.json')) {
+        var data = fs.readFileSync(rootFolder + '/settings.json');
         settings = JSON.parse(data);
     }
 }
@@ -72,7 +74,7 @@ catch (err) {
     console.log('Invalid settings file.'.red);
     process.abort();
 }
-    
+
 var MicroServiceBusHost = require("./microServiceBusHost.js");
 var microServiceBusHost = new MicroServiceBusHost(settings);
 

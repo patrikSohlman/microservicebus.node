@@ -48,7 +48,8 @@ function MicroService(microService) {
     this.RunOutboundScript = "Not set";
     this.RunScript = "Not set";
     this.ValidateRoutingExpression = "Not set";
-    
+    this.ComSettings = null;
+
     // Callbacks
     this.onMessageReceivedCallback = null;
     this.onCompletedCallback = null;
