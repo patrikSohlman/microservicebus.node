@@ -51,7 +51,9 @@
     <Compile Include="test\successfulSignIn.js" />
     <Compile Include="Utils.js" />
     <Content Include=".coveralls.yml" />
+    <Content Include=".gitignore" />
     <Content Include=".npmignore" />
+    <Content Include=".tesselinclude" />
     <Content Include=".travis.yml" />
     <Content Include="azuredeploy.json" />
     <Content Include="BEFORE PUBLISH.md" />
