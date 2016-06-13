@@ -1251,7 +1251,12 @@ function MicroServiceBusHost(settings) {
         }
         var args = process.argv.slice(2);
 
-        if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
+        if (args.length == 1 && args[0] == '-r') { 
+            console.log('RESTORING'.yellow);
+            require("./restore.js");
+            return;
+        }
+        else if (settings.hubUri != null && settings.nodeName != null && settings.organizationId != null) { // jshint ignore:line
             if (args.length > 0 && (args[0] == '/n' || args[0] == '-n')) {
                 settings.nodeName = args[1];
             }
