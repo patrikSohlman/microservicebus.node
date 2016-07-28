@@ -90,7 +90,7 @@ function REST(nodeName, sbSettings) {
                     message: message
                 };
                 if (storageIsEnabled)
-                    storage.setItem(guid.v1(), persistMessage);
+                    storage.setItemSync(guid.v1(), persistMessage);
                 
                 return;
             }
@@ -116,7 +116,7 @@ function REST(nodeName, sbSettings) {
                         message: message
                     };
                     if (storageIsEnabled)
-                        storage.setItem(message.InterchangeId, persistMessage);
+                        storage.setItemSync(message.InterchangeId, persistMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                     // All good
@@ -127,7 +127,7 @@ function REST(nodeName, sbSettings) {
                     //acquireToken("MICROSERVICEBUS", "MESSAGING", restMessagingToken, function (token) {
                     //    if (token == null && storageIsEnabled) {
                     //        me.onQueueErrorSubmitCallback("Unable to aquire messaging token: " + token);
-                    //        storage.setItem(message.instanceId, persistMessage);
+                    //        storage.setItemSync(message.instanceId, persistMessage);
                     //        return;
                     //    }
                     //    restMessagingToken = token;
@@ -143,7 +143,7 @@ function REST(nodeName, sbSettings) {
                         message: message
                     };
                     if (storageIsEnabled && message.instanceId != undefined)
-                        storage.setItem(message.instanceId, persistMessage);
+                        storage.setItemSync(message.instanceId, persistMessage);
                 }
             });
 
@@ -157,7 +157,7 @@ function REST(nodeName, sbSettings) {
             if (stop) {
 
                 if (storageIsEnabled)
-                    storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    storage.setItemSync("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                 
                 return;
             }
@@ -166,7 +166,7 @@ function REST(nodeName, sbSettings) {
             
             httpRequest({
                 headers: {
-                    "Authorization": restTrackingToken, 
+                    "Authorization": restTrackingToken , 
                     "Content-Type" : "application/json",
                 },
                 uri: trackUri,
@@ -178,16 +178,18 @@ function REST(nodeName, sbSettings) {
                     me.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message);
                     console.log("Unable to send message. " + err.code + " - " + err.message);
                     if (storageIsEnabled)
-                        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                        storage.setItemSync("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                 }
                 else if (res.statusCode >= 200 && res.statusCode < 300) {
                 }
                 else if (res.statusCode == 401) {
                     me.onQueueDebugCallback("Expired tracking token. Updating token...");
+                    if (storageIsEnabled)
+                        storage.setItemSync("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                     //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
                     //    if (token == null && storageIsEnabled) {
                     //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
-                    //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    //        storage.setItemSync("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
                     //        return;
                     //    }
                         
