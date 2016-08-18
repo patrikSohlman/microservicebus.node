@@ -23,3 +23,5 @@ coverage
 !services/microService.js
 !services/sqlCommand.js
 obj 
+.vs
+.vscode
