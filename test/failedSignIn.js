@@ -1,5 +1,5 @@
 ﻿
-var MicroService = require('../Services/microService.js');
+var MicroService = require('../services/microService.js');
 var microService = new MicroService();
 var varaiables = [
     { Variable: 'kid1', Type: 'String', Value: "Linus" },

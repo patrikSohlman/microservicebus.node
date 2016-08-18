@@ -44,8 +44,8 @@
     <Compile Include="protocols\REST.js" />
     <Compile Include="restore.js" />
     <Compile Include="server.js" />
-    <Compile Include="Services\microService.js" />
-    <Compile Include="Services\sqlCommand.js" />
+    <Compile Include="services\microService.js" />
+    <Compile Include="services\sqlCommand.js" />
     <Compile Include="start.js" />
     <Compile Include="test\failedSignIn.js" />
     <Compile Include="test\successfulSignIn.js" />
@@ -71,7 +71,7 @@
     <Folder Include="handlers\" />
     <Folder Include="protocols\" />
     <Folder Include="test\" />
-    <Folder Include="Services\" />
+    <Folder Include="services\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\adm-zip\" />
