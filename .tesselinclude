@@ -6,6 +6,6 @@
 # For more information, visit: https://tessel.io/docs/cli#usage
 
 settings.json
-Services/microService.js
-Services/sqlCommand.js
+services/microService.js
+services/sqlCommand.js
 protocols/*
