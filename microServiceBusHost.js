@@ -33,7 +33,7 @@ var os = require("os");
 var fs = require('fs');
 var path = require('path');
 var util = require('./Utils.js');
-var MicroService = require('./Services/microService.js');
+var MicroService = require('./services/microService.js');
 var Com = require("./Com.js");
 var http;
 var express;
@@ -720,7 +720,7 @@ function MicroServiceBusHost(settings) {
                                     done();
                                 }
                                 else {
-                                    var localFilePath = __dirname + "/Services/" + scriptfileName;
+                                    var localFilePath = __dirname + "/services/" + scriptfileName;
                                     fs.writeFileSync(localFilePath, scriptContent);
                                     _downloadedScripts.push({ name: scriptfileName });
                                     callback(null, localFilePath, integrationId, scriptfileName);
