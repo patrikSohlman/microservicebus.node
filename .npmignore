@@ -17,7 +17,8 @@ BEFORE PUBLISH.md
 *.heapsnapshot
 microServiceBus.BizTalk
 persist
-Services
+services
+typings
 Metadata
 coverage
 !services/microService.js
