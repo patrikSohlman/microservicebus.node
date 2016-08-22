@@ -20,8 +20,8 @@ persist
 Services
 Metadata
 coverage
-!Services/microService.js
-!Services/sqlCommand.js
+!services/microService.js
+!services/sqlCommand.js
 obj 
 .vs
 .vscode

@@ -25,7 +25,7 @@ describe('SignIn', function () {
     }
 
     it('Parse string should work', function (done) {
-        var MicroService = require('../Services/microService.js');
+        var MicroService = require('../services/microService.js');
         var microService = new MicroService();
 
         var varaiables = [
@@ -109,7 +109,7 @@ describe('SignIn', function () {
                     done();
                 });
                 it('azureApiAppInboundService.js should exist after login', function (done) {
-                    var ret = fs.statSync(__dirname + "/../Services/azureApiAppInboundService.js");
+                    var ret = fs.statSync(__dirname + "/../services/azureApiAppInboundService.js");
                     ret.should.be.type('object');
                     done();
                 });
@@ -171,7 +171,7 @@ describe('SignIn', function () {
                     });
                 });
                 it('javascriptaction.js should exist after calling service', function (done) {
-                    var ret = fs.statSync(__dirname + "/../Services/javascriptaction.js");
+                    var ret = fs.statSync(__dirname + "/../services/javascriptaction.js");
                     ret.should.be.type('object');
                     done();
                 });

@@ -27,10 +27,10 @@ var pjson = require('./package.json');
 require('colors');
 
 // Delete all services
-var files = fs.readdirSync('./Services');
+var files = fs.readdirSync('./services');
 files.forEach(function (file) {
     if(file != 'microService.js' && file != 'sqlCommand.js')
-        fs.unlinkSync('./Services/' + file);
+        fs.unlinkSync('./services/' + file);
 });
 console.log("Services removed".green);
 
