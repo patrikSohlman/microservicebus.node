@@ -8,7 +8,7 @@
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FmicroServiceBus%2Fmicroservicebus.node%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-
+[![Stories in Ready](https://badge.waffle.io/microServiceBus/microservicebus.node.svg?label=ready&title=Ready)](http://waffle.io/microServiceBus/microservicebus.node)
 
 
 # microservicebus.host
