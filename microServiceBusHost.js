@@ -63,6 +63,7 @@ function MicroServiceBusHost(settings) {
     var _loadingState = "none"; // node -> loading -> done -> stopped
     var _restoreTimeout;
     var _comSettings;
+    var _isWaitingForSignInResponse = false;
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -87,7 +88,7 @@ function MicroServiceBusHost(settings) {
     client.serviceHandlers = {
         bound: function () { console.log("Connection: " + "bound".yellow); },
         connectFailed: function (error) {
-            //console.log("Connection: " + "Connect Failed".red);
+            console.log("Connection: " + "Connect Failed".red);
         },
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
@@ -122,6 +123,7 @@ function MicroServiceBusHost(settings) {
             console.log("Connection: " + "Binding Error: ".red, error);
         },
         connectionLost: function (error) {
+            _isWaitingForSignInResponse = false;
             console.log("Connection: " + "Connection Lost".red);
         },
         reconnected: void function (connection) {
@@ -213,6 +215,7 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when itineraries has been updated
     function OnChangeState(state) {
         console.log();
+        _isWaitingForSignInResponse = false;
         settings.state = state;
         if (state == "Active")
             console.log("State changed to " + state.green);
@@ -245,6 +248,12 @@ function MicroServiceBusHost(settings) {
     }
     // Called by HUB when signin  has been successful
     function OnSignInMessage(response) {
+        _isWaitingForSignInResponse = false;
+
+        if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+            console.log(settings.nodeName.gray + ' successfully logged in'.green);
+        }
+
         log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
@@ -375,11 +384,25 @@ function MicroServiceBusHost(settings) {
                 OrganizationID : settings.organizationId,
                 npmVersion : pjson.version
             };
+
             client.invoke(
                 'integrationHub', 
     		    'SignIn',	
     		    hostData
             );
+            _isWaitingForSignInResponse = true;
+
+            if (settings.debug != null && settings.debug == true) {// jshint ignore:line
+                console.log("Waiting for signin response".grey);
+            }
+
+            setTimeout(function () {
+                if (_isWaitingForSignInResponse) {
+                    console.log("Sign in response was not received".red);
+                    console.log("Signing in again".yellow);
+                    signIn();
+                }
+            }, 5000);
         }
     }
     
@@ -863,7 +886,12 @@ function MicroServiceBusHost(settings) {
                         callback(null, newMicroService, scriptfileName);
                     }
                     catch (error3) {
-                        console.log('Unable to start service '.red + newMicroService.Name.red);
+                        if (newMicroService === undefined) {
+                            console.log('Unable to load '.red + localFilePath.red + ' ' + error3);
+                        }
+                        else
+                            console.log('Unable to start service '.red + newMicroService.Name.red + ' ' + error3);
+
                         done();
                     }
                 },
