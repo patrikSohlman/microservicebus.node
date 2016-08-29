@@ -92,6 +92,7 @@
     <Folder Include="typings\globals\linq\" />
     <Folder Include="typings\globals\mocha\" />
     <Folder Include="typings\globals\moment\" />
+    <Folder Include="typings\globals\mssql\" />
     <Folder Include="typings\globals\node-persist\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\npm\" />
@@ -119,6 +120,7 @@
     <TypeScriptCompile Include="typings\globals\linq\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\mocha\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\mssql\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node-persist\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\npm\index.d.ts" />

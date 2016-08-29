@@ -253,8 +253,6 @@ function MicroServiceBusHost(settings) {
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
             console.log(settings.nodeName.gray + ' successfully logged in'.green);
         }
-
-        log(settings.nodeName + ' successfully logged in');
         
         signInResponse = response;
         settings.state = response.state;
@@ -402,7 +400,7 @@ function MicroServiceBusHost(settings) {
                     console.log("Signing in again".yellow);
                     signIn();
                 }
-            }, 5000);
+            }, 10000);
         }
     }
     
