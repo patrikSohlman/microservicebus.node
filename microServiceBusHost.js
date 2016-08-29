@@ -42,6 +42,7 @@ var bodyParser;
 var guid = require('uuid');
 var pjson = require('./package.json');
 var keypress = require('keypress');
+var Applicationinsights = require("./Applicationinsights.js");
 var memwatch; 
 
 function MicroServiceBusHost(settings) {
@@ -75,7 +76,8 @@ function MicroServiceBusHost(settings) {
     var app;// = express();
     var server;
     var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
-
+    var applicationinsights = new Applicationinsights();
+    
     var client = new signalR.client(
         settings.hubUri + '/signalR',
 	    ['integrationHub'],                
@@ -265,9 +267,18 @@ function MicroServiceBusHost(settings) {
         else
             console.log("State: " + settings.state.yellow);
         
-
         _itineraries = signInResponse.itineraries;
-        
+
+        applicationinsights.init(settings.appinsightKey, settings.nodeName)
+            .then(function (resp) {
+                if (resp)
+                    console.log("Application Insights:" + " Successfully initiated".green);
+                else
+                    console.log("Application Insights:" + " Disabled".grey);
+            }, function (error) {
+                console.log("Application Insights:" + " Failed to initiate!".green);
+            });
+
         if (_firstStart) {
             _firstStart = false;
             
@@ -392,6 +403,7 @@ function MicroServiceBusHost(settings) {
 
             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                 console.log("Waiting for signin response".grey);
+                
             }
 
             setTimeout(function () {
@@ -610,63 +622,63 @@ function MicroServiceBusHost(settings) {
         if (itineraries.length == 0)
             self.onStarted(0, 0);
         
-        async.map(itineraries, function (itinerary, callback) {
-            var itineraryId = itinerary.itineraryId;
-            
-            // encapsulate each activity to work in async
-            var intineratyActivities = [];
-            for (var i = 0; i < itinerary.activities.length; i++) {
-                if (itinerary.activities[i].userData.config != undefined) {
-                    var host = itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
-                    if (host == settings.nodeName) {
-                        intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+        async.map(itineraries,
+            function (itinerary, callback) {
+                var itineraryId = itinerary.itineraryId;
+                // encapsulate each activity to work in async
+                var intineratyActivities = [];
+                for (var i = 0; i < itinerary.activities.length; i++) {
+                    if (itinerary.activities[i].userData.config != undefined) {
+                        var host = itinerary.activities[i].userData.config.generalConfig.find(function (c) { return c.id === 'host'; }).value;
+                        if (host == settings.nodeName) {
+                            intineratyActivities.push({ itinerary: itinerary, activity: itinerary.activities[i] });
+                        }
                     }
                 }
-            }
-            async.map(intineratyActivities, function (intineratyActivity, callback) {
-                startServiceAsync(intineratyActivity, organizationId, false, function () {
+                async.map(intineratyActivities, function (intineratyActivity, callback) {
+                    startServiceAsync(intineratyActivity, organizationId, false, function () {
+                        callback(null, null);
+                    });
+
+                }, function (err, results) {
                     callback(null, null);
                 });
 
-            }, function (err, results) {
-                callback(null, null);
-            });
+            },
+            function (err, results) {
+                // Start com to receive messages
+                if (settings.state === 'Active') {
+                    com.Start(function () {
+                        console.log("");
+                        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
+                        console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
+                        console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
 
-        }, function (err, results) {
-            
-            // Start com to receive messages
-            if (settings.state === 'Active') {
-                com.Start(function () {
-                    console.log("");
-                    console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-                    console.log("|" + util.padRight("Inbound service", 20, ' ') + "|  Status   |" + util.padRight("Flow", 40, ' ') + "|");
-                    console.log("|" + util.padLeft("", 20, '-') + "|-----------|" + util.padLeft("", 40, '-') + "|");
-
-                    for (var i = 0; i < _inboundServices.length; i++) {
-                        var newMicroService = _inboundServices[i];
+                        for (var i = 0; i < _inboundServices.length; i++) {
+                            var newMicroService = _inboundServices[i];
                         
-                        var serviceStatus = "Started".green;
+                            var serviceStatus = "Started".green;
                         
-                        if (settings.state == "Active")
-                            newMicroService.Start();
-                        else
-                            serviceStatus = "Stopped".yellow;
+                            if (settings.state == "Active")
+                                newMicroService.Start();
+                            else
+                                serviceStatus = "Stopped".yellow;
                         
-                        var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
-                        console.log(lineStatus);
-                    }
-                    console.log();
-                    self.onStarted(itineraries.length, exceptionsLoadingItineraries);
+                            var lineStatus = "|" + util.padRight(newMicroService.Name, 20, ' ') + "| " + serviceStatus + "   |" + util.padRight(newMicroService.IntegrationName, 40, ' ') + "|";
+                            console.log(lineStatus);
+                        }
+                        console.log();
+                        self.onStarted(itineraries.length, exceptionsLoadingItineraries);
                     
-                    if (self.onUpdatedItineraryComplete != null)
-                        self.onUpdatedItineraryComplete();
+                        if (self.onUpdatedItineraryComplete != null)
+                            self.onUpdatedItineraryComplete();
                     
-                    startListen();
+                        startListen();
                     
-                    _loadingState = "done";
-                    callback();    
-                });
-            }
+                        _loadingState = "done";
+                        callback();    
+                    });
+                }
         });
     }
     
@@ -873,11 +885,13 @@ function MicroServiceBusHost(settings) {
                             console.log("Error at: ".red + source);
                             console.log("Error id: ".red + errorId);
                             console.log("Error description: ".red + errorDescription);
+                            appInsights.client.trackException(new Error(errorDescription));
                         });
                         // Eventhandler for any debug information sent back from the service
                         newMicroService.OnDebug(function (source, info) {
                             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                                 console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
+                                applicationinsights.trackEvent("Information", { info: info });
                             }
                         });
                         

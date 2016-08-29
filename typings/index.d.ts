@@ -1,4 +1,5 @@
 /// <reference path="globals/adm-zip/index.d.ts" />
+/// <reference path="globals/applicationinsights/index.d.ts" />
 /// <reference path="globals/async/index.d.ts" />
 /// <reference path="globals/body-parser/index.d.ts" />
 /// <reference path="globals/chai/index.d.ts" />
