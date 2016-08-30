@@ -64,7 +64,7 @@ function MicroServiceBusHost(settings) {
     var _loadingState = "none"; // node -> loading -> done -> stopped
     var _restoreTimeout;
     var _comSettings;
-    var _isWaitingForSignInResponse = false;
+    //var _isWaitingForSignInResponse = false;
     var signInResponse;
     var com;
     var checkConnectionInterval;
@@ -125,7 +125,7 @@ function MicroServiceBusHost(settings) {
             console.log("Connection: " + "Binding Error: ".red, error);
         },
         connectionLost: function (error) {
-            _isWaitingForSignInResponse = false;
+            //_isWaitingForSignInResponse = false;
             console.log("Connection: " + "Connection Lost".red);
         },
         reconnected: void function (connection) {
@@ -217,7 +217,7 @@ function MicroServiceBusHost(settings) {
     // Called by HUB when itineraries has been updated
     function OnChangeState(state) {
         console.log();
-        _isWaitingForSignInResponse = false;
+        //_isWaitingForSignInResponse = false;
         settings.state = state;
         if (state == "Active")
             console.log("State changed to " + state.green);
@@ -250,7 +250,7 @@ function MicroServiceBusHost(settings) {
     }
     // Called by HUB when signin  has been successful
     function OnSignInMessage(response) {
-        _isWaitingForSignInResponse = false;
+        //_isWaitingForSignInResponse = false;
 
         if (settings.debug != null && settings.debug == true) {// jshint ignore:line
             console.log(settings.nodeName.gray + ' successfully logged in'.green);
@@ -269,7 +269,7 @@ function MicroServiceBusHost(settings) {
         
         _itineraries = signInResponse.itineraries;
 
-        applicationinsights.init(settings.appinsightKey, settings.nodeName)
+        applicationinsights.init(response.instrumentationKey, settings.nodeName)
             .then(function (resp) {
                 if (resp)
                     console.log("Application Insights:" + " Successfully initiated".green);
@@ -399,20 +399,20 @@ function MicroServiceBusHost(settings) {
     		    'SignIn',	
     		    hostData
             );
-            _isWaitingForSignInResponse = true;
+            //_isWaitingForSignInResponse = true;
 
             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                 console.log("Waiting for signin response".grey);
                 
             }
 
-            setTimeout(function () {
-                if (_isWaitingForSignInResponse) {
-                    console.log("Sign in response was not received".red);
-                    console.log("Signing in again".yellow);
-                    signIn();
-                }
-            }, 10000);
+            //setTimeout(function () {
+            //    if (_isWaitingForSignInResponse) {
+            //        console.log("Sign in response was not received".red);
+            //        console.log("Signing in again".yellow);
+            //        signIn();
+            //    }
+            //}, 10000);
         }
     }
     
@@ -885,13 +885,12 @@ function MicroServiceBusHost(settings) {
                             console.log("Error at: ".red + source);
                             console.log("Error id: ".red + errorId);
                             console.log("Error description: ".red + errorDescription);
-                            appInsights.client.trackException(new Error(errorDescription));
                         });
                         // Eventhandler for any debug information sent back from the service
                         newMicroService.OnDebug(function (source, info) {
                             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                                 console.log("DEBUG: ".green + '['.gray + source.gray + ']'.gray + '=>'.green + info);
-                                applicationinsights.trackEvent("Information", { info: info });
+                                applicationinsights.trackEvent("Tracking", { service: source, state: info });
                             }
                         });
                         
@@ -1228,6 +1227,7 @@ function MicroServiceBusHost(settings) {
             State : status
         };
         com.Track(trackingMessage);
+        applicationinsights.trackException(trackingMessage);
     };
     
     // Submits the messagee to the hub to show up in the portal console

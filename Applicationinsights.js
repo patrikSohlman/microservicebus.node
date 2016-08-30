@@ -35,13 +35,19 @@ function Applicationinsights() {
         if (_isInitialized)
             appInsights.client.trackEvent(type, event);
     };
-    Applicationinsights.prototype.trackException = function (errorMessage) {
-        appInsights.client.trackException(new Error(errorMessage));
+    Applicationinsights.prototype.trackException = function (error) {
+        try {
+            if (_isInitialized)
+                appInsights.client.trackException(new Error(error.FaultDescription), error);
+        }
+        catch (ex) {
+            console.log(ex);
+        }
     };
     Applicationinsights.prototype.init = function (instrumentationKey, node) {
         return new Promise(function (resolve, reject) {
 
-            if (instrumentationKey === undefined) {
+            if (instrumentationKey === null || instrumentationKey === undefined) {
                 resolve(false);
                 return;
             }
@@ -62,7 +68,7 @@ function Applicationinsights() {
                         node: node
                     };
 
-                    //appInsights.enableVerboseLogging(true);
+                    appInsights.enableVerboseLogging(true);
                     
                     _isInitialized = true;
                     resolve(true);
