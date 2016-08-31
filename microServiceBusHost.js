@@ -77,6 +77,7 @@ function MicroServiceBusHost(settings) {
     var server;
     var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
     var applicationinsights = new Applicationinsights();
+    var _heartBeatInterval;
     
     var client = new signalR.client(
         settings.hubUri + '/signalR',
@@ -95,7 +96,7 @@ function MicroServiceBusHost(settings) {
         connected: function (connection) {
             console.log("Connection: " + "Connected".green);
             signIn();
-            checkConnection();
+            startHeartBeat();
         },
         disconnected: function () {
             
@@ -105,7 +106,6 @@ function MicroServiceBusHost(settings) {
             }
 
             clearTimeout(_restoreTimeout);
-            
             //stopAllServices(function () {
             //    console.log("All services stopped".yellow);
             //});
@@ -165,9 +165,9 @@ function MicroServiceBusHost(settings) {
     client.on('integrationHub', 'nodeCreated', function (nodeData) {
         OnNodeCreated(nodeData);
     });
-    
-    var tempHasLoogedIn = false;
-    
+    client.on('integrationHub', 'heartBeat', function (id) {
+        //console.log("received heartbeat".gray);
+    });    
     // Called by HUB if it was ot able to process the request
     function OnErrorMessage(message) {
         console.log("errorMessage => " + message);
@@ -399,23 +399,29 @@ function MicroServiceBusHost(settings) {
     		    'SignIn',	
     		    hostData
             );
-            //_isWaitingForSignInResponse = true;
 
             if (settings.debug != null && settings.debug == true) {// jshint ignore:line
                 console.log("Waiting for signin response".grey);
-                
             }
-
-            //setTimeout(function () {
-            //    if (_isWaitingForSignInResponse) {
-            //        console.log("Sign in response was not received".red);
-            //        console.log("Signing in again".yellow);
-            //        signIn();
-            //    }
-            //}, 10000);
         }
     }
-    
+
+    // Check heartbeat from the server every 5 min
+    // To enforce the signalR client to recognize disconnected state
+    function startHeartBeat() {
+
+        if (_heartBeatInterval === null || _heartBeatInterval === undefined) {
+            _heartBeatInterval = setInterval(function () {
+                var lastHeartBeatId = guid.v1();
+                //console.log("sending heartbeat".gray);
+                client.invoke(
+                    'integrationHub',
+                    'heartBeat',
+                    lastHeartBeatId
+                );
+            }, 5*60*1000);
+        }
+    }
     // Starting up all services
     function startAllServices(itineraries, callback) {
         stopAllServices(function () {
@@ -1232,21 +1238,6 @@ function MicroServiceBusHost(settings) {
     
     // Submits the messagee to the hub to show up in the portal console
     function log(message) {
-    }
-    
-    // To enforce the signalR client to recognize disconnected state
-    function checkConnection() {
-        
-        if (checkConnectionInterval != undefined) {
-            clearInterval(checkConnectionInterval);
-        }
-        
-        checkConnectionInterval = setInterval(function () {
-            client.invoke( 
-                'integrationHub',
-		        'hello');
-
-        }, 5000);
     }
     
     var intercept = require("intercept-stdout"),
