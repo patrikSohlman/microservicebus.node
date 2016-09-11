@@ -422,6 +422,7 @@ function MicroServiceBusHost(settings) {
             }, 5*60*1000);
         }
     }
+
     // Starting up all services
     function startAllServices(itineraries, callback) {
         stopAllServices(function () {
@@ -920,7 +921,7 @@ function MicroServiceBusHost(settings) {
                     // Start the service
                     try {
                         _inboundServices.push(newMicroService);
-                        if (activity.userData.type == "azureApiAppInboundService") {
+                        if (activity.userData.isInboundREST || activity.userData.type === "azureApiAppInboundService") {
                             
                             if (!_startWebServer) {
                                 http = require('http');
@@ -1025,7 +1026,7 @@ function MicroServiceBusHost(settings) {
             if(settings.enableKeyPress == false)
                 var port = process.env.PORT || 1337;
             
-            server = http.createServer(app).listen(port, function () {
+            server = http.createServer(app).listen(port, function (err) {
                 console.log("Server started on port: ".green + port);
                 console.log();
             });
@@ -1277,6 +1278,11 @@ function MicroServiceBusHost(settings) {
             process.on('SIGINT', gracefulShutdown);
             
             process.on('uncaughtException', function (err) {
+                if (err.errno === 'EADDRINUSE' || err.errno === 'EACCES') {
+                    console.log("");
+                    console.log("Error: ".red + "The address is in use. Either close the program is using the same port, or change the port of the node in the portal.".yellow);
+                }
+                else
                     console.log('Uncaught exception: '.red + err);
             });
         }
