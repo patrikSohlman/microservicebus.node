@@ -988,7 +988,7 @@ function MicroServiceBusHost(settings) {
             app.use(function (req, res) {
                 res.header('Content-Type', 'text/html');
                 var response = '<style>body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; background: rgb(52, 73, 94); color: white;}</style>';
-                response += '<h1><img src="https://microservicebus.com/Images/Logotypes/Logo6.svg" style="height:75px"/> Welcome to the laptop002 node</h1><h2 style="margin-left: 80px">API List</h2>';
+                response += '<h1><img src="https://microservicebus.com/Images/Logotypes/Logo6.svg" style="height:75px"/> Welcome to the ' + settings.nodeName+' node</h1><h2 style="margin-left: 80px">API List</h2>';
                 
                 app._router.stack.forEach(function (endpoint) {
                     if (endpoint.route != undefined) {
