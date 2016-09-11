@@ -73,9 +73,6 @@
     <Folder Include="protocols\" />
     <Folder Include="test\" />
     <Folder Include="services\" />
-    <Folder Include="typings\" />
-    <Folder Include="typings\globals\" />
-    <Folder Include="typings\globals\adm-zip\" />
     <Folder Include="typings\globals\applicationinsights\" />
     <Folder Include="typings\globals\async\" />
     <Folder Include="typings\globals\body-parser\" />
@@ -104,7 +101,6 @@
     <Folder Include="typings\globals\uuid\" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="typings\globals\adm-zip\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\applicationinsights\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\body-parser\index.d.ts" />
