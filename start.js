@@ -72,6 +72,7 @@ try {
 }
 catch (err) {
     console.log('Invalid settings file.'.red);
+    console.log(err);
     process.abort();
 }
 

@@ -2,10 +2,10 @@
 The MIT License (MIT)
 
 Copyright (c) 2014 microServiceBus.com
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without AMQPriction, including without limitation the rights
+in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
@@ -21,116 +21,229 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-var AMQPClient = require('amqp10').Client;
-var Policy = require('amqp10').Policy;
+
+'use strict';
+//var util = require('../Utils.js');
+
+var url = require("url");
+var azure;
 var crypto = require('crypto');
-var crypto = require('crypto');
+var httpRequest = require('request');
 var storage = require('node-persist');
 var util = require('../Utils.js');
-var storageIsEnabled = true;
- 
+var guid = require('uuid');
+
 function AMQP(nodeName, sbSettings) {
-    var trackingClientUri = 'amqps://' + encodeURIComponent(sbSettings.trackingKeyName) + ':' + encodeURIComponent(sbSettings.trackingKey) + '@' + sbSettings.sbNamespace;
-    var messageClientUri = 'amqps://' + encodeURIComponent(sbSettings.sasKeyName) + ':' + encodeURIComponent(sbSettings.sasKey) + '@' + sbSettings.sbNamespace;
-    
-    var trackingClientPolicy = Policy.ServiceBusQueue;
-    trackingClientPolicy.reconnect.forever = false;
-    trackingClientPolicy.reconnect.retries = 2;
-    
-    var messageClientPolicy = Policy.ServiceBusTopic;
-    messageClientPolicy.reconnect.forever = false;
-    messageClientPolicy.reconnect.retries = 2;
-    
-    var trackingClient = new AMQPClient(trackingClientPolicy);
-    var messageClient = new AMQPClient(messageClientPolicy);
-    
-    var messageSender;
-    var trackingSender;
-    
-    AMQP.prototype.Start = function (done) {
-        messageClient.connect(messageClientUri)
-        .then(function () {
-            return Promise.all([
-                messageClient.createSender(sbSettings.topic),
-                messageClient.createReceiver(sbSettings.topic + '/Subscriptions/' + nodeName.toLowerCase())
-            ]);
-        })
-        .spread(function (sender, receiver) {
-            messageSender = sender;
-            sender.on('errorReceived', function (tx_err) {
-                onQueueErrorReceiveCallback("Unable to receive message. " + tx_err);
-            });
-            receiver.on('errorReceived', function (rx_err) {
-                onQueueErrorReceiveCallback("Unable to receive message. " + rx_err);
-            });
-            
-            // message event handler
-            receiver.on('message', function (message) {
-                onQueueMessageReceivedCallback(message);
-            });
-        })
-        .catch(function (e) {
-            onQueueErrorReceiveCallback("Unable to start AMQP client. " + e);
+    var me = this;
+    var stop = false;
+    var storageIsEnabled = true;
+    var sender;
+    var receiver;
+    var tracker;
+    var tokenRefreshTimer;
+    var tokenRefreshInterval = (sbSettings.tokenLifeTime * 60 * 1000) * 0.9;
+
+    // Setup tracking
+    var baseAddress = "https://" + sbSettings.sbNamespace;
+    if (!baseAddress.match(/\/$/)) {
+        baseAddress += '/';
+    }
+    var restTrackingToken = sbSettings.trackingToken;
+
+    AMQP.prototype.Start = function (callback) {
+        me = this;
+        stop = false;
+
+        util.addNpmPackage("azure-sb", function (err) {
+            if (err) {
+                me.onQueueErrorSubmitCallback("Unable to download azure npm package");
+                callback(err);
+            }
+            else {
+                azure = require('azure-sb');
+                sbSettings.messagingToken = "Endpoint=sb://microservicebus-northeurope.servicebus.windows.net/;SharedAccessKeyName=demo-organization;SharedAccessKey=BSOHOWCV0W7HV2nKfjl7Bf0AnGHwriFPbzo3eJU45js=";
+                sender = azure.createServiceBusService(sbSettings.messagingToken);
+                receiver = azure.createServiceBusService(sbSettings.messagingToken);
+                callback();
+            }
         });
-        
-        trackingClient.connect(trackingClientUri)
-          .then(function () { return trackingClient.createSender(sbSettings.trackingHubName); })
-          .then(function (sender) {
-            trackingSender = sender;
-            sender.on('errorReceived', function (err) {
-                onQueueErrorReceiveCallback("Unable to start tracking client (AMQP) " + err);
+
+
+
+        //sender = SendClient.fromSharedAccessSignature(sbSettings.messagingToken);
+        //receiver = ReceiveClient.fromSharedAccessSignature(sbSettings.messagingToken, AmqpWs);
+
+        //sender.open(function (err) {
+        //    var self = me;
+        //    if (err) {
+        //        me.onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+        //    }
+        //    else {
+        //        me.onQueueDebugCallback("Sender is ready");
+        //        receiver.open(function (err, transport) {
+        //            if (err) {
+        //                me.onQueueErrorReceiveCallback('Could not connect: ' + err.message);
+        //            } else {
+        //                me.onQueueDebugCallback("Receiver is ready");
+        //                receiver.on('message', function (msg) {
+        //                    try {
+        //                        var message = msg.data;
+
+        //                        var responseData = {
+        //                            body: message,
+        //                            applicationProperties: { value: { service: message.service } }
+        //                        }
+        //                        me.onQueueMessageReceivedCallback(responseData);
+
+        //                        receiver.complete(msg, function () { });
+        //                    }
+        //                    catch (e) {
+        //                        me.onQueueErrorReceiveCallback('Could not connect: ' + e.message);
+        //                    }
+        //                });
+
+        //                if (callback != null)
+        //                    callback();
+        //            }
+        //        });
+        //    }
+        //});
+
+        tokenRefreshTimer = setInterval(function () {
+            me.onQueueDebugCallback("Update tracking tokens");
+            acquireToken("AMQP", "TRACKING", restTrackingToken, function (token) {
+                if (token == null) {
+                    me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                }
+                else {
+                    restTrackingToken = token;
+                }
             });
-        })
-          .then(function (state) {
-            console.log(state);
-        })
-          .catch(function (e) {
-            onQueueErrorReceiveCallback("Unable to start tracking client (AMQP) " + e);
-        });
+        }, tokenRefreshInterval);
     };
     AMQP.prototype.Stop = function () {
-        messageSender.disconnect(function () {
-            onQueueDebugCallback("Stopped message client");
-        });
-        trackingClient.disconnect(function () {
-            onQueueDebugCallback("Stopped tracking client");
-        });
+        stop = true;
+        sender = undefined;
+        receiver = undefined;
+        clearTimeout(tokenRefreshTimer);
     };
     AMQP.prototype.Submit = function (message, node, service) {
-        if (messageSender == undefined) {
+        var me = this;
+        if (stop) {
+            var persistMessage = {
+                node: node,
+                service: service,
+                message: message
+            };
+            if (storageIsEnabled)
+                storage.setItem(guid.v1(), persistMessage);
+
             return;
         }
-        
-        var request = {
-            body: message, 
-            applicationProperties: {
-                node: node,
-                service: service
-            }
-        };
-        
-        return messageSender.send(request)
-                    .then(function (err) {
-            if (err) {
-                onQueueErrorReceiveCallback("Unable to send message " + err);
-            }
+        message.service = service;
+
+        //var msg = new Message(message);
+        //message.properties.add('myproperty', 'myvalue');
+        sender.send(node, message, function (err) {
+            if (err)
+                me.onQueueErrorReceiveCallback(err);
         });
     };
     AMQP.prototype.Track = function (trackingMessage) {
-        if (trackingClient == undefined) {
-            return;
-        }
-        
-        var request = {
-            body: trackingMessage, 
-            applicationProperties: {}
-        };
-        return trackingSender.send(request)
-                    .then(function (err) {
-            if (err) {
-                onQueueErrorReceiveCallback("Unable to send tracking message " + err);
+        try {
+            var me = this;
+            if (stop) {
+                if (storageIsEnabled)
+                    storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+
+                return;
             }
-        });
+
+            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
+
+            httpRequest({
+                headers: {
+                    "Authorization": sbSettings.trackingToken,
+                    "Content-Type": "application/json",
+                },
+                uri: trackUri,
+                json: trackingMessage,
+                method: 'POST'
+            },
+                function (err, res, body) {
+                    if (err != null) {
+                        me.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                        console.log("Unable to send message. " + err.code + " - " + err.message);
+                        if (storageIsEnabled)
+                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    }
+                    else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    }
+                    else if (res.statusCode == 401) {
+                        console.log("Invalid token. Updating token...")
+
+                        //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                        //    if (token == null && storageIsEnabled) {
+                        //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                        //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                        //        return;
+                        //    }
+
+                        //    restTrackingToken = token;
+                        //    me.Track(trackingMessage);
+                        //});
+                        return;
+                    }
+                    else {
+                        console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+
+                    }
+                });
+
+        }
+        catch (err) {
+            console.log();
+        }
+    };
+    AMQP.prototype.Update = function (settings) {
+        restTrackingToken = settings.trackingToken;
+        me.onQueueDebugCallback("Tracking token updated");
+    };
+
+    function acquireToken(provider, keyType, oldKey, callback) {
+        try {
+            var acquireTokenUri = me.hubUri.replace("wss:", "https:") + "/api/Token";
+            var request = {
+                "provider": provider,
+                "keyType": keyType,
+                "oldKey": oldKey
+            }
+            httpRequest({
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                uri: acquireTokenUri,
+                json: request,
+                method: 'POST'
+            },
+                function (err, res, body) {
+                    if (err != null) {
+                        me.onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                        callback(null);
+                    }
+                    else if (res.statusCode >= 200 && res.statusCode < 300) {
+                        callback(body.token);
+                    }
+                    else {
+                        me.onQueueErrorSubmitCallback("Unable to acquire new token. Status code: " + res.statusCode);
+                        callback(null);
+                    }
+                });
+        }
+        catch (err) {
+            process.exit(1);
+        }
     };
 }
 module.exports = AMQP;
+

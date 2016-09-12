@@ -1,5 +1,8 @@
 {
-    "hubUri": "wss://microservicebus.com",
+    "hubUri": "wss://localhost:44302",
     "trackMemoryUsage": 0,
-    "enableKeyPress": true
+    "enableKeyPress": true,
+    "nodeName": "TestNode1",
+    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
+    "machineName": "DESKTOP-JPUK8UG"
 }

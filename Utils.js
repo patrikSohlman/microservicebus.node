@@ -106,6 +106,12 @@ exports.addNpmPackage = function (npmPackage, callback) {
                 npm.commands.install([npmPackage], function (er, data) {
                     callback(er);
                 });
+                npm.on("log", function (message) {
+                    ret = null;
+                });
+                npm.on("error", function (error) {
+                    ret = null;
+                });
             }
             else {
                 callback(null);

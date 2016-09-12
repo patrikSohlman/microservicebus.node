@@ -41,10 +41,7 @@ function REST(nodeName, sbSettings) {
     if (!baseAddress.match(/\/$/)) {
         baseAddress += '/';
     }
-    
-    // Auto refresh token
-
-
+   
     REST.prototype.Start = function (callback) {
         stop = false;
         me = this;
