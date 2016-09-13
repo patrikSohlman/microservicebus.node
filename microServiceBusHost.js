@@ -754,7 +754,7 @@ function MicroServiceBusHost(settings) {
                         else {
                             require("request")(scriptFileUri, function (err, response, scriptContent) {
                                 if (response.statusCode != 200 || err != null) {
-                                    console.log("Unable to get file:" + fileName);
+                                    console.log("Unable to get file:" + scriptfileName);
                                     var lineStatus = "|" + util.padRight(activity.userData.id, 20, ' ') + "| " + "Not found".red + " |" + util.padRight(scriptfileName, 40, ' ') + "|";
                                     console.log(lineStatus);
                                     done();
@@ -1165,7 +1165,7 @@ function MicroServiceBusHost(settings) {
         }
 
         var time = moment();
-        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+        var utcNow = time.utc().format('YYYY-MM-DD HH:mm:ss.SSSZ');
         var messageId = guid.v1();
         
         if (msg.IsFirstAction && status == "Completed")
