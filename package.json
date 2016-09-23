@@ -69,7 +69,9 @@
     "Micro Services",
     "MicroServices",
     "microServiceBus",
-    "Cloud"
+    "Cloud",
+    "AZURE",
+    "AZURE IOT"
   ],
   "name": "microservicebus.node",
   "repository": {
@@ -81,6 +83,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "1.1.21" 
+  "version": "1.1.23"
 }
- 

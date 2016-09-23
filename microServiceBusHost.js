@@ -35,6 +35,7 @@ var path = require('path');
 var util = require('./Utils.js');
 var MicroService = require('./services/microService.js');
 var Com = require("./Com.js");
+var auth;
 var http;
 var express;
 var swaggerize;
@@ -698,7 +699,7 @@ function MicroServiceBusHost(settings) {
         try {
             var activity = intineratyActivity.activity;
             var itinerary = intineratyActivity.itinerary;
-            if (activity.type == 'draw2d.Connection') {
+            if (activity.type === 'draw2d.Connection' || activity.type === 'LabelConnection') {
                 done();
                 return;
             }
@@ -929,6 +930,58 @@ function MicroServiceBusHost(settings) {
                                 swaggerize = require('swaggerize-express');
                                 bodyParser = require('body-parser');
                                 app = express();
+
+                                app.use(function (req, res, next) {
+                                    
+
+                                    var allowAnonymous = false;
+                                    var basicAuth = true;
+                                    var allowedUserName = "john";
+                                    var allowedUserPassword = "secret";
+
+                                    if (!allowAnonymous && basicAuth) { // Basic only
+                                        util.addNpmPackage("basic-auth", function (err) {
+                                            auth = require('basic-auth');
+                                            var credentials = auth(req);
+                                            if (!credentials) {
+                                                res.statusCode = 401
+                                                res.setHeader('WWW-Authenticate', 'Basic realm="microservicebus.com"')
+                                                res.end('Access denied')
+                                            }
+                                            else {
+                                                if (credentials.name !== allowedUserName || credentials.pass !== allowedUserPassword) {
+                                                    res.statusCode = 401
+                                                    res.end('Access denied')
+                                                }
+                                                else {
+                                                    req.AuthenticatedUser = credentials.name;
+                                                    next();
+                                                }
+                                            }
+                                        });
+                                        
+                                    }
+                                    else if (allowAnonymous && basicAuth) {
+                                        if (credentials) {
+                                            if (credentials.name !== allowedUserName || credentials.pass !== allowedUserPassword) {
+                                                res.statusCode = 401
+                                                res.end('Access denied')
+                                            }
+                                            else {
+                                                req.AuthenticatedUser = credentials.name;
+                                                next();
+                                            }
+                                        }
+                                        else {
+                                            next();
+                                        }
+                                    }
+                                    else { // Only Anonymous
+                                        next();
+                                    } 
+                                });
+
+                                
                                 _startWebServer = true;
                             }
                             newMicroService.App = app;
@@ -967,7 +1020,8 @@ function MicroServiceBusHost(settings) {
             console.log("Listening to port: " + settings.port);            
             console.log();
             
-            app.use(bodyParser.json());
+            //app.use(bodyParser.json());
+
             server = http.createServer(app);
             
             /*
@@ -1005,8 +1059,7 @@ function MicroServiceBusHost(settings) {
 
                 res.send(response);
             })
-
-            
+        
             app.use('/', express.static(__dirname + '/html'));
             
             console.log("REST endpoints:".green);
@@ -1022,10 +1075,23 @@ function MicroServiceBusHost(settings) {
                         console.log("PUT:    ".yellow + endpoint.route.path);
                 }
             });
-            
+
+
             if(settings.enableKeyPress == false)
                 var port = process.env.PORT || 1337;
-            
+
+            //app.use(function (req, res, next) {
+            //    var credentials = auth(req)
+
+            //    if (!credentials || credentials.name !== 'john' || credentials.pass !== 'secret') {
+            //        res.statusCode = 401
+            //        res.setHeader('WWW-Authenticate', 'Basic realm="microservicebus.com"')
+            //        res.end('Access denied')
+            //    }
+            //    else {
+            //        next();
+            //    }
+            //});
             server = http.createServer(app).listen(port, function (err) {
                 console.log("Server started on port: ".green + port);
                 console.log();
@@ -1087,7 +1153,10 @@ function MicroServiceBusHost(settings) {
         var lastActionId = itinerary.activities.find(function (action) { return action.userData.id === serviceName; }).id;
         
         var connections = itinerary.activities.filter(function (connection) {
-            return connection.type === 'draw2d.Connection' && connection.source.node === lastActionId;
+            return connection.source !== undefined &&
+                connection.source.node !== undefined &&
+                connection.source.node === lastActionId &&
+                (connection.type === 'draw2d.Connection' || connection.type === 'LabelConnection');
         });
         
         var successors = [];
