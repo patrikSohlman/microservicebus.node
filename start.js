@@ -29,7 +29,7 @@ var checkVersion = require('package-json');
 var fs = require('fs');
 var started = false;
 var maxWidth = 75;
-var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
+var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':__dirname;
 
 console.log();
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);

@@ -76,7 +76,7 @@ function MicroServiceBusHost(settings) {
     var baseHost = process.env.WEBSITE_HOSTNAME || 'localhost';
     var app;// = express();
     var server;
-    var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':'.';
+    var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':__dirname;
     var applicationinsights = new Applicationinsights();
     var _heartBeatInterval;
     
