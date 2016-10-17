@@ -584,10 +584,14 @@ function MicroServiceBusHost(settings) {
     
     // Restore persisted messages from ./persist folder
     function restorePersistedMessages() {
-        fs.readdir(rootFolder + '/persist/', function (err, files) {
+        var persistPath = rootFolder + '/persist/';
+        if (!fs.existsSync(persistPath))
+            fs.mkdirSync(persistPath);
+
+        fs.readdir(persistPath, function (err, files) {
             if (err) throw err;
             for (var i = 0; i < files.length; i++) {
-                var file = rootFolder + '/persist/' + files[i];
+                var file = persistPath + files[i];
                 try {
                     
                     var persistMessage = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -934,10 +938,10 @@ function MicroServiceBusHost(settings) {
                                 app.use(function (req, res, next) {
                                     
 
-                                    var allowAnonymous = false;
-                                    var basicAuth = true;
-                                    var allowedUserName = "john";
-                                    var allowedUserPassword = "secret";
+                                    var allowAnonymous = true;
+                                    var basicAuth = false;
+                                    //var allowedUserName = "john";
+                                    //var allowedUserPassword = "secret";
 
                                     if (!allowAnonymous && basicAuth) { // Basic only
                                         util.addNpmPackage("basic-auth", function (err) {

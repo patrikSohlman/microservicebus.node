@@ -30,24 +30,24 @@ var path = require("path");
 var crypto = require('crypto');
 var algorithm = 'aes-256-ctr';
 require('colors');
+var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
 
 exports.padLeft = function (nr, n, str) {
     if (nr.length > n)
         nr = nr.substring(0, n);
 
-	return Array(n - String(nr).length + 1).join(str || '0') + nr;
+    return Array(n - String(nr).length + 1).join(str || '0') + nr;
 };
 
 exports.padRight = function (nr, n, str) {
     if (nr != undefined && nr.length > n)
         nr = nr.substring(0, n);
-    
+
     return nr + Array(n - String(nr).length + 1).join(str || '0');
 };
 
 exports.saveSettings = function (settings) {
-    var fileName = "./settings.json";
-    
+    var fileName = rootFolder + "/settings.json";
     fs.writeFile(fileName, JSON.stringify(settings, null, 4), function (err) {
         if (err) {
             console.log(err);
@@ -79,7 +79,7 @@ exports.encrypt = function (buffer, password) {
     if (password == undefined) {
         throw "Node is configured to use encryption, but no secret has been configured. Add an environment variable called 'NODESECRET and set the value to your secret.".bgRed;
     }
-    
+
     var cipher = crypto.createCipher(algorithm, password)
     var crypted = Buffer.concat([cipher.update(buffer), cipher.final()]);
     return crypted;
@@ -92,7 +92,7 @@ exports.decrypt = function (buffer, password) {
     }
     var algorithm = 'aes-256-ctr';
     var decipher = crypto.createDecipher(algorithm, password)
-    var dec = Buffer.concat([decipher.update(buffer) , decipher.final()]);
+    var dec = Buffer.concat([decipher.update(buffer), decipher.final()]);
     return dec;
 }
 
@@ -123,16 +123,16 @@ exports.addNpmPackage = function (npmPackage, callback) {
 exports.compareVersion = function (a, b) {
     var i;
     var len;
-    
+
     if (typeof a + typeof b !== 'stringstring') {
         return false;
     }
-    
+
     a = a.split('.');
     b = b.split('.');
     i = 0;
     len = Math.max(a.length, b.length);
-    
+
     for (; i < len; i++) {
         if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
             return 1;
@@ -140,7 +140,7 @@ exports.compareVersion = function (a, b) {
             return -1;
         }
     }
-    
+
     return 0;
 };
 
