@@ -29,6 +29,7 @@ var npm = require('npm');
 var fs = require('graceful-fs');
 var path = require("path");
 var util = require('../Utils.js')
+var npmFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname + "/../node_modules";
 
 function MicroService(microService) {
 
@@ -213,7 +214,7 @@ function MicroService(microService) {
 
             for (var i = 0; i < packages.length; i++) {
                 var npmPackage = packages[i];
-                var packageFolder = path.resolve(npm.dir, npmPackage)
+                var packageFolder = path.resolve(npmFolder, npmPackage);
                 try {
                     var stats = fs.lstatSync(packageFolder);
                     if (!stats.isDirectory()) {

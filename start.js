@@ -29,7 +29,8 @@ var checkVersion = require('package-json');
 var fs = require('fs');
 var started = false;
 var maxWidth = 75;
-var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1':__dirname;
+let args = process.argv.slice(1);
+var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
 
 console.log();
 console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
@@ -45,19 +46,19 @@ console.log();
 
 // Check if there is a later npm package
 checkVersion("microservicebus.node")
-			.then(function (rawData) {
-    var latest = rawData['dist-tags'].latest;
-    if (util.compareVersion (pjson.version,latest) < 0) {
-        console.log();
-        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
-        console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
-        console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
-        console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
-        console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
-        console.log();
-        
-    }
-});
+    .then(function (rawData) {
+        var latest = rawData['dist-tags'].latest;
+        if (util.compareVersion(pjson.version, latest) < 0) {
+            console.log();
+            console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+            console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
+            console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
+            console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
+            console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+            console.log();
+
+        }
+    });
 
 // Load settings 
 try {
@@ -89,24 +90,24 @@ microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
         console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
         console.log("|          rss           |        heapTotal       |        heapUsed       |".bgBlue.white.bold)
         console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
-        
+
         if (!started) {
-            started = true;   
+            started = true;
             setInterval(function () {
                 memUsage = process.memoryUsage();
-                
+
                 var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
                 console.log(str.bgBlue.white.bold);
-        
+
             }, settings.trackMemoryUsage);
         }
     }
 });
 microServiceBusHost.OnStopped(function () {
-    
+
 });
 microServiceBusHost.OnUpdatedItineraryComplete(function () {
-    
+
 });
 
 microServiceBusHost.Start();

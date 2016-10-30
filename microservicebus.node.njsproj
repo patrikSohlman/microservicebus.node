@@ -5,8 +5,7 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <Name>microservicebus.node</Name>
     <RootNamespace>microservicebus.host</RootNamespace>
-    <ScriptArguments>
-    </ScriptArguments>
+    <ScriptArguments>restore</ScriptArguments>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -35,6 +34,7 @@
   <ItemGroup>
     <Compile Include="Applicationinsights.js" />
     <Compile Include="Com.js" />
+    <Compile Include="globalRestore.js" />
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
     <Compile Include="protocols\AMQP.js" />

@@ -69,8 +69,9 @@ function AZUREIOT(nodeName, sbSettings) {
                 me.onQueueDebugCallback("Sender is ready");
                 receiver.open(function (err, transport) {
                     if (err) {
-                        me.onQueueErrorReceiveCallback('Could not connect: ' + err.message);
-                    } else {
+                        me.onQueueErrorReceiveCallback('Could not connect: ' + err);
+                    }
+                    else {
                         me.onQueueDebugCallback("Receiver is ready");
                         receiver.on('message', function (msg) {
                             try {
