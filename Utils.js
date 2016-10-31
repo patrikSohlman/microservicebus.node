@@ -46,12 +46,14 @@ exports.padRight = function (nr, n, str) {
     return nr + Array(n - String(nr).length + 1).join(str || '0');
 };
 
-exports.saveSettings = function (settings) {
+exports.saveSettings = function (settings, done) {
     var fileName = rootFolder + "/settings.json";
     fs.writeFile(fileName, JSON.stringify(settings, null, 4), function (err) {
         if (err) {
             console.log(err);
         }
+        if (done)
+            done();
     });
 };
 
