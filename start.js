@@ -23,9 +23,10 @@ SOFTWARE.
 */
 
 require('colors');
-var util = require('./Utils.js');
+var util = require('./lib/Utils.js');
 var pjson = require('./package.json');
 var checkVersion = require('package-json');
+var npm = require('npm');
 var fs = require('fs');
 var started = false;
 var maxWidth = 75;
@@ -66,8 +67,8 @@ try {
         "debug": false,
         "hubUri": "wss://microservicebus.com"
     }
-    if (fs.existsSync(rootFolder + '/settings.json')) {
-        var data = fs.readFileSync(rootFolder + '/settings.json');
+    if (fs.existsSync(rootFolder + '/lib/settings.json')) {
+        var data = fs.readFileSync(rootFolder + '/lib/settings.json');
         settings = JSON.parse(data);
     }
 }
@@ -77,12 +78,8 @@ catch (err) {
     process.abort();
 }
 
-var MicroServiceBusHost = require("./microServiceBusHost.js");
+var MicroServiceBusHost = require("./lib/microServiceBusHost.js");
 var microServiceBusHost = new MicroServiceBusHost(settings);
-
-function formatNumber(num) {
-    return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
-}
 
 microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
     if (settings.trackMemoryUsage != undefined && settings.trackMemoryUsage > 0) {
@@ -110,5 +107,30 @@ microServiceBusHost.OnUpdatedItineraryComplete(function () {
 
 });
 
-microServiceBusHost.Start();
+checkVersion("microservicebus.core")
+    .then(function (rawData) {
+        var packageFile = rootFolder+'/node_modules/microservicebus.core/package.json';
+        var corePjson;
+
+        if (fs.existsSync(packageFile)){
+            corePjson = require(packageFile);
+        }
+        var latest = rawData['dist-tags'].latest;
+
+        if (corePjson === undefined || util.compareVersion(corePjson.version, latest) < 0) {
+
+            console.log("New version of Core available. Performing update, please wait...\n".green); 
+            util.addNpmPackage("microservicebus.core", true, function (err) {
+                if (err) {
+                    console.log("Unable to install core update".bgRed.white);
+                }
+                microServiceBusHost.Start();
+            });
+        }
+        else {
+            microServiceBusHost.Start();
+        }
+    });
+
+
 
