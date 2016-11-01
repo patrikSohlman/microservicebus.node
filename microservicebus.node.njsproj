@@ -64,13 +64,14 @@
     <Content Include="README.md" />
     <Content Include="settings.json" />
     <Content Include="sim.bat" />
-    <Content Include="swagger.json" />
-    <Content Include="swaggerPathTemplate.json" />
-    <Content Include="swaggerTemplate.json" />
+    <Content Include="templates\swagger.json" />
+    <Content Include="templates\swaggerPathTemplate.json" />
+    <Content Include="templates\swaggerTemplate.json" />
     <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
+    <Folder Include="templates\" />
     <Folder Include="protocols\" />
     <Folder Include="test\" />
     <Folder Include="services\" />

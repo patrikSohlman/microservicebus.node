@@ -43,10 +43,7 @@
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
   "bin": {
     "startnode": "global.js",
-    "restorenode": "globalRestore.js",
-    "installnode": "service.js --i",
-    "uninstallnode": "service.js --u",
-    "runnode": "service.js --run"
+    "restorenode": "globalRestore.js"
   },
   "main": "global.js",
   "devDependencies": {
