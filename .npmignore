@@ -17,11 +17,16 @@ BEFORE PUBLISH.md
 *.heapsnapshot
 microServiceBus.BizTalk
 persist
-Services
+services
+typings
 Metadata
 coverage
 !services/microService.js
 !services/sqlCommand.js
 obj 
+<<<<<<< HEAD
 .vs
+=======
+.vs
+>>>>>>> 419c8ab77962283a12819aece94cc727aeedf51a
 .vscode

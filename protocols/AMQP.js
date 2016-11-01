@@ -1,86 +1,236 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+﻿/*
+The MIT License (MIT)
+
+Copyright (c) 2014 microServiceBus.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 'use strict';
+var AmqpWs = require('azure-iot-device-amqp-ws').AmqpWs; // Default transport for Receiver
+var ReceiveClient = require('azure-iot-device').Client;
+var SendClient = require('azure-iothub').Client;
+var SharedAccessSignature = require('azure-iot-device').SharedAccessSignature;
 
-var Base = require('azure-iot-amqp-base').Amqp;
-var endpoint = require('azure-iot-common').endpoint;
-var PackageJson = require('../package.json');
+var url = require("url");
+var Message = require('azure-iot-device').Message;
+var crypto = require('crypto');
+var httpRequest = require('request');
+var storage = require('node-persist');
+var util = require('../Utils.js');
+var guid = require('uuid');
 
-/**
- * @class       module:azure-iothub.Amqp
- * @classdesc   Constructs an {@linkcode Amqp} object that can be used in an application
- *              to connect to IoT Hub instance, using the AMQP protocol.
- */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_001: [The Amqp constructor shall accept a config object with those 4 properties:
-host – (string) the fully-qualified DNS hostname of an IoT Hub
-hubName - (string) the name of the IoT Hub instance (without suffix such as .azure-devices.net).
-keyName – (string) the name of a key that can be used to communicate with the IoT Hub instance
-sharedAccessSignature – (string) the key associated with the key name.] */
-function Amqp(config) {
-    var uri = 'amqps://';
-    uri += encodeURIComponent(config.keyName) +
-         '%40sas.root.' +
-         config.hubName +
-         ':' +
-         encodeURIComponent(config.sharedAccessSignature) +
-         '@' +
-         config.host;
-    
-    this._amqp = new Base(uri, true, 'azure-iothub/' + PackageJson.version);
-    this._config = config;
+function AMQP(nodeName, sbSettings) {
+    var me = this;
+    var stop = false;
+    var storageIsEnabled = true;
+    var sender;
+    var receiver;
+    var tracker;
+    var tokenRefreshTimer;
+    var tokenRefreshInterval = (sbSettings.tokenLifeTime * 60 * 1000) * 0.9;
+
+    // Setup tracking
+    var baseAddress = "https://" + sbSettings.sbNamespace;
+    if (!baseAddress.match(/\/$/)) {
+        baseAddress += '/';
+    }
+    var restTrackingToken = sbSettings.trackingToken;
+
+    AMQP.prototype.Start = function (callback) {
+        me = this;
+        stop = false;
+
+        sender = SendClient.fromSharedAccessSignature(sbSettings.messagingToken);
+        receiver = ReceiveClient.fromSharedAccessSignature(sbSettings.messagingToken, AmqpWs);
+
+        sender.open(function (err) {
+            var self = me;
+            if (err) {
+                me.onQueueErrorReceiveCallback('Unable to connect to Azure IoT Hub (send) : ' + err);
+            }
+            else {
+                me.onQueueDebugCallback("Sender is ready");
+                receiver.open(function (err, transport) {
+                    if (err) {
+                        me.onQueueErrorReceiveCallback('Could not connect: ' + err.message);
+                    } else {
+                        me.onQueueDebugCallback("Receiver is ready");
+                        receiver.on('message', function (msg) {
+                            try {
+                                var message = msg.data;
+
+                                var responseData = {
+                                    body: message,
+                                    applicationProperties: { value: { service: message.service } }
+                                }
+                                me.onQueueMessageReceivedCallback(responseData);
+
+                                receiver.complete(msg, function () { });
+                            }
+                            catch (e) {
+                                me.onQueueErrorReceiveCallback('Could not connect: ' + e.message);
+                            }
+                        });
+
+                        if (callback != null)
+                            callback();
+                    }
+                });
+            }
+        });
+
+        tokenRefreshTimer = setInterval(function () {
+            me.onQueueDebugCallback("Update tracking tokens");
+            acquireToken("AMQP", "TRACKING", restTrackingToken, function (token) {
+                if (token == null) {
+                    me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                }
+                else {
+                    restTrackingToken = token;
+                }
+            });
+        }, tokenRefreshInterval);
+    };
+    AMQP.prototype.Stop = function () {
+        stop = true;
+        sender = undefined;
+        receiver = undefined;
+        clearTimeout(tokenRefreshTimer);
+    };
+    AMQP.prototype.Submit = function (message, node, service) {
+        var me = this;
+        if (stop) {
+            var persistMessage = {
+                node: node,
+                service: service,
+                message: message
+            };
+            if (storageIsEnabled)
+                storage.setItem(guid.v1(), persistMessage);
+
+            return;
+        }
+        message.service = service;
+
+        //var msg = new Message(message);
+        //message.properties.add('myproperty', 'myvalue');
+        sender.send(node, message, function (err) {
+            if (err)
+                me.onQueueErrorReceiveCallback(err);
+        });
+    };
+    AMQP.prototype.Track = function (trackingMessage) {
+        try {
+            var me = this;
+            if (stop) {
+                if (storageIsEnabled)
+                    storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+
+                return;
+            }
+
+            var trackUri = baseAddress + sbSettings.trackingHubName + "/messages" + "?timeout=60";
+
+            httpRequest({
+                headers: {
+                    "Authorization": restTrackingToken,
+                    "Content-Type": "application/json",
+                },
+                uri: trackUri,
+                json: trackingMessage,
+                method: 'POST'
+            },
+                function (err, res, body) {
+                    if (err != null) {
+                        me.onQueueErrorSubmitCallback("Unable to send message. " + err.code + " - " + err.message)
+                        console.log("Unable to send message. " + err.code + " - " + err.message);
+                        if (storageIsEnabled)
+                            storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                    }
+                    else if (res.statusCode >= 200 && res.statusCode < 300) {
+                    }
+                    else if (res.statusCode == 401) {
+                        console.log("Invalid token. Updating token...")
+
+                        //acquireToken("MICROSERVICEBUS", "TRACKING", restTrackingToken, function (token) {
+                        //    if (token == null && storageIsEnabled) {
+                        //        me.onQueueErrorSubmitCallback("Unable to aquire tracking token: " + token);
+                        //        storage.setItem("_tracking_" + trackingMessage.InterchangeId, trackingMessage);
+                        //        return;
+                        //    }
+
+                        //    restTrackingToken = token;
+                        //    me.Track(trackingMessage);
+                        //});
+                        return;
+                    }
+                    else {
+                        console.log("Unable to send message. " + res.statusCode + " - " + res.statusMessage);
+
+                    }
+                });
+
+        }
+        catch (err) {
+            console.log();
+        }
+    };
+    AMQP.prototype.Update = function (settings) {
+        restTrackingToken = settings.trackingToken;
+        me.onQueueDebugCallback("Tracking token updated");
+    };
+
+    function acquireToken(provider, keyType, oldKey, callback) {
+        try {
+            var acquireTokenUri = me.hubUri.replace("wss:", "https:") + "/api/Token";
+            var request = {
+                "provider": provider,
+                "keyType": keyType,
+                "oldKey": oldKey
+            }
+            httpRequest({
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                uri: acquireTokenUri,
+                json: request,
+                method: 'POST'
+            },
+                function (err, res, body) {
+                    if (err != null) {
+                        me.onQueueErrorSubmitCallback("Unable to acquire new token. " + err.message);
+                        callback(null);
+                    }
+                    else if (res.statusCode >= 200 && res.statusCode < 300) {
+                        callback(body.token);
+                    }
+                    else {
+                        me.onQueueErrorSubmitCallback("Unable to acquire new token. Status code: " + res.statusCode);
+                        callback(null);
+                    }
+                });
+        }
+        catch (err) {
+            process.exit(1);
+        }
+    };
 }
+module.exports = AMQP;
 
-/**
- * @method             module:azure-iothub.Amqp#connect
- * @description        Establishes a connection with the IoT Hub instance.
- * @param {Function}   done   Called when the connection is established of if an error happened.
- */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_009: [The done callback method passed in argument shall be called if the connection is established] */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_010: [The done callback method passed in argument shall be called with an error object if the connection fails] */
-Amqp.prototype.connect = function connect(done) {
-    this._amqp.connect(done);
-};
-
-/**
- * @method             module:azure-iothub.Amqp#disconnect
- * @description        Disconnects the link to the IoT Hub instance.
- * @param {Function}   done   Called when disconnected of if an error happened.
- */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_011: [The done callback method passed in argument shall be called when disconnected]*/
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_012: [The done callback method passed in argument shall be called with an error objec if disconnecting fails]*/
-Amqp.prototype.disconnect = function disconnect(done) {
-    this._amqp.disconnect(done);
-};
-
-/**
- * @method             module:azure-iothub.Amqp#send
- * @description        Sends a message to the IoT Hub.
- * @param {Message}  message    The [message]{@linkcode module:common/message.Message}
- *                              to be sent.
- * @param {Function} done       The callback to be invoked when `send`
- *                              completes execution.
- */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_002: [The send method shall construct an AMQP request using the message passed in argument as the body of the message.]*/
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_003: [The message generated by the send method should have its “to” field set to the device ID passed as an argument.]*/
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_004: [The send method shall call the done() callback with no arguments when the message has been successfully sent.]*/
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_005: [If send encounters an error before it can send the request, it shall invoke the done callback function and pass the standard JavaScript Error object with a text description of the error (err.message).]*/
-Amqp.prototype.send = function send(deviceId, message, done) {
-    var serviceEndpoint = '/messages/devicebound';
-    var deviceEndpoint = endpoint.messagePath(encodeURIComponent(deviceId));
-    this._amqp.send(message, serviceEndpoint, deviceEndpoint, done);
-};
-
-/**
- * @method             module:azure-iothub.Amqp#getReceiver
- * @description        Gets the {@linkcode AmqpReceiver} object that can be used to receive messages from the IoT Hub instance and accept/reject/release them.
- * @param {Function}  done      Callback used to return the {@linkcode AmqpReceiver} object.
- */
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_007: [If a receiver for this endpoint has already been created, the getReceiver method should call the done() method with the existing instance as an argument.]*/
-/*Codes_SRS_NODE_IOTHUB_SERVICE_AMQP_16_008: [If a receiver for this endpoint doesn’t exist, the getReceiver method should create a new AmqpReceiver object and then call the done() method with the object that was just created as an argument.]*/
-Amqp.prototype.getReceiver = function getFeedbackReceiver(done) {
-    var feedbackEndpoint = '/messages/serviceBound/feedback';
-    this._amqp.getReceiver(feedbackEndpoint, done);
-};
-
-module.exports = Amqp;

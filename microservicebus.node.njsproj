@@ -5,8 +5,7 @@
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
     <Name>microservicebus.node</Name>
     <RootNamespace>microservicebus.host</RootNamespace>
-    <ScriptArguments>
-    </ScriptArguments>
+    <ScriptArguments>restore</ScriptArguments>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -33,10 +32,13 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Applicationinsights.js" />
     <Compile Include="Com.js" />
+    <Compile Include="globalRestore.js" />
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
-    <Compile Include="protocols\Amqp.js" />
+    <Compile Include="service.js" />
+    <Compile Include="protocols\AMQP.js" />
     <Compile Include="protocols\_AMQP.js" />
     <Compile Include="handlers\dummy.js" />
     <Compile Include="microServiceBusHost.js" />
@@ -62,20 +64,24 @@
     <Content Include="README.md" />
     <Content Include="settings.json" />
     <Content Include="sim.bat" />
-    <Content Include="swagger.json" />
-    <Content Include="swaggerPathTemplate.json" />
-    <Content Include="swaggerTemplate.json" />
+    <Content Include="templates\swagger.json" />
+    <Content Include="templates\swaggerPathTemplate.json" />
+    <Content Include="templates\swaggerTemplate.json" />
     <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
+    <Folder Include="templates\" />
     <Folder Include="protocols\" />
     <Folder Include="test\" />
     <Folder Include="services\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\adm-zip\" />
+    <Folder Include="typings\globals\applicationinsights\" />
     <Folder Include="typings\globals\async\" />
+    <Folder Include="typings\globals\azure-sb\" />
+    <Folder Include="typings\globals\basic-auth\" />
     <Folder Include="typings\globals\body-parser\" />
     <Folder Include="typings\globals\chai\" />
     <Folder Include="typings\globals\chokidar\" />
@@ -92,7 +98,13 @@
     <Folder Include="typings\globals\linq\" />
     <Folder Include="typings\globals\mocha\" />
     <Folder Include="typings\globals\moment\" />
+    <Folder Include="typings\globals\mongodb\" />
+    <Folder Include="typings\globals\mssql\" />
+    <Folder Include="typings\globals\needle\" />
     <Folder Include="typings\globals\node-persist\" />
+    <Folder Include="typings\globals\nodemailer-direct-transport\" />
+    <Folder Include="typings\globals\nodemailer-smtp-transport\" />
+    <Folder Include="typings\globals\nodemailer\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\npm\" />
     <Folder Include="typings\globals\request\" />
@@ -102,7 +114,10 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\adm-zip\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\applicationinsights\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\azure-sb\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\basic-auth\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\body-parser\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\chai\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\chokidar\index.d.ts" />
@@ -119,7 +134,13 @@
     <TypeScriptCompile Include="typings\globals\linq\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\mocha\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\moment\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\mongodb\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\mssql\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\needle\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node-persist\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\nodemailer-direct-transport\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\nodemailer-smtp-transport\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\nodemailer\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\npm\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />

@@ -30,4 +30,10 @@ microServiceBus.BizTalk
 persist
 obj
 .vs
+<<<<<<< HEAD
 .vscode
+=======
+.vscode
+typings
+*.bat
+>>>>>>> 419c8ab77962283a12819aece94cc727aeedf51a

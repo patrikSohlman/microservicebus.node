@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 var fs = require('fs');
 var util = require('./Utils.js');
 var pjson = require('./package.json');
@@ -32,6 +33,7 @@ files.forEach(function (file) {
     if(file != 'microService.js' && file != 'sqlCommand.js')
         fs.unlinkSync('./services/' + file);
 });
+console.log();
 console.log("Services removed".green);
 
 // Delete folders

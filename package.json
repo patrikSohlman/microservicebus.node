@@ -31,7 +31,7 @@
     "moment": "2.10.3",
     "node-persist": "0.0.6",
     "node-rest-client": "1.5.1",
-    "npm": "2.13.2",
+    "npm": "2.15.10",
     "package-json": "2.2.1",
     "request": "2.65.0",
     "require-reload": "0.2.2",
@@ -42,7 +42,8 @@
   },
   "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
   "bin": {
-    "startnode": "global.js"
+    "startnode": "global.js",
+    "restorenode": "globalRestore.js"
   },
   "main": "global.js",
   "devDependencies": {
@@ -61,7 +62,7 @@
     "unit.js": "^2.0.0"
   },
   "engines": {
-    "node": ">=0.12.0 <5.0"
+    "node": ">=0.12.0 <6.3.1"
   },
   "keywords": [
     "IoT",
@@ -69,7 +70,9 @@
     "Micro Services",
     "MicroServices",
     "microServiceBus",
-    "Cloud"
+    "Cloud",
+    "AZURE",
+    "AZURE IOT"
   ],
   "name": "microservicebus.node",
   "repository": {
@@ -81,5 +84,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "1.1.16"
+  "version": "1.1.26"
 }
