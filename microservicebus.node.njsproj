@@ -36,16 +36,13 @@
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
     <Compile Include="lib\service.js" />
-    <Compile Include="lib\protocols\AMQP.js" />
     <Compile Include="lib\microServiceBusHost.js" />
     <Compile Include="lib\protocols\AZUREIOT.js" />
     <Compile Include="lib\protocols\REST.js" />
     <Compile Include="lib\signalR.js" />
     <Compile Include="restore.js" />
     <Compile Include="server.js" />
-    <Compile Include="lib\services\sqlCommand.js" />
     <Compile Include="start.js" />
-    <Compile Include="test\failedSignIn.js" />
     <Compile Include="test\successfulSignIn.js" />
     <Compile Include="lib\Utils.js" />
     <Content Include=".coveralls.yml" />
@@ -59,20 +56,17 @@
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="lib\settings.json" />
-    <Content Include="lib\templates\swaggerPathTemplate.json" />
     <Content Include="lib\templates\swaggerTemplate.json" />
     <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="lib\" />
-    <Folder Include="lib\protocols\" />
-    <Folder Include="lib\services\" />
-    <Folder Include="lib\templates\" />
     <Folder Include="test\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\adm-zip\" />
     <Folder Include="typings\globals\applicationinsights\" />
+    <Folder Include="typings\globals\assert\" />
     <Folder Include="typings\globals\async\" />
     <Folder Include="typings\globals\azure-sb\" />
     <Folder Include="typings\globals\basic-auth\" />
@@ -102,6 +96,7 @@
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\npm\" />
     <Folder Include="typings\globals\request\" />
+    <Folder Include="typings\globals\should\" />
     <Folder Include="typings\globals\supertest\" />
     <Folder Include="typings\globals\swaggerize-express\" />
     <Folder Include="typings\globals\uuid\" />
@@ -110,6 +105,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\adm-zip\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\applicationinsights\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\assert\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\async\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\azure-sb\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\basic-auth\index.d.ts" />
@@ -139,6 +135,7 @@
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\npm\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\should\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\supertest\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\swaggerize-express\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\uuid\index.d.ts" />

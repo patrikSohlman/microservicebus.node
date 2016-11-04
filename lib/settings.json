@@ -1,8 +1,7 @@
 {
     "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0,
-    "enableKeyPress": false,
-    "nodeName": "lab",
-    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
+    "nodeName": "TestNode1",
+    "organizationId": "65b22e1f-a17e-432f-b9f2-b7057423a786",
+    "port": 9090,
     "machineName": "DESKTOP-JPUK8UG"
 }

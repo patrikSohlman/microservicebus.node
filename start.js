@@ -119,7 +119,13 @@ checkVersion("microservicebus.core")
 
         if (corePjson === undefined || util.compareVersion(corePjson.version, latest) < 0) {
 
-            console.log("New version of Core available. Performing update, please wait...\n".green); 
+            console.log();
+            console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+            console.log(util.padRight(" New version of Core available. Performing update, please wait...", maxWidth, ' ').bgGreen.white.bold);
+            console.log(util.padRight(" Current version: " + corePjson.version + ". New version: " + latest, maxWidth, ' ').bgGreen.white.bold);
+            console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+            console.log();
+
             util.addNpmPackage("microservicebus.core", true, function (err) {
                 if (err) {
                     console.log("Unable to install core update".bgRed.white);
