@@ -141,6 +141,10 @@ describe('Sign in', function () {
        expect(r).to.equal(true);
        done();
    });
+   it('Handle Uncaught Exception state should work', function (done) {
+       microServiceBusHost.RaiseUncaughtException();
+       done();
+   });
 });
 describe('Post Signin', function () {
     it('azureApiAppInboundService.js should exist after login', function (done) {
