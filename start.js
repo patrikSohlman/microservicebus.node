@@ -118,11 +118,11 @@ checkVersion("microservicebus.core")
         var latest = rawData['dist-tags'].latest;
 
         if (corePjson === undefined || util.compareVersion(corePjson.version, latest) < 0) {
-
+            var version = corePjson === undefined ? "NONE" : corePjson.version;
             console.log();
             console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
             console.log(util.padRight(" New version of Core available. Performing update, please wait...", maxWidth, ' ').bgGreen.white.bold);
-            console.log(util.padRight(" Current version: " + corePjson.version + ". New version: " + latest, maxWidth, ' ').bgGreen.white.bold);
+            console.log(util.padRight(" Current version: " + version + ". New version: " + latest, maxWidth, ' ').bgGreen.white.bold);
             console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
             console.log();
 
