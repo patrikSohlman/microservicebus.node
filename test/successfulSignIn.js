@@ -16,6 +16,51 @@ var settings;
 var loggedInComplete1;
 var microServiceBusHost;
 
+describe('Util functions', function () {
+   
+    it('padRight should work', function (done) {
+
+        var t = util.padRight("microServiceBus.com", 25, ' ');
+        expect(t).to.equal("microServiceBus.com      ");
+        done();
+    });
+    it('padLeft should work', function (done) {
+
+        var t = util.padLeft("microServiceBus.com", 25, ' ');
+        expect(t).to.equal("      microServiceBus.com");
+        done();
+    });
+    it('addNpmPackage should work', function (done) {
+        this.timeout(10000);
+        util.addNpmPackage("colors", true, function (err) {
+            if (err)
+                throw err;
+            util.addNpmPackage("colors", false, function (err) {
+                if (err)
+                    throw err;
+                done();
+            });
+        });
+    });
+    it('compare same version should work', function (done) {
+
+        var r = util.compareVersion("1.0.0", "1.0.0")
+        expect(r).to.equal(0);
+        done();
+    });
+    it('compare greater version should work', function (done) {
+
+        var r = util.compareVersion("1.0.0", "1.0.1")
+        expect(r).to.equal(-1);
+        done();
+    });
+    it('compare earlier version should work', function (done) {
+
+        var r = util.compareVersion("1.0.2", "1.0.1")
+        expect(r).to.equal(1);
+        done();
+    });
+});
 describe('Encryption/Decryption', function () {
     var dataToEncrypt = "Some data";
     var encryptedBuffer;
@@ -85,6 +130,16 @@ describe('Sign in', function () {
            done();
        }
        
+   });
+   it('Ping should work', function (done) {
+       var r = microServiceBusHost.TestOnPing("test");
+       expect(r).to.equal(true);
+       done();
+   });
+   it('Change Debug state should work', function (done) {
+       var r = microServiceBusHost.TestOnChangeDebug(true);
+       expect(r).to.equal(true);
+       done();
    });
 });
 describe('Post Signin', function () {
