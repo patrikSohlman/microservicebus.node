@@ -1,8 +1,8 @@
 {
-    "hubUri": "wss://microservicebus.com",
+    "hubUri": "wss://localhost:44302",
     "trackMemoryUsage": 0,
     "enableKeyPress": false,
-    "nodeName": "device2",
-    "organizationId": "a8928b4c-9e9d-4a44-b595-14bd5894a7bd",
+    "nodeName": "Test1",
+    "organizationId": "74ff8902-2057-499a-bca8-36a699c2458f",
     "machineName": "DESKTOP-JPUK8UG"
 }
