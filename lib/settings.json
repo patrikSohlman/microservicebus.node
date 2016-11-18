@@ -1,7 +1,9 @@
 {
     "hubUri": "wss://microservicebus.com",
-    "nodeName": "TestNode1",
-    "organizationId": "65b22e1f-a17e-432f-b9f2-b7057423a786",
-    "port": 9090,
-    "machineName": "DESKTOP-JPUK8UG"
+    "trackMemoryUsage": 0,
+    "enableKeyPress": false,
+    "nodeName": "device3",
+    "organizationId": "a8928b4c-9e9d-4a44-b595-14bd5894a7bd",
+    "machineName": "DESKTOP-JPUK8UG",
+    "id": "0635780a-f4f1-4e1d-91b2-6cd7020a9d9e"
 }

@@ -32,14 +32,30 @@ describe('Util functions', function () {
     });
     it('addNpmPackage should work', function (done) {
         this.timeout(10000);
-        util.addNpmPackage("colors", true, function (err) {
+        util.addNpmPackage("msbcam", true, function (err) {
             if (err)
                 throw err;
-            util.addNpmPackage("colors", false, function (err) {
+            util.addNpmPackage("msbcam", false, function (err) {
                 if (err)
                     throw err;
                 done();
             });
+        });
+    });
+    it('removeNpmPackage should work', function (done) {
+        this.timeout(10000);
+        util.removeNpmPackage("msbcam", function (err) {
+            if (err)
+                throw err;
+            done();
+        });
+    });
+    it('addNpmPackages should work', function (done) {
+        this.timeout(10000);
+        util.addNpmPackages("msbcam", false, function (err) {
+            if (err)
+                throw err;
+            done();
         });
     });
     it('compare same version should work', function (done) {
@@ -141,10 +157,6 @@ describe('Sign in', function () {
         expect(r).to.equal(true);
         done();
     });
-    it('Handle Uncaught Exception state should work', function (done) {
-        microServiceBusHost.RaiseUncaughtException();
-        done();
-    });
 });
 describe('Post Signin', function () {
     it('azureApiAppInboundService.js should exist after login', function (done) {
@@ -225,4 +237,73 @@ describe('Post Signin', function () {
         TestOnChangeDebugResponse.should.equal(true);
         done();
     });
+    it('change state should work', function (done) {
+        var TestOnChangeDebugResponse = microServiceBusHost.TestOnChangeState("Stop");
+        done();
+    });
 }); 
+describe('Wrong Signin', function ()  {
+    it('Restore settings should work', function (done) {
+
+        settings = {
+            "hubUri": "wss://microservicebus.com",
+            "trackMemoryUsage": 0,
+            "enableKeyPress": false
+        }
+        util.saveSettings(settings);
+        done();
+    });
+    it('Create microServiceBusHost should work', function (done) {
+         microServiceBusHost = new MicroServiceBusHost(settings);
+        expect(microServiceBusHost).to.not.be.null;
+        done();
+    });
+    it('Sign in should not work', function (done) {
+        this.timeout(10000);
+        microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+            expect(exceptionCount).to.eql(1);
+            expect(loadedCount).to.eql(0);
+            done();
+        });
+        microServiceBusHost.OnStopped(function () {
+
+        });
+        microServiceBusHost.OnUpdatedItineraryComplete(function () {
+
+        });
+        try {
+            microServiceBusHost.Start(true);
+
+        }
+        catch (er) {
+            expect(err).to.be.null;
+            //done();process.argv
+        }
+    });
+    it('Sign in with to many arguments should not work', function (done) {
+        process.argv.push("a");
+        process.argv.push("b");
+        process.argv.push("c");
+
+        this.timeout(10000);
+        microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+            expect(exceptionCount).to.eql(1);
+            expect(loadedCount).to.eql(0);
+            done();
+        });
+        microServiceBusHost.OnStopped(function () {
+
+        });
+        microServiceBusHost.OnUpdatedItineraryComplete(function () {
+
+        });
+        try {
+            microServiceBusHost.Start(true);
+
+        }
+        catch (er) {
+            expect(err).to.be.null;
+            //done();process.argv
+        }
+    });
+});
