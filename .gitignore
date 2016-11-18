@@ -30,6 +30,5 @@ microServiceBus.BizTalk
 persist
 obj
 .vs
-.vscode
 typings
 *.bat

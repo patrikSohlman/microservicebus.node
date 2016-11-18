@@ -17,7 +17,7 @@ var loggedInComplete1;
 var microServiceBusHost;
 
 describe('Util functions', function () {
-   
+
     it('padRight should work', function (done) {
 
         var t = util.padRight("microServiceBus.com", 25, ' ');
@@ -66,7 +66,7 @@ describe('Encryption/Decryption', function () {
     var encryptedBuffer;
 
     it('Encryption should work', function (done) {
-        
+
         var dataToEncrypt = "Some data";
         encryptedBuffer = util.encrypt(new Buffer(dataToEncrypt), "secret");
         done();
@@ -91,7 +91,7 @@ describe('Check configuration', function () {
     });
 });
 describe('Sign in', function () {
-   it('Save settings should work', function (done) {
+    it('Save settings should work', function (done) {
 
         settings = {
             "hubUri": "wss://microservicebus.com",
@@ -102,55 +102,55 @@ describe('Sign in', function () {
         util.saveSettings(settings);
         done();
     });
-   it('Create microServiceBusHost should work', function (done) {
+    it('Create microServiceBusHost should work', function (done) {
         loggedInComplete1 = false;
         microServiceBusHost = new MicroServiceBusHost(settings);
         expect(microServiceBusHost).to.not.be.null;
         done();
-   });
-   it('Sign in should work', function (done) {
-       this.timeout(10000);
-       microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-           expect(exceptionCount).to.eql(0);
-           expect(loadedCount).to.eql(1);
-           done();
-       });
-       microServiceBusHost.OnStopped(function () {
+    });
+    it('Sign in should work', function (done) {
+        this.timeout(10000);
+        microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+            expect(exceptionCount).to.eql(0);
+            expect(loadedCount).to.eql(1);
+            done();
+        });
+        microServiceBusHost.OnStopped(function () {
 
-       });
-       microServiceBusHost.OnUpdatedItineraryComplete(function () {
+        });
+        microServiceBusHost.OnUpdatedItineraryComplete(function () {
 
-       });
-       try {
-           microServiceBusHost.Start();
+        });
+        try {
+            microServiceBusHost.Start();
 
-       }
-       catch (er) {
-           expect(err).to.be.null;
-           done();
-       }
-       
-   });
-   it('Ping should work', function (done) {
-       var r = microServiceBusHost.TestOnPing("test");
-       expect(r).to.equal(true);
-       done();
-   });
-   it('Change Debug state should work', function (done) {
-       var r = microServiceBusHost.TestOnChangeDebug(true);
-       expect(r).to.equal(true);
-       done();
-   });
-   it('Handle Uncaught Exception state should work', function (done) {
-       microServiceBusHost.RaiseUncaughtException();
-       done();
-   });
+        }
+        catch (er) {
+            expect(err).to.be.null;
+            done();
+        }
+
+    });
+    it('Ping should work', function (done) {
+        var r = microServiceBusHost.TestOnPing("test");
+        expect(r).to.equal(true);
+        done();
+    });
+    it('Change Debug state should work', function (done) {
+        var r = microServiceBusHost.TestOnChangeDebug(true);
+        expect(r).to.equal(true);
+        done();
+    });
+    it('Handle Uncaught Exception state should work', function (done) {
+        microServiceBusHost.RaiseUncaughtException();
+        done();
+    });
 });
 describe('Post Signin', function () {
     it('azureApiAppInboundService.js should exist after login', function (done) {
         var ret = fs.statSync(__dirname + SCRIPTFOLDER + "azureApiAppInboundService.js");
         ret.should.be.type('object');
-        
+
         done();
     });
     it('calling test should work', function (done) {
@@ -159,7 +159,7 @@ describe('Post Signin', function () {
 
         request(url)
             .get('/api/data/azureApiAppInboundService1/test')
-            .expect('Content-Type', /json/)
+            .expect('Content-Type', 'application/json; charset=utf-8')
             .expect(200)//Status code
             .end(function (err, res) {
                 if (err) {
@@ -171,7 +171,7 @@ describe('Post Signin', function () {
                 //done();
                 request(url)
                     .delete('/api/data/azureApiAppInboundService1/test')
-                    .expect('Content-Type', /json/)
+                    .expect('Content-Type', 'application/json; charset=utf-8')
                     .expect(200)//Status code
                     .end(function (err, res) {
                         if (err) {

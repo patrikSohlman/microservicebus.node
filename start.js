@@ -134,7 +134,7 @@ checkVersion("microservicebus.core")
             });
         }
         else {
-            microServiceBusHost.Start(true);
+            microServiceBusHost.Start();
         }
     });
 
