@@ -39,7 +39,6 @@
     "gulp": "^3.9.0",
     "gulp-scp2": "^0.2.0",
     "istanbul": "^0.4.5",
-    "microservicebus.core": "^0.0.16",
     "mocha": "^2.5.3",
     "mocha-jshint": "^2.2.5",
     "should": "^11.1.1",
@@ -69,5 +68,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "2.0.4"
+  "version": "2.0.5"
 }
