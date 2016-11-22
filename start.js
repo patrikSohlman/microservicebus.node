@@ -22,121 +22,160 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+
+
 require('colors');
-var util = require('./lib/Utils.js');
-var pjson = require('./package.json');
-var checkVersion = require('package-json');
-var npm = require('npm');
-var fs = require('fs');
-var started = false;
-var maxWidth = 75;
-let args = process.argv.slice(1);
-var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
+var debug = process.execArgv.find(function (e) {  return e.startsWith('--debug');}) !== undefined;
 
-console.log();
-console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
-console.log(util.padRight(" microServicebus.com", maxWidth, ' ').bgBlue.white.bold);
-console.log(util.padRight(" Node.js version    : " + process.version, maxWidth, ' ').bgBlue.white);
-console.log(util.padRight(" NPM package version: " + pjson.version, maxWidth, ' ').bgBlue.white);
-console.log(util.padRight(" Architecture       : " + process.arch, maxWidth, ' ').bgBlue.white);
-console.log(util.padRight(" For more information visit: http://microservicebus.com", maxWidth, ' ').bgBlue.white);
-console.log(util.padRight(" GIT repository: https://github.com/microServiceBus/microservicebus.node", maxWidth, ' ').bgBlue.white);
-console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
-
-console.log();
-
-// Check if there is a later npm package
-checkVersion("microservicebus.node")
-    .then(function (rawData) {
-        var latest = rawData['dist-tags'].latest;
-        if (util.compareVersion(pjson.version, latest) < 0) {
-            console.log();
-            console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
-            console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
-            console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
-            console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
-            console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
-            console.log();
-
-        }
-    });
-
-// Load settings 
-try {
-    var settings = {
-        "debug": false,
-        "hubUri": "wss://microservicebus.com"
-    }
-    if (fs.existsSync(rootFolder + '/lib/settings.json')) {
-        var data = fs.readFileSync(rootFolder + '/lib/settings.json');
-        settings = JSON.parse(data);
-    }
+if (debug) {
+    console.log("Start with debug");
+    start(true);
 }
-catch (err) {
-    console.log('Invalid settings file.'.red);
-    console.log(err);
-    process.abort();
+else {
+    startWithoutDebug();
 }
 
-var MicroServiceBusHost = require("./lib/microServiceBusHost.js");
-var microServiceBusHost = new MicroServiceBusHost(settings);
+function startWithoutDebug() {
+    var cluster = require('cluster');
+    var worker;
 
-microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
-    if (settings.trackMemoryUsage != undefined && settings.trackMemoryUsage > 0) {
-        console.log("");
-        console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
-        console.log("|          rss           |        heapTotal       |        heapUsed       |".bgBlue.white.bold)
-        console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
+    if (cluster.isMaster) {
+        worker = cluster.fork();
 
-        if (!started) {
-            started = true;
-            setInterval(function () {
-                memUsage = process.memoryUsage();
+        worker.on('exit', function (worker, code, signal) {
+            worker = cluster.fork();
+        });
 
-                var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
-                console.log(str.bgBlue.white.bold);
+        worker.on('message', function (msg) {
+            if (msg.chat === "abort")
+                process.abort();
+            else if (msg.chat == "restart") {
+                worker.kill([signal = 'SIGTERM']);
 
-            }, settings.trackMemoryUsage);
+            }
+        });
+    }
+
+    if (cluster.isWorker) {
+        console.log("start worker");
+        start();
+    }
+}
+
+function start(d) {
+    var util = require('./lib/Utils.js');
+    var pjson = require('./package.json');
+    var checkVersion = require('package-json');
+    var npm = require('npm');
+    var fs = require('fs');
+    var started = false;
+    var maxWidth = 75;
+    let args = process.argv.slice(1);
+    var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
+
+    console.log();
+    console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
+    console.log(util.padRight(" microServicebus.com", maxWidth, ' ').bgBlue.white.bold);
+    console.log(util.padRight(" Node.js version    : " + process.version, maxWidth, ' ').bgBlue.white);
+    console.log(util.padRight(" NPM package version: " + pjson.version, maxWidth, ' ').bgBlue.white);
+    console.log(util.padRight(" Architecture       : " + process.arch, maxWidth, ' ').bgBlue.white);
+    console.log(util.padRight(" For more information visit: http://microservicebus.com", maxWidth, ' ').bgBlue.white);
+    console.log(util.padRight(" GIT repository: https://github.com/microServiceBus/microservicebus.node", maxWidth, ' ').bgBlue.white);
+    console.log(util.padRight("", maxWidth, ' ').bgBlue.white.bold);
+
+    console.log();
+    
+    // Check if there is a later npm package
+    checkVersion("microservicebus.node")
+        .then(function (rawData) {
+            var latest = rawData['dist-tags'].latest;
+            if (util.compareVersion(pjson.version, latest) < 0) {
+                console.log();
+                console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+                console.log(util.padRight("There is a new version of microservicebus.node: " + latest, maxWidth, ' ').bgRed.white.bold);
+                console.log(util.padRight("type: 'npm update microservicebus.node' ", maxWidth, ' ').bgRed.gray.bold);
+                console.log(util.padRight(" from the root folder to get the latest version", maxWidth, ' ').bgRed.gray.bold);
+                console.log(util.padRight("", maxWidth, ' ').bgRed.white.bold);
+                console.log();
+
+            }
+        });
+
+    // Load settings 
+    try {
+        var settings = {
+            "debug": false,
+            "hubUri": "wss://microservicebus.com"
+        }
+        if (fs.existsSync(rootFolder + '/lib/settings.json')) {
+            var data = fs.readFileSync(rootFolder + '/lib/settings.json');
+            settings = JSON.parse(data);
         }
     }
-});
-microServiceBusHost.OnStopped(function () {
+    catch (err) {
+        console.log('Invalid settings file.'.red);
+        console.log(err);
+        process.abort();
+    }
 
-});
-microServiceBusHost.OnUpdatedItineraryComplete(function () {
+    var MicroServiceBusHost = require("./lib/microServiceBusHost.js");
+    var microServiceBusHost = new MicroServiceBusHost(settings);
 
-});
+    microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
+        if (settings.trackMemoryUsage != undefined && settings.trackMemoryUsage > 0) {
+            console.log("");
+            console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
+            console.log("|          rss           |        heapTotal       |        heapUsed       |".bgBlue.white.bold)
+            console.log("---------------------------------------------------------------------------".bgBlue.white.bold)
 
-checkVersion("microservicebus.core")
-    .then(function (rawData) {
-        var packageFile = rootFolder+'/node_modules/microservicebus.core/package.json';
-        var corePjson;
+            if (!started) {
+                started = true;
+                setInterval(function () {
+                    memUsage = process.memoryUsage();
 
-        if (fs.existsSync(packageFile)){
-            corePjson = require(packageFile);
-        }
-        var latest = rawData['dist-tags'].latest;
+                    var str = "|" + util.padLeft(memUsage.rss.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapTotal.toLocaleString(), 23, ' ') + " |" + util.padLeft(memUsage.heapUsed.toLocaleString(), 22, ' ') + " |";
+                    console.log(str.bgBlue.white.bold);
 
-        if (corePjson === undefined || util.compareVersion(corePjson.version, latest) < 0) {
-            var version = corePjson === undefined ? "NONE" : corePjson.version;
-            console.log();
-            console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
-            console.log(util.padRight(" New version of Core available. Performing update, please wait...", maxWidth, ' ').bgGreen.white.bold);
-            console.log(util.padRight(" Current version: " + version + ". New version: " + latest, maxWidth, ' ').bgGreen.white.bold);
-            console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
-            console.log();
-
-            util.addNpmPackage("microservicebus.core", true, function (err) {
-                if (err) {
-                    console.log("Unable to install core update".bgRed.white);
-                }
-                microServiceBusHost.Start();
-            });
-        }
-        else {
-            microServiceBusHost.Start(false);
+                }, settings.trackMemoryUsage);
+            }
         }
     });
+    microServiceBusHost.OnStopped(function () {
 
+    });
+    microServiceBusHost.OnUpdatedItineraryComplete(function () {
 
+    });
+    
+    checkVersion("microservicebus.core")
+        .then(function (rawData) {
+            var packageFile = rootFolder + '/node_modules/microservicebus.core/package.json';
+            var corePjson;
 
+            if (fs.existsSync(packageFile)) {
+                corePjson = require(packageFile);
+            }
+            var latest = rawData['dist-tags'].latest;
+
+            if (corePjson === undefined || util.compareVersion(corePjson.version, latest) < 0) {
+                var version = corePjson === undefined ? "NONE" : corePjson.version;
+                console.log();
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight(" New version of Core available. Performing update, please wait...", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight(" Current version: " + version + ". New version: " + latest, maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log();
+
+                util.addNpmPackage("microservicebus.core", true, function (err) {
+                    if (err) {
+                        console.log("Unable to install core update".bgRed.white);
+                    }
+                    microServiceBusHost.Start();
+                });
+            }
+            else {
+                microServiceBusHost.Start(d);
+            }
+        });
+
+}
