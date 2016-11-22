@@ -23,25 +23,25 @@ SOFTWARE.
 */
 
 var fs = require('fs');
-var util = require('./Utils.js');
+var util = require('./lib//Utils.js');
 var pjson = require('./package.json');
 require('colors');
 
 // Delete all services
-var files = fs.readdirSync('./services');
-files.forEach(function (file) {
-    if(file != 'microService.js' && file != 'sqlCommand.js')
-        fs.unlinkSync('./services/' + file);
-});
-console.log();
-console.log("Services removed".green);
+//var files = fs.readdirSync('./services');
+//files.forEach(function (file) {
+//    if(file != 'microService.js' && file != 'sqlCommand.js')
+//        fs.unlinkSync('./lib/services/' + file);
+//});
+//console.log();
+//console.log("Services removed".green);
 
-// Delete folders
-deleteFolderRecursive('./microServiceBus.BizTalk');
-deleteFolderRecursive('./data');
-deleteFolderRecursive('./output');
-deleteFolderRecursive('./persist');
-console.log("Deleted".green);
+//// Delete folders
+//deleteFolderRecursive('./microServiceBus.BizTalk');
+//deleteFolderRecursive('./data');
+//deleteFolderRecursive('./output');
+//deleteFolderRecursive('./persist');
+//console.log("Deleted".green);
 
 //if (fs.existsSync('./settings.json'))
 //    fs.unlinkSync('./settings.json');
@@ -49,7 +49,9 @@ console.log("Deleted".green);
 settings = {
     "hubUri": "wss://microservicebus.com",
     "trackMemoryUsage": 0,
-    "enableKeyPress" : false
+    "enableKeyPress": false,
+    "useEncryption": false,
+    "log": ""
 }
 util.saveSettings(settings);
 console.log("Settings updated".green);
