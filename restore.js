@@ -49,7 +49,9 @@ require('colors');
 settings = {
     "hubUri": "wss://microservicebus.com",
     "trackMemoryUsage": 0,
-    "enableKeyPress" : false
+    "enableKeyPress": false,
+    "useEncryption": false,
+    "log": ""
 }
 util.saveSettings(settings);
 console.log("Settings updated".green);

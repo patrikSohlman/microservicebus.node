@@ -21,7 +21,7 @@
     "uuid": "2.0.1",
     "websocket": "^1.0.17"
   },
-  "description": "node.js node for microservicebus. Please visit microservicebus.com for more information.",
+  "description": "node.js node for microservicebus. Please visit http://microservicebus.com for more information.",
   "bin": {
     "startnode": "global.js",
     "restorenode": "globalRestore.js"
@@ -68,5 +68,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "2.0.6"
+  "version": "2.0.7"
 }
