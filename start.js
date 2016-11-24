@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
+'use strict';
 
 require('colors');
 var debug = process.execArgv.find(function (e) {  return e.startsWith('--debug');}) !== undefined;
@@ -37,23 +37,34 @@ else {
 
 function startWithoutDebug() {
     var cluster = require('cluster');
-    var worker;
-
+    
     if (cluster.isMaster) {
-        worker = cluster.fork();
+        cluster.fork();
 
-        worker.on('exit', function (worker, code, signal) {
-            worker = cluster.fork();
+        cluster.on('exit', function (worker, code, signal) {
+            cluster.fork();
         });
 
-        worker.on('message', function (msg) {
-            if (msg.chat === "abort")
+        cluster.on('message', function (msg) {
+            if (msg.chat === "abort") {
+                console.log("abort");
                 process.abort();
+            }
             else if (msg.chat == "restart") {
-                worker.kill([signal = 'SIGTERM']);
-
+                console.log("restart");
+                cluster.destroy();
             }
         });
+
+        //setInterval(function () {
+        //    if (!worker.isConnected()) {
+        //        console.log("no worker");
+        //        worker = cluster.fork();
+        //    }
+        //    else {
+        //        console.log("worker exists".green);
+        //    }
+        //}, 3000);
     }
 
     if (cluster.isWorker) {
