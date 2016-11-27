@@ -1,0 +1,1 @@
+{"source":"simulatorTemperatureSensor1","temp":23,"dateTime":"2016-11-25T08:39:32.677Z","_dateTime":1480063172000,"unit":"C"}

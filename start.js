@@ -32,6 +32,7 @@ if (debug) {
     start(true);
 }
 else {
+    //console.log("Start without debug");
     startWithoutDebug();
 }
 
@@ -39,32 +40,35 @@ function startWithoutDebug() {
     var cluster = require('cluster');
     
     if (cluster.isMaster) {
+        //cluster.setupMaster({
+        //    execArgv: process.execArgv.filter(function (s) { return s !== '--debug-brk=33000 --nolazy' })
+        //});
+        
         cluster.fork();
 
         cluster.on('exit', function (worker, code, signal) {
             cluster.fork();
+            worker.send({ cmd: 'YYYYYYYYYYYY' });
         });
 
         cluster.on('message', function (msg) {
+            console.log('Master ' + process.pid + ' received message from worker ' + this.pid + '.', msg);
+
             if (msg.chat === "abort") {
-                console.log("abort");
                 process.abort();
             }
             else if (msg.chat == "restart") {
-                console.log("restart");
+                cluster.destroy();
+            }
+            else if (msg.chat == "debug") {
+                var fixedExecArgv = [];
+                fixedExecArgv.push('--debug-brk=33000');
+                cluster.setupMaster({
+                    execArgv: fixedExecArgv
+                });
                 cluster.destroy();
             }
         });
-
-        //setInterval(function () {
-        //    if (!worker.isConnected()) {
-        //        console.log("no worker");
-        //        worker = cluster.fork();
-        //    }
-        //    else {
-        //        console.log("worker exists".green);
-        //    }
-        //}, 3000);
     }
 
     if (cluster.isWorker) {
