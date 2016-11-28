@@ -38,36 +38,54 @@ else {
 
 function startWithoutDebug() {
     var cluster = require('cluster');
-    
+    var DebugHost = new require("./lib/DebugHost.js");
+    var debugHost;
     if (cluster.isMaster) {
         //cluster.setupMaster({
         //    execArgv: process.execArgv.filter(function (s) { return s !== '--debug-brk=33000 --nolazy' })
         //});
-        
-        cluster.fork();
+                
+        var worker = cluster.fork();
 
         cluster.on('exit', function (worker, code, signal) {
             cluster.fork();
-            worker.send({ cmd: 'YYYYYYYYYYYY' });
+
+            if (debugHost) {
+                debugHost.Start();
+            }
         });
 
         cluster.on('message', function (msg) {
-            console.log('Master ' + process.pid + ' received message from worker ' + this.pid + '.', msg);
+            var fixedExecArgv = [];
+            fixedExecArgv.push('--debug-brk=33000');
+            cluster.setupMaster({
+                execArgv: fixedExecArgv
+            });
 
-            if (msg.chat === "abort") {
-                process.abort();
-            }
-            else if (msg.chat == "restart") {
-                cluster.destroy();
-            }
-            else if (msg.chat == "debug") {
-                var fixedExecArgv = [];
-                fixedExecArgv.push('--debug-brk=33000');
-                cluster.setupMaster({
-                    execArgv: fixedExecArgv
-                });
-                cluster.destroy();
-            }
+            debugHost = new DebugHost();
+            debugHost.OnReady(function () {
+                
+            });
+            debugHost.OnStopped(function () {
+
+            });
+
+            
+
+            //if (msg.chat === "abort") {
+            //    process.abort();
+            //}
+            //else if (msg.chat == "restart") {
+            //    cluster.destroy();
+            //}
+            //else if (msg.chat == "debug") {
+            //    var fixedExecArgv = [];
+            //    fixedExecArgv.push('--debug-brk=33000');
+            //    cluster.setupMaster({
+            //        execArgv: fixedExecArgv
+            //    });
+            //    cluster.destroy();
+            //}
         });
     }
 

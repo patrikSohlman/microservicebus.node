@@ -36,6 +36,7 @@
     <Compile Include="globalRestore.js" />
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
+    <Compile Include="lib\DebugHost.js" />
     <Compile Include="lib\service.js" />
     <Compile Include="lib\microServiceBusHost.js" />
     <Compile Include="lib\protocols\AZUREIOT.js" />
