@@ -27,12 +27,13 @@ SOFTWARE.
 require('colors');
 var debug = process.execArgv.find(function (e) {  return e.startsWith('--debug');}) !== undefined;
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 if (debug) {
     console.log("Start with debug");
     start(true);
 }
 else {
-    //console.log("Start without debug");
     startWithoutDebug();
 }
 
@@ -40,15 +41,13 @@ function startWithoutDebug() {
     var cluster = require('cluster');
     var DebugHost = new require("./lib/DebugHost.js");
     var debugHost;
+    var fixedExecArgv = [];
     if (cluster.isMaster) {
-        //cluster.setupMaster({
-        //    execArgv: process.execArgv.filter(function (s) { return s !== '--debug-brk=33000 --nolazy' })
-        //});
-                
         var worker = cluster.fork();
 
         cluster.on('exit', function (worker, code, signal) {
-            cluster.fork();
+            console.log("exit called");
+            worker = cluster.fork();
 
             if (debugHost) {
                 debugHost.Start();
@@ -56,22 +55,30 @@ function startWithoutDebug() {
         });
 
         cluster.on('message', function (msg) {
-            var fixedExecArgv = [];
-            fixedExecArgv.push('--debug-brk=33000');
-            cluster.setupMaster({
-                execArgv: fixedExecArgv
-            });
+            //var x = process.execArgv.filter(function (s) { return s !== '--debug-brk' })
+            if (debugHost == undefined) {
+                fixedExecArgv.push('--debug-brk');
+                cluster.setupMaster({
+                    execArgv: fixedExecArgv
+                });
 
-            debugHost = new DebugHost();
-            debugHost.OnReady(function () {
-                
-            });
-            debugHost.OnStopped(function () {
+                debugHost = new DebugHost();
+                debugHost.OnReady(function () {
 
-            });
+                });
+                debugHost.OnStopped(function () {
 
+                });
+            }
+            else {
+                debugHost.Stop(function () {
+
+                });
+                debugHost = undefined;
+            }
             
-
+            
+            
             //if (msg.chat === "abort") {
             //    process.abort();
             //}
