@@ -25,6 +25,14 @@ SOFTWARE.
 'use strict';
 
 require('colors');
+var util = require('./lib/Utils.js');
+var pjson = require('./package.json');
+var checkVersion = require('package-json');
+var npm = require('npm');
+var fs = require('fs');
+var maxWidth = 75;
+var debugPort = 5859;
+
 var debug = process.execArgv.find(function (e) {  return e.startsWith('--debug');}) !== undefined;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -48,14 +56,22 @@ function startWithoutDebug() {
         cluster.on('exit', function (worker, code, signal) {
             console.log("exit called");
             worker = cluster.fork();
-
+            
             if (debugHost) {
-                debugHost.Start();
+
+                console.log();
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight(" IN DEBUG", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log();
+
+                debugHost.Start(debugPort);
+                debugPort++;
             }
         });
 
         cluster.on('message', function (msg) {
-            //var x = process.execArgv.filter(function (s) { return s !== '--debug-brk' })
+
             if (debugHost == undefined) {
                 fixedExecArgv.push('--debug-brk');
                 cluster.setupMaster({
@@ -75,24 +91,11 @@ function startWithoutDebug() {
 
                 });
                 debugHost = undefined;
+                cluster.setupMaster({
+                    execArgv: []
+                });
             }
             
-            
-            
-            //if (msg.chat === "abort") {
-            //    process.abort();
-            //}
-            //else if (msg.chat == "restart") {
-            //    cluster.destroy();
-            //}
-            //else if (msg.chat == "debug") {
-            //    var fixedExecArgv = [];
-            //    fixedExecArgv.push('--debug-brk=33000');
-            //    cluster.setupMaster({
-            //        execArgv: fixedExecArgv
-            //    });
-            //    cluster.destroy();
-            //}
         });
     }
 
@@ -100,16 +103,14 @@ function startWithoutDebug() {
         console.log("start worker");
         start();
     }
+    process.on('uncaughtException', function (err) {
+        console.log('Uncaught exception: '.red + err);
+    });
 }
 
 function start(d) {
-    var util = require('./lib/Utils.js');
-    var pjson = require('./package.json');
-    var checkVersion = require('package-json');
-    var npm = require('npm');
-    var fs = require('fs');
     var started = false;
-    var maxWidth = 75;
+    
     let args = process.argv.slice(1);
     var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
 
