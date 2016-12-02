@@ -36,17 +36,15 @@
     <Compile Include="globalRestore.js" />
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
-    <Compile Include="lib\DebugHost.js" />
-    <Compile Include="lib\v8debug\breakpoint-manager.js" />
-    <Compile Include="lib\v8debug\breakpoint.js" />
-    <Compile Include="lib\v8debug\client.js" />
-    <Compile Include="lib\v8debug\frame-manager.js" />
-    <Compile Include="lib\v8debug\frame.js" />
-    <Compile Include="lib\v8debug\index.js" />
-    <Compile Include="lib\v8debug\protocol.js" />
-    <Compile Include="lib\v8debug\script-manager.js" />
-    <Compile Include="lib\v8debug\script.js" />
-    <Compile Include="lib\v8debug\utils.js" />
+    <Compile Include="lib\_v8debug\breakpoint-manager.js" />
+    <Compile Include="lib\_v8debug\client.js" />
+    <Compile Include="lib\_v8debug\frame-manager.js" />
+    <Compile Include="lib\_v8debug\frame.js" />
+    <Compile Include="lib\_v8debug\index.js" />
+    <Compile Include="lib\_v8debug\protocol.js" />
+    <Compile Include="lib\_v8debug\script-manager.js" />
+    <Compile Include="lib\_v8debug\script.js" />
+    <Compile Include="lib\_v8debug\utils.js" />
     <Compile Include="lib\service.js" />
     <Compile Include="lib\microServiceBusHost.js" />
     <Compile Include="lib\protocols\AZUREIOT.js" />
@@ -73,7 +71,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="lib\" />
-    <Folder Include="lib\v8debug\" />
     <Folder Include="lib\protocols\" />
     <Folder Include="lib\templates\" />
     <Folder Include="test\" />

@@ -47,7 +47,8 @@ else {
 
 function startWithoutDebug() {
     var cluster = require('cluster');
-    var DebugHost = new require("./lib/DebugHost.js");
+    //var DebugHost = new require("./lib/DebugHost.js");
+    var DebugHost = require("microservicebus.core").DebugClient;
     var debugHost;
     var fixedExecArgv = [];
     if (cluster.isMaster) {
@@ -67,6 +68,9 @@ function startWithoutDebug() {
 
                 debugHost.Start(debugPort);
                 debugPort++;
+            }
+            else {
+                console.log("normal start");
             }
         });
 
@@ -104,7 +108,7 @@ function startWithoutDebug() {
         start();
     }
     process.on('uncaughtException', function (err) {
-        console.log('Uncaught exception: '.red + err);
+       // console.log('Uncaught exception: '.red + err);
     });
 }
 
