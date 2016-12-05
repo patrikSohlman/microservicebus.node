@@ -73,6 +73,7 @@
     <Folder Include="lib\" />
     <Folder Include="lib\protocols\" />
     <Folder Include="lib\templates\" />
+    <Folder Include="lib\_v8debug\" />
     <Folder Include="test\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
@@ -107,6 +108,7 @@
     <Folder Include="typings\globals\nodemailer\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\npm\" />
+    <Folder Include="typings\globals\progress\" />
     <Folder Include="typings\globals\request\" />
     <Folder Include="typings\globals\should\" />
     <Folder Include="typings\globals\supertest\" />
@@ -146,6 +148,7 @@
     <TypeScriptCompile Include="typings\globals\nodemailer\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\npm\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\progress\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\should\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\supertest\index.d.ts" />

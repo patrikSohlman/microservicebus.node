@@ -47,18 +47,16 @@ else {
 
 function startWithoutDebug() {
     var cluster = require('cluster');
-    //var DebugHost = new require("./lib/DebugHost.js");
-    var DebugHost = require("microservicebus.core").DebugClient;
+    
     var debugHost;
     var fixedExecArgv = [];
     if (cluster.isMaster) {
         var worker = cluster.fork();
 
         cluster.on('exit', function (worker, code, signal) {
-            console.log("exit called");
             worker = cluster.fork();
-            
-            if (debugHost) {
+
+            if (cluster.settings.execArgv.find(function (e) { return e.startsWith('--debug'); }) !== undefined) {
 
                 console.log();
                 console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
@@ -70,34 +68,54 @@ function startWithoutDebug() {
                 debugPort++;
             }
             else {
-                console.log("normal start");
+                console.log();
+                console.log(util.padRight(" NORMAL START", maxWidth, ' ').bgGreen.white.bold);
+                console.log();
+
+                debugHost = undefined;
             }
         });
 
         cluster.on('message', function (msg) {
-
             if (debugHost == undefined) {
                 fixedExecArgv.push('--debug-brk');
+
                 cluster.setupMaster({
                     execArgv: fixedExecArgv
                 });
+                var DebugHost = require("microservicebus.core").DebugClient;
 
                 debugHost = new DebugHost();
                 debugHost.OnReady(function () {
 
                 });
                 debugHost.OnStopped(function () {
+                    console.log(util.padRight(" OnStop process triggered", maxWidth, ' ').bgGreen.white.bold);
+                    cluster.setupMaster({
+                        execArgv: []
+                    });
+                    debugHost = undefined;
 
+                    for (var id in cluster.workers) {
+                        console.log(util.padRight(" Killing", maxWidth, ' ').bgGreen.white.bold);
+                        cluster.workers[id].process.disconnect();
+                        cluster.workers[id].process.kill('SIGTERM');
+                    }
                 });
             }
             else {
                 debugHost.Stop(function () {
+                    cluster.setupMaster({
+                        execArgv: []
+                    });
+                    for (var id in cluster.workers) {
+                        console.log(util.padRight(" Killing", maxWidth, ' ').bgGreen.white.bold);
+                        cluster.workers[id].process.disconnect();
+                        cluster.workers[id].process.kill('SIGTERM');
+                    }
 
                 });
-                debugHost = undefined;
-                cluster.setupMaster({
-                    execArgv: []
-                });
+                
             }
             
         });
@@ -108,7 +126,16 @@ function startWithoutDebug() {
         start();
     }
     process.on('uncaughtException', function (err) {
-       // console.log('Uncaught exception: '.red + err);
+        if (err.errno === 'ECONNREFUSED') {
+            for (var id in cluster.workers) {
+                debugHost = undefined;
+                console.log(util.padRight(" Killing", maxWidth, ' ').bgRed.white.bold);
+                cluster.workers[id].process.disconnect();
+                cluster.workers[id].process.kill('SIGTERM');
+            }
+        }
+        else
+            console.log('Uncaught exception: '.red + err);
     });
 }
 

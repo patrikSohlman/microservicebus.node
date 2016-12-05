@@ -17,6 +17,7 @@
     "moment": "2.10.3",
     "npm": "3.10.9",
     "package-json": "2.2.1",
+    "progress": "^1.1.8",
     "require-reload": "0.2.2",
     "uuid": "2.0.1",
     "v8-debug-protocol": "0.0.20",
@@ -69,5 +70,5 @@
     "succcess": "mocha Tests/successfulSignIn.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "2.0.11"
+  "version": "2.0.13"
 }
