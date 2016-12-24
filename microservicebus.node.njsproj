@@ -92,6 +92,7 @@
     <Folder Include="typings\globals\express\" />
     <Folder Include="typings\globals\extend\" />
     <Folder Include="typings\globals\graceful-fs\" />
+    <Folder Include="typings\globals\grunt\" />
     <Folder Include="typings\globals\gulp\" />
     <Folder Include="typings\globals\istanbul\" />
     <Folder Include="typings\globals\jsonpath\" />
@@ -132,6 +133,7 @@
     <TypeScriptCompile Include="typings\globals\express\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\extend\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\graceful-fs\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\grunt\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\istanbul\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\jsonpath\index.d.ts" />

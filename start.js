@@ -127,15 +127,15 @@ function startWithoutDebug() {
     }
     process.on('uncaughtException', function (err) {
         if (err.errno === 'ECONNREFUSED') {
+            debugHost = undefined;
             for (var id in cluster.workers) {
-                debugHost = undefined;
                 console.log(util.padRight(" Killing", maxWidth, ' ').bgRed.white.bold);
                 cluster.workers[id].process.disconnect();
                 cluster.workers[id].process.kill('SIGTERM');
             }
         }
-        else
-            console.log('Uncaught exception: '.red + err);
+        //else
+            //console.log('Uncaught exception: '.red + err);
     });
 }
 
