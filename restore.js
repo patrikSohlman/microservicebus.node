@@ -25,29 +25,54 @@ SOFTWARE.
 var fs = require('fs');
 var util = require('./lib//Utils.js');
 var pjson = require('./package.json');
+var site = "wss://microservicebus.com";
 require('colors');
 
-// Delete all services
-//var files = fs.readdirSync('./services');
-//files.forEach(function (file) {
-//    if(file != 'microService.js' && file != 'sqlCommand.js')
-//        fs.unlinkSync('./lib/services/' + file);
-//});
-//console.log();
-//console.log("Services removed".green);
+var args = process.argv.slice(2);
 
-//// Delete folders
-//deleteFolderRecursive('./microServiceBus.BizTalk');
-//deleteFolderRecursive('./data');
-//deleteFolderRecursive('./output');
-//deleteFolderRecursive('./persist');
-//console.log("Deleted".green);
+if (args.length > 0) {
+    switch (args[0]) {
+        case '-all':
+            deleteFolderRecursive('./microServiceBus.BizTalk');
+            deleteFolderRecursive('./data');
+            deleteFolderRecursive('./output');
+            deleteFolderRecursive('./persist');
+            deleteFolderRecursive('./cert');
+            deleteFolderRecursive('./node_modules/microservicebus.core');
+            console.log("Deleted".green);
+            break;
+        case '-cert':
+            deleteFolderRecursive('./microServiceBus.BizTalk');
+            deleteFolderRecursive('./data');
+            deleteFolderRecursive('./output');
+            deleteFolderRecursive('./persist');
+            deleteFolderRecursive('./cert');
+            console.log("Deleted".green);
+            break;
+        case '-debug':
+            site = "wss://localhost:44302";
+            console.log("Setting host to localhost".green);
+            break;
+        case '-stage':
+            site = "wss://microservicebus-northeurope.azurewebsites.net";
+            console.log("Setting host to localhost".green);
+            break;
+
+        case '-?':
+            console.log("-all, -cert or -debug".yellow);
+            return;
+        default:
+            console.log("Unsupported argument.".red);
+            console.log("-all, -cert or -debug".yellow);
+            return;
+    }
+}
 
 //if (fs.existsSync('./settings.json'))
 //    fs.unlinkSync('./settings.json');
 // Update settings
 settings = {
-    "hubUri": "wss://microservicebus.com",
+    "hubUri": site,
     "trackMemoryUsage": 0,
     "enableKeyPress": false,
     "useEncryption": false,
