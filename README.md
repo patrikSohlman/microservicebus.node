@@ -1,9 +1,6 @@
 ﻿![alt](https://blogical.blob.core.windows.net/microservicebus/Logosmall.png)
 
-**Master** [![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
-
-**Develop** [![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
-
+[![Build Status](https://travis-ci.org/microServiceBus/microservicebus.node.svg?branch=master)](https://travis-ci.org/microServiceBus/microservicebus.node/)
 [![Stories in Ready](https://badge.waffle.io/microServiceBus/microservicebus.node.svg?label=ready&title=Ready)](http://waffle.io/microServiceBus/microservicebus.node)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FmicroServiceBus%2Fmicroservicebus.node%2Fmaster%2Fazuredeploy.json" target="_blank">
