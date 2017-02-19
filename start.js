@@ -25,7 +25,17 @@ SOFTWARE.
 'use strict';
 
 require('colors');
+var util = require('./lib/Utils.js');
+var pjson = require('./package.json');
+var checkVersion = require('package-json');
+var npm = require('npm');
+var fs = require('fs');
+var maxWidth = 75;
+var debugPort = 5859;
+
 var debug = process.execArgv.find(function (e) {  return e.startsWith('--debug');}) !== undefined;
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 if (debug) {
     console.log("Start with debug");
@@ -38,49 +48,100 @@ else {
 function startWithoutDebug() {
     var cluster = require('cluster');
     
+    var debugHost;
+    var fixedExecArgv = [];
     if (cluster.isMaster) {
-        cluster.fork();
+        var worker = cluster.fork();
 
         cluster.on('exit', function (worker, code, signal) {
-            cluster.fork();
+            worker = cluster.fork();
+
+            if (cluster.settings.execArgv.find(function (e) { return e.startsWith('--debug'); }) !== undefined) {
+
+                console.log();
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight(" IN DEBUG", maxWidth, ' ').bgGreen.white.bold);
+                console.log(util.padRight("", maxWidth, ' ').bgGreen.white.bold);
+                console.log();
+
+                debugHost.Start(debugPort);
+                debugPort++;
+            }
+            else {
+                console.log();
+                console.log(util.padRight(" NORMAL START", maxWidth, ' ').bgGreen.white.bold);
+                console.log();
+
+                debugHost = undefined;
+            }
         });
 
         cluster.on('message', function (msg) {
-            if (msg.chat === "abort") {
-                console.log("abort");
-                process.abort();
-            }
-            else if (msg.chat == "restart") {
-                console.log("restart");
-                cluster.destroy();
-            }
-        });
+            if (debugHost == undefined) {
+                fixedExecArgv.push('--debug-brk');
 
-        //setInterval(function () {
-        //    if (!worker.isConnected()) {
-        //        console.log("no worker");
-        //        worker = cluster.fork();
-        //    }
-        //    else {
-        //        console.log("worker exists".green);
-        //    }
-        //}, 3000);
+                cluster.setupMaster({
+                    execArgv: fixedExecArgv
+                });
+                var DebugHost = require("microservicebus.core").DebugClient;
+
+                debugHost = new DebugHost();
+                debugHost.OnReady(function () {
+
+                });
+                debugHost.OnStopped(function () {
+                    console.log(util.padRight(" OnStop process triggered", maxWidth, ' ').bgGreen.white.bold);
+                    cluster.setupMaster({
+                        execArgv: []
+                    });
+                    debugHost = undefined;
+
+                    for (var id in cluster.workers) {
+                        console.log(util.padRight(" Killing", maxWidth, ' ').bgGreen.white.bold);
+                        cluster.workers[id].process.disconnect();
+                        cluster.workers[id].process.kill('SIGTERM');
+                    }
+                });
+            }
+            else {
+                debugHost.Stop(function () {
+                    cluster.setupMaster({
+                        execArgv: []
+                    });
+                    for (var id in cluster.workers) {
+                        console.log(util.padRight(" Killing", maxWidth, ' ').bgGreen.white.bold);
+                        cluster.workers[id].process.disconnect();
+                        cluster.workers[id].process.kill('SIGTERM');
+                    }
+
+                });
+                
+            }
+            
+        });
     }
 
     if (cluster.isWorker) {
         console.log("start worker");
         start();
     }
+    process.on('uncaughtException', function (err) {
+        if (err.errno === 'ECONNREFUSED') {
+            debugHost = undefined;
+            for (var id in cluster.workers) {
+                console.log(util.padRight(" Killing", maxWidth, ' ').bgRed.white.bold);
+                cluster.workers[id].process.disconnect();
+                cluster.workers[id].process.kill('SIGTERM');
+            }
+        }
+        //else
+            //console.log('Uncaught exception: '.red + err);
+    });
 }
 
 function start(d) {
-    var util = require('./lib/Utils.js');
-    var pjson = require('./package.json');
-    var checkVersion = require('package-json');
-    var npm = require('npm');
-    var fs = require('fs');
     var started = false;
-    var maxWidth = 75;
+    
     let args = process.argv.slice(1);
     var rootFolder = process.arch == 'mipsel' ? '/mnt/sda1' : __dirname;
 

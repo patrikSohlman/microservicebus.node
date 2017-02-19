@@ -36,6 +36,15 @@
     <Compile Include="globalRestore.js" />
     <Compile Include="global.js" />
     <Compile Include="Gruntfile.js" />
+    <Compile Include="lib\_v8debug\breakpoint-manager.js" />
+    <Compile Include="lib\_v8debug\client.js" />
+    <Compile Include="lib\_v8debug\frame-manager.js" />
+    <Compile Include="lib\_v8debug\frame.js" />
+    <Compile Include="lib\_v8debug\index.js" />
+    <Compile Include="lib\_v8debug\protocol.js" />
+    <Compile Include="lib\_v8debug\script-manager.js" />
+    <Compile Include="lib\_v8debug\script.js" />
+    <Compile Include="lib\_v8debug\utils.js" />
     <Compile Include="lib\service.js" />
     <Compile Include="lib\microServiceBusHost.js" />
     <Compile Include="lib\protocols\AZUREIOT.js" />
@@ -44,7 +53,7 @@
     <Compile Include="restore.js" />
     <Compile Include="server.js" />
     <Compile Include="start.js" />
-    <Compile Include="test\successfulSignIn.js" />
+    <Compile Include="test\unittests.js" />
     <Compile Include="lib\Utils.js" />
     <Content Include=".coveralls.yml" />
     <Content Include=".gitignore" />
@@ -52,7 +61,7 @@
     <Content Include=".tesselinclude" />
     <Content Include=".travis.yml" />
     <Content Include="azuredeploy.json" />
-    <Content Include="BEFORE PUBLISH.md" />
+    <Content Include="cert\root-CA.crt" />
     <Content Include="metadata.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
@@ -61,9 +70,11 @@
     <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="cert\" />
     <Folder Include="lib\" />
     <Folder Include="lib\protocols\" />
     <Folder Include="lib\templates\" />
+    <Folder Include="lib\_v8debug\" />
     <Folder Include="test\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
@@ -82,6 +93,7 @@
     <Folder Include="typings\globals\express\" />
     <Folder Include="typings\globals\extend\" />
     <Folder Include="typings\globals\graceful-fs\" />
+    <Folder Include="typings\globals\grunt\" />
     <Folder Include="typings\globals\gulp\" />
     <Folder Include="typings\globals\istanbul\" />
     <Folder Include="typings\globals\jsonpath\" />
@@ -98,6 +110,7 @@
     <Folder Include="typings\globals\nodemailer\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\npm\" />
+    <Folder Include="typings\globals\progress\" />
     <Folder Include="typings\globals\request\" />
     <Folder Include="typings\globals\should\" />
     <Folder Include="typings\globals\supertest\" />
@@ -121,6 +134,7 @@
     <TypeScriptCompile Include="typings\globals\express\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\extend\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\graceful-fs\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\grunt\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\gulp\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\istanbul\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\jsonpath\index.d.ts" />
@@ -137,6 +151,7 @@
     <TypeScriptCompile Include="typings\globals\nodemailer\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\npm\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\progress\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\request\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\should\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\supertest\index.d.ts" />

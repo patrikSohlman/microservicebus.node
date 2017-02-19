@@ -15,10 +15,13 @@
     "intercept-stdout": "0.1.2",
     "keypress": "0.2.1",
     "moment": "2.10.3",
+    "network": "^0.3.0",
     "npm": "3.10.9",
     "package-json": "2.2.1",
+    "progress": "^1.1.8",
     "require-reload": "0.2.2",
     "uuid": "2.0.1",
+    "v8-debug-protocol": "0.0.20",
     "websocket": "^1.0.17"
   },
   "description": "node.js node for microservicebus. Please visit http://microservicebus.com for more information.",
@@ -65,8 +68,8 @@
   },
   "scripts": {
     "lint": "jshint Utils.js",
-    "succcess": "mocha Tests/successfulSignIn.js",
+    "succcess": "mocha Tests/unittests.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
-  "version": "2.0.9"
+  "version": "2.0.17"
 }
