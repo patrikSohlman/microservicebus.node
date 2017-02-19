@@ -68,7 +68,7 @@
   },
   "scripts": {
     "lint": "jshint Utils.js",
-    "succcess": "mocha Tests/successfulSignIn.js",
+    "succcess": "mocha Tests/unittests.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec"
   },
   "version": "2.0.17"

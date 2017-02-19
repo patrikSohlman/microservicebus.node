@@ -29,6 +29,8 @@ node_modules
 microServiceBus.BizTalk
 persist
 obj
+bin
 .vs
+.vscode
 typings
 *.bat
