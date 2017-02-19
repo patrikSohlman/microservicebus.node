@@ -244,6 +244,15 @@ describe('Post Signin', function () {
         TestOnChangeDebugResponse.should.equal(true);
         done();
     });
+    //it('update itinerary should work', function (done) {
+    //    this.timeout(10000);
+    //    var testData = require('./testData.js');
+    //    var updatedItinerary = testData.updateItinerary();
+    //    microServiceBusHost.OnUpdatedItineraryComplete(function () {
+    //        done();
+    //    });
+    //    var TestOnUpdateItineraryResponse = microServiceBusHost.TestOnUpdateItinerary(updatedItinerary);
+    //});
     it('change state should work', function (done) {
         var TestOnChangeDebugResponse = microServiceBusHost.TestOnChangeState("Stop");
         done();
