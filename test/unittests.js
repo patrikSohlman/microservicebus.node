@@ -52,7 +52,7 @@ describe('Util functions', function () {
     });
     it('addNpmPackages should work', function (done) {
         this.timeout(10000);
-        util.addNpmPackages("msbcam", false, function (err) {
+        util.addNpmPackages("msbcam,microservicebus.core", false, function (err) {
             if (err)
                 throw err;
             done();
