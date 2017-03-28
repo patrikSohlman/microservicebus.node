@@ -132,7 +132,7 @@ describe('Sign in', function () {
         done();
     });
     it('Sign in should work', function (done) {
-        this.timeout(10000);
+        this.timeout(60000);
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
             expect(exceptionCount).to.eql(0);
             expect(loadedCount).to.eql(1);
