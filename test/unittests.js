@@ -30,29 +30,23 @@ describe('Util functions', function () {
         expect(t).to.equal("      microServiceBus.com");
         done();
     });
-    it('addNpmPackage should work', function (done) {
+    it('addNpmPackage (msbcam) should work', function (done) {
         this.timeout(10000);
         util.addNpmPackage("msbcam", true, function (err) {
-            if (err)
-                throw err;
-            util.addNpmPackage("msbcam", false, function (err) {
-                if (err)
-                    throw err;
-                done();
-            });
-        });
-    });
-    it('removeNpmPackage should work', function (done) {
-        this.timeout(10000);
-        util.removeNpmPackage("msbcam", function (err) {
-            if (err)
-                throw err;
+            expect(err).to.equal(null);   
             done();
         });
     });
-    it('addNpmPackages should work', function (done) {
+    // it('addNpmPackage (microservicebus.core) should work', function (done) {
+    //     this.timeout(30000);
+    //     util.addNpmPackage("microservicebus.core", true, function (err) {
+    //         expect(err).to.equal(null);   
+    //         done();
+    //     });
+    // });
+    it('removeNpmPackage (msbcam) should work', function (done) {
         this.timeout(10000);
-        util.addNpmPackages("msbcam", false, function (err) {
+        util.removeNpmPackage("msbcam", function (err) {
             if (err)
                 throw err;
             done();
@@ -132,7 +126,7 @@ describe('Sign in', function () {
         done();
     });
     it('Sign in should work', function (done) {
-        this.timeout(10000);
+        this.timeout(60000);
         microServiceBusHost.OnStarted(function (loadedCount, exceptionCount) {
             expect(exceptionCount).to.eql(0);
             expect(loadedCount).to.eql(1);
