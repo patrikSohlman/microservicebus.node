@@ -60,7 +60,6 @@
     <Content Include=".tesselinclude" />
     <Content Include=".travis.yml" />
     <Content Include="azuredeploy.json" />
-    <Content Include="cert\root-CA.crt" />
     <Content Include="metadata.json" />
     <Content Include="package.json" />
     <Content Include="README.md" />
@@ -69,11 +68,11 @@
     <Compile Include="test\testData.js" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="cert\" />
     <Folder Include="lib\" />
     <Folder Include="lib\protocols\" />
     <Folder Include="lib\templates\" />
     <Folder Include="lib\_v8debug\" />
+    <Folder Include="cert\" />
     <Folder Include="test\" />
     <Folder Include="typings\" />
     <Folder Include="typings\globals\" />
