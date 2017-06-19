@@ -1,7 +1,12 @@
 {
-    "hubUri": "wss://microservicebus.com",
-    "trackMemoryUsage": 0,
-    "enableKeyPress": false,
-    "useEncryption": false,
-    "log": ""
+	"hubUri": "wss://localhost:44302",
+	"trackMemoryUsage": 0,
+	"enableKeyPress": false,
+	"useEncryption": false,
+	"log": "",
+	"nodeName": "Jonas",
+	"organizationId": "5f5967d9-4020-40d9-86e7-e813664d0397",
+	"machineName": "DESKTOP-6PS46DD",
+	"id": "526a2e2d-a7d9-4ba9-a5d3-fb141e413eec",
+	"sas": "SharedAccessSignature sr=5f5967d9-4020-40d9-86e7-e813664d0397&sig=EHXnTHQyhmVmUVmM3SqyLQhdbug%2fgGhcduDwDPyytWs%3d&se=1813133495&skn=Jonas"
 }
